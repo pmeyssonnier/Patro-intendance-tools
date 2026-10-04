@@ -307,7 +307,7 @@ const txtRec=n=>{const R=S.rec[n];return R?"📖 "+n+"\n"+(R.desc?R.desc+"\n":""
 /* ---------- export CSV (Excel en français : séparateur « ; », virgule décimale, UTF-8 avec BOM) ---------- */
 const cs=v=>{let s=String(v==null?"":v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return /[;"\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
 const cn=(v,d)=>(+v).toFixed(d==null?2:d).replace(".",","),cq=v=>String(v).replace(".",",");
-const csvOut=rows=>"﻿"+rows.map(r=>r.map(cs).join(";")).join("\r\n")+"\r\n";
+const csvOut=rows=>"\uFEFF"+rows.map(r=>r.map(cs).join(";")).join("\r\n")+"\r\n";
 const qparts=(k,q)=>{const u=ING[k][1];if(u==="pc")return[String(Math.ceil(q)),"pc"];return q>=1000?[cn(q/1000),u==="ml"?"L":"kg"]:[String(Math.round(q)),u]};
 function csvList(){const r=[["Produit","Quantité","Unité","Prix unitaire (€)","Prix par","Coût (€)","Remarque"]],n=nn();
  LAST.keys.forEach(k=>{const[q,u]=qparts(k,LAST.tot[k]);r.push([ING[k][0],q,u,cn(price(k)),ul(k),cn(LAST.tot[k]/per(k)*price(k)),price(k)?"":"prix manquant"])});
@@ -421,7 +421,7 @@ function drawRec(){const names=Object.keys(S.rec);if(!S.rec[S.cur])S.cur=names[0
  $("rh").innerHTML="<tr><th>Ingrédient</th>"+SEC.map(s=>`<th>${s[0]}<div class="s">${s[1]}</div></th>`).join("")+"<th></th></tr>";
  $("rb").innerHTML=R?Object.entries(R.ing).map(([k,q])=>{const fx=R.fx&&k in R.fx;return `<tr><td>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${esc(k)}">${fx?"→ par personne":"→ quantité unique"}</button></div></td>${fx?`<td colspan="4"><input type="number" min="0" step="any" value="${+(R.fx[k]/fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span><label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa&&R.fa[k]===0?"":" checked"} style="width:auto"> adapter aux régimes</label></td>`:q.map((v,i)=>`<td><input type="number" min="0" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${SEC[i][0]}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>`}).join(""):"";
  $("radd").innerHTML="<option value=''>+ Ajouter un ingrédient…</option>"+Object.entries(ING).filter(([k,v])=>R&&!R.ing[k]&&!v[4]&&!S.hid.includes(k)).map(([k,v])=>`<option value="${esc(k)}">${esc(v[0])}</option>`).join("")}
-const PG={eff:"Effectifs",reg:"Régimes & allergies",menu:"Menu",rec:"Recettes",cat:"Catalogue de prix",list:"Liste de courses",sh:"Partager / imprimer",pj:"Sauvegarde"};
+const PG={eff:"Camp & effectifs",reg:"Régimes & allergies",menu:"Menu",rec:"Recettes",cat:"Catalogue de prix",list:"Liste de courses",sh:"Partager / imprimer",pj:"Sauvegarde"};
 const mqW=matchMedia("(min-width:900px)"),say=t=>{$("live").textContent="";setTimeout(()=>$("live").textContent=t,30)};
 function nav(o){document.body.classList.toggle("nav",!!o);$("burger").setAttribute("aria-expanded",!!o);syncDrawer(o)}
 function syncDrawer(o){$("drawer").inert=!mqW.matches&&!o}

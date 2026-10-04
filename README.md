@@ -50,7 +50,19 @@ Tous les boutons et champs ont un nom pour les lecteurs d'écran, le menu ☰ et
 
 ## Pour les développeurs
 
-Tout le code (HTML, CSS, JavaScript) est dans `index.html`, sans dépendance ni étape de compilation. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement le fichier dans un navigateur. Le site est publié par GitHub Pages à partir de la branche `main`.
+Tout le code (HTML, CSS, JavaScript) est dans `index.html`, sans dépendance ni étape de compilation. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement le fichier dans un navigateur.
+
+### Tests
+
+Des tests de bout en bout (Playwright) ouvrent la page dans un vrai navigateur, sur ordinateur et au format téléphone : navigation, camps et dates, menu (ajout, repas supplémentaires, déplacement au clavier), quantité unique et régimes, export/import, sécurité de l'import, export CSV, avertissement de stockage et accessibilité.
+
+```
+npm install
+npx playwright install chromium
+npm test
+```
+
+Pour utiliser un Chromium déjà installé : `CHROMIUM_PATH=/chemin/vers/chromium npm test`. Le site est publié par GitHub Pages à partir de la branche `main`.
 
 ## Licence
 

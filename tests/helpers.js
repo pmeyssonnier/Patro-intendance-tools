@@ -1,0 +1,41 @@
+const path = require("path");
+const fs = require("fs");
+
+const URL = "file://" + path.resolve(__dirname, "..", "index.html");
+
+/** Ouvre l'appli (stockage vide) ; renvoie la liste des erreurs JavaScript rencontrées. */
+async function ouvrir(page) {
+  const erreurs = [];
+  page.on("pageerror", (e) => erreurs.push(e.message));
+  page.on("dialog", (d) => d.accept());
+  await page.goto(URL);
+  return erreurs;
+}
+
+/** Va sur une page du menu ☰ (eff, reg, menu, rec, cat, list, sh, pj), sur ordinateur comme sur téléphone. */
+async function aller(page, id) {
+  const burger = page.locator("#burger");
+  if (await burger.isVisible()) {
+    if (await page.locator("#drawer").evaluate((d) => d.inert)) await burger.click();
+  }
+  await page.locator(`.ni[data-g="${id}"]`).click();
+  await page.locator(`#g-${id}.on`).waitFor();
+}
+
+/** Clique sur un bouton qui télécharge un fichier et renvoie { nom, texte, octets, chemin }. */
+async function telecharger(page, selecteur) {
+  const [dl] = await Promise.all([page.waitForEvent("download"), page.locator(selecteur).click()]);
+  const chemin = await dl.path();
+  const octets = fs.readFileSync(chemin);
+  return { nom: dl.suggestedFilename(), octets, texte: octets.toString("utf8"), chemin };
+}
+
+/** Importe un projet (chemin ou { name, mimeType, buffer }) et attend le rechargement de la page. */
+async function importer(page, fichier) {
+  await Promise.all([page.waitForEvent("load"), page.locator("#jin").setInputFiles(fichier)]);
+}
+
+/** Montant affiché en euros (« 198,21 € ») → nombre. */
+const montant = (txt) => parseFloat(txt.replace(/[^\d,]/g, "").replace(",", "."));
+
+module.exports = { ouvrir, aller, telecharger, importer, montant, URL };
