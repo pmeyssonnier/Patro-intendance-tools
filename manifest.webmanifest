@@ -1,0 +1,17 @@
+{
+  "name": "Patro Sainte-Suzanne – Intendance de camp",
+  "short_name": "Intendance PSS",
+  "description": "Menus, recettes, régimes et allergies, liste de courses et budget des camps du Patro Sainte-Suzanne.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1f7a3f",
+  "theme_color": "#1f7a3f",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

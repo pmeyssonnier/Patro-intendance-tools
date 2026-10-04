@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f7a3f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
 <style>
 :root{--bg:#eaf4ec;--card:#fff;--tx:#1f2a22;--mu:#5c6f62;--ac:#1f7a3f;--bd:#c9e0cf;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -77,6 +83,8 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 <div class="dsec">Projet</div>
 <button class="ni" data-g="pj"><span>💾</span>Sauvegarde</button>
 <div class="s dfoot">Outil fait par le PSS pour les patros ⛺</div>
+<button id="inst" class="x" style="display:none;margin:12px 6px 0">📲 Installer l'application</button>
+<div id="ioshint" class="s" style="display:none;margin:12px 6px 0">📲 Pour installer sur iPhone : touche Partager puis « Sur l'écran d'accueil ».</div>
 </nav>
 
 <div class="pg on" id="g-eff">
@@ -426,6 +434,13 @@ const DMAP={viande:["veg"],porc:["veg","halal"],boeuf:["veg","sb"],sl:["sl"],sg:
 $("inew").onclick=()=>{$("iform").style.display="grid";$("iname").value="";$("iname").focus()};
 $("ino").onclick=()=>{$("iform").style.display="none"};
 $("iok").onclick=()=>{const n=$("iname").value.trim();if(!n)return;const k="c_"+Date.now().toString(36);const dg=DMAP[$("idiet").value]||[];const kw=n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,"\\$&");const e=[n,$("iunit").value,0,kw,0,dg];S.cust[k]=e;ING[k]=e;dg.forEach(d=>{if(DIETS[d])DIETS[d].ex[k]=null});if(S.rec[S.cur])S.rec[S.cur].ing[k]=[0,0,0,0];$("iform").style.display="none";drawRec();drawDietEd();calc()};
+/* ---------- installation (PWA) ---------- */
+let dip=null;
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();dip=e;$("inst").style.display="inline-block"});
+addEventListener("appinstalled",()=>{$("inst").style.display="none"});
+$("inst").onclick=()=>{if(dip){dip.prompt();dip.userChoice.finally(()=>{dip=null;$("inst").style.display="none"})}};
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone)$("ioshint").style.display="block";
+if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 /* ---------- projet : export / import / reset ---------- */
 $("exp").onclick=()=>{S.dd=DIETS;dl(JSON.stringify(S,null,1),"projet-patro-"+new Date().toISOString().slice(0,10)+".json","application/json")};
 $("jin").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const x=JSON.parse(t);if(!x.rec||typeof x.rec!=="object"||!(Array.isArray(x.meals)||(x.camps&&typeof x.camps==="object")))throw 0;localStorage.setItem("intendance2",t);location.reload()}catch(_){alert("Fichier invalide")}})};
