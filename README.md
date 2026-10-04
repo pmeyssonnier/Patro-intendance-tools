@@ -18,6 +18,14 @@ sur ordinateur, tablette et téléphone. Les données restent sur ton appareil
 5. **Liste de courses** : consulte les quantités et le budget, puis imprime ou partage la liste.
 6. **Sauvegarde** : exporte le projet (`.json`) pour ne rien perdre.
 
+## Installer l'application sur le téléphone
+
+L'outil s'installe comme une application, avec son icône sur l'écran d'accueil, et fonctionne ensuite aussi sans connexion.
+
+- **Android (Chrome)** : ouvre le menu ☰ de l'outil puis touche « 📲 Installer l'application » (ou menu ⋮ du navigateur → « Installer l'application »).
+- **iPhone (Safari)** : touche Partager puis « Sur l'écran d'accueil ».
+- **Ordinateur (Chrome, Edge)** : icône d'installation dans la barre d'adresse.
+
 ## Pages et fonctions
 
 - **Camp & effectifs** : un projet par camp (nom, dates, effectifs par section – Benjas, Chevaliers-Étincelles, Conquérants-Alpines, Animateurs –, marge de pertes, régimes/allergies et menu). On peut créer, dupliquer, supprimer et changer de camp (sélecteur dans le menu ☰). Recettes, ingrédients et prix sont partagés entre les camps.
@@ -37,7 +45,7 @@ sur ordinateur, tablette et téléphone. Les données restent sur ton appareil
 
 ## Pour les développeurs
 
-Tout le code (HTML, CSS, JavaScript) est dans `index.html`, sans dépendance ni étape de compilation. Pour essayer en local, ouvre simplement le fichier dans un navigateur. Le site est publié par GitHub Pages à partir de la branche `main`.
+Tout le code (HTML, CSS, JavaScript) est dans `index.html`, sans dépendance ni étape de compilation. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement le fichier dans un navigateur. Le site est publié par GitHub Pages à partir de la branche `main`.
 
 ## Licence
 
