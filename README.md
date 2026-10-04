@@ -30,12 +30,16 @@ L'outil s'installe comme une application, avec son icône sur l'écran d'accueil
 
 - **Camp & effectifs** : un projet par camp (nom, dates, effectifs par section – Benjas, Chevaliers-Étincelles, Conquérants-Alpines, Animateurs –, marge de pertes, régimes/allergies et menu). On peut créer, dupliquer, supprimer et changer de camp (sélecteur dans le menu ☰). Recettes, ingrédients et prix sont partagés entre les camps.
 - **Régimes & allergies** : végétarien, halal, sans lactose, sans gluten, etc. L'appli retire l'ingrédient concerné et ajoute le substitut à acheter. Les régimes sont modifiables : on peut en créer, les renommer, en supprimer et définir les règles de remplacement.
-- **Menu** : un tableau par jour (« Vendredi 22/03 »), d'après les dates du camp, avec Matin, Midi et Soir. On peut ajouter d'autres repas (Goûter, Collation…) et les retirer, à **un seul jour ou à tous les jours** au choix ; ils sont renommables, réordonnables et ont chacun une couleur. Les plats se glissent d'un repas ou d'un jour à l'autre. Menu imprimable (avec ou sans descriptions et adaptations) et copie du menu d'un autre camp.
-- **Recettes** : quantités par personne et par section, ou **quantité unique** pour un ingrédient (ex. 5 pains, 5 L de lait : bouton « → quantité unique » sous l'ingrédient ; cette quantité n'est ni multipliée par l'effectif, ni augmentée de la marge) ; ingrédients personnalisés.
+- **Menu** : un tableau par jour (« Vendredi 22/03 »), d'après les dates du camp, avec Matin, Midi et Soir. On peut ajouter d'autres repas (Goûter, Collation…) et les retirer, à **un seul jour ou à tous les jours** au choix ; ils sont renommables, réordonnables et ont chacun une couleur. Les plats se glissent d'un repas ou d'un jour à l'autre, à la souris, au doigt ou au clavier (flèches haut/bas pour l'ordre, gauche/droite pour changer de repas). Menu imprimable (avec ou sans descriptions et adaptations) et copie du menu d'un autre camp.
+- **Recettes** : quantités par personne et par section, ou **quantité unique** pour un ingrédient (ex. 5 pains, 5 L de lait : bouton « → quantité unique » sous l'ingrédient ; cette quantité n'est ni multipliée par l'effectif, ni augmentée de la marge, et elle est répartie au prorata des personnes au régime concernées — par exemple 3 personnes sans gluten sur 30 reçoivent 10 % du pain en pain sans gluten ; case « adapter aux régimes » désactivable) ; ingrédients personnalisés.
 - **Catalogue de prix** : saisie à la main ou import d'une liste de produits (CSV/texte, `nom ; prix`) ; l'appli lit le poids dans le nom du produit et retient le moins cher pour chaque ingrédient.
 - **Liste de courses** : quantités, coût total, par personne et par repas.
-- **Partager / imprimer** : liste, menu et recettes par WhatsApp, mail, partage du téléphone, copie, impression ou fichier HTML (utile si l'impression directe ne marche pas sur l'appareil).
+- **Partager / imprimer** : liste, menu et recettes par WhatsApp, mail, partage du téléphone, copie, impression ou fichier HTML (utile si l'impression directe ne marche pas sur l'appareil). **Export CSV** de la liste de courses (avec coûts et total), du menu et des recettes : le fichier s'ouvre directement dans Excel en français, pratique pour le budget et le trésorier.
 - **Sauvegarde** : export / import du projet en `.json` (le fichier est vérifié avant d'être accepté ; en cas de problème, rien n'est modifié et un message l'explique). Une « zone sensible » permet de vider les recettes, ingrédients et menus (les camps sont conservés) ou de tout réinitialiser (camps compris, retour aux données d'exemple).
+
+## Accessibilité
+
+Tous les boutons et champs ont un nom pour les lecteurs d'écran, le menu ☰ et le déplacement des plats se font au clavier, et la navigation est annoncée (page courante, déplacements de plats).
 
 ## Conseils
 
@@ -46,7 +50,19 @@ L'outil s'installe comme une application, avec son icône sur l'écran d'accueil
 
 ## Pour les développeurs
 
-Tout le code (HTML, CSS, JavaScript) est dans `index.html`, sans dépendance ni étape de compilation. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement le fichier dans un navigateur. Le site est publié par GitHub Pages à partir de la branche `main`.
+Tout le code (HTML, CSS, JavaScript) est dans `index.html`, sans dépendance ni étape de compilation. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement le fichier dans un navigateur.
+
+### Tests
+
+Des tests de bout en bout (Playwright) ouvrent la page dans un vrai navigateur, sur ordinateur et au format téléphone : navigation, camps et dates, menu (ajout, repas supplémentaires, déplacement au clavier), quantité unique et régimes, export/import, sécurité de l'import, export CSV, avertissement de stockage et accessibilité.
+
+```
+npm install
+npx playwright install chromium
+npm test
+```
+
+Pour utiliser un Chromium déjà installé : `CHROMIUM_PATH=/chemin/vers/chromium npm test`. Le site est publié par GitHub Pages à partir de la branche `main`.
 
 ## Licence
 
