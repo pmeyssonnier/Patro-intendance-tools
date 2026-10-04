@@ -25,7 +25,8 @@ button{width:auto;cursor:pointer;background:var(--ac);color:#fff;border:0}button
 .chip{display:inline-flex;align-items:center;gap:2px;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:2px 4px;margin:2px 4px 2px 0}.chip.drag{opacity:.4}.chip .x{padding:2px 7px;border:0}
 .tg{font-size:.72rem;padding:2px 8px;margin-top:3px}
 .trow{border:1px solid var(--bd);border-radius:10px;padding:8px;margin:8px 0}.tl{display:flex;gap:6px;align-items:center}.tl .tn{flex:1;min-width:0}.tl button{padding:4px 9px}
-.zadd{padding:8px 12px;border-top:1px solid var(--bd)}.zadd select{max-width:260px;padding:4px 8px}.nsl{display:inline-flex;gap:6px;flex-wrap:wrap;margin-top:6px}.nsl input{width:180px}
+.zadd{padding:8px 12px;border-top:1px solid var(--bd)}.zadd select{max-width:260px;padding:4px 8px}.nsl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}.nsl select{max-width:200px}.nsl input{width:180px}
+.zdel{padding:8px 12px;background:color-mix(in srgb,#d33 14%,var(--card));border-top:1px solid var(--bd);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .zl{display:flex;flex-direction:column;align-items:center;gap:2px}.zx{background:transparent;color:inherit;border:0;padding:0 6px;font-size:.9rem;opacity:.85}
 .crow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}.crow b{width:56px}.sws{display:contents}.crow input[type=color]{width:44px;height:32px;padding:0}
 .sw{width:28px;height:28px;padding:0;border-radius:50%;border:2px solid var(--bd)}.sw.on{outline:3px solid var(--tx);outline-offset:2px}
@@ -264,24 +265,33 @@ if(!navigator.share)$("sn").style.display="none";
 $("sn").onclick=()=>{const t=shtxt();if(t)navigator.share({title:"Patro Sainte-Suzanne – "+shk()[0],text:t}).catch(()=>{})};
 $("sc").onclick=()=>{const t=shtxt();if(!t)return;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>shmsg("Copié ✅"),()=>shmsg("Copie impossible"))};
 /* ---------- menu : édition, glisser-déposer, couleurs ---------- */
-let addDay=-1;
+let addDay=-1,addT="",delSl=null;const ALLD=()=>[...Array(31).keys()];
+const delPanel=(i,k,lab)=>{const n1=slotArr(i,k).length,n2=days().reduce((a,d,j)=>a+slotArr(j,k).length,0),f=n=>n?` (${n} plat${n>1?"s":""} supprimé${n>1?"s":""})`:"";
+ return `<div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${k}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${k}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div>`};
+const addPanel=()=>{const nw=addT==="__new",t=C.types.find(x=>x.k===addT);
+ return `<div class="nsl">${nw?'<input data-nn="1" placeholder="Nom (ex. Goûter)" maxlength="30">':`<b>${esc(t?t.n:"")}</b>`}<select data-sc="1"><option value="one">Ce jour seulement</option><option value="all">Tous les jours</option></select><button data-nok="1">Ajouter</button><button class="x" data-nno="1">Annuler</button></div>`};
 function drawMenu(){
- $("menu").innerHTML=days().map((d,i)=>{const gone=C.types.filter(t=>hid(i,t.k));return `<div class="dcard"><div class="dhd">${esc(dlab(d))}</div>${dtypes(i).map(({k,n:lab})=>`<div class="zone" data-day="${i}" data-slot="${k}" style="${cvars(C.col[k])}"><div class="zl"><span>${esc(lab)}</span><button class="zx" data-ds="1" data-day="${i}" data-slot="${k}" title="Retirer ce repas de ce jour" aria-label="Retirer ${esc(lab)} de ce jour">✕</button></div><div class="zc">${slotArr(i,k).map((r,j)=>`<span class="chip" data-j="${j}"><span class="hd" data-day="${i}" data-slot="${k}" data-j="${j}" title="Glisser pour déplacer">⠿</span><span class="cn">${esc(r)}</span><button class="x" data-rm="1" data-day="${i}" data-slot="${k}" data-j="${j}" title="Retirer">✕</button></span>`).join("")}</div><select data-add="1" data-day="${i}" data-slot="${k}"><option value="">+ Ajouter un plat…</option>${Object.keys(S.rec).map(n=>`<option>${esc(n)}</option>`).join("")}</select></div>`).join("")}<div class="zadd"><select data-as="1" data-day="${i}"><option value="">+ Ajouter un repas…</option>${gone.map(t=>`<option value="${t.k}">${esc(t.n)}</option>`).join("")}<option value="__new">➕ Nouveau repas…</option></select>${addDay===i?`<span class="nsl"><input data-nn="${i}" placeholder="Nom (ex. Goûter)" maxlength="30"> <button data-nok="${i}">Ajouter</button> <button class="x" data-nno="1">Annuler</button></span>`:""}</div></div>`}).join("");
+ $("menu").innerHTML=days().map((d,i)=>{const gone=C.types.filter(t=>hid(i,t.k));return `<div class="dcard"><div class="dhd">${esc(dlab(d))}</div>${dtypes(i).map(({k,n:lab})=>`<div class="zone" data-day="${i}" data-slot="${k}" style="${cvars(C.col[k])}"><div class="zl"><span>${esc(lab)}</span><button class="zx" data-ds="1" data-day="${i}" data-slot="${k}" title="Retirer ce repas de ce jour" aria-label="Retirer ${esc(lab)} de ce jour">✕</button></div><div class="zc">${slotArr(i,k).map((r,j)=>`<span class="chip" data-j="${j}"><span class="hd" data-day="${i}" data-slot="${k}" data-j="${j}" title="Glisser pour déplacer">⠿</span><span class="cn">${esc(r)}</span><button class="x" data-rm="1" data-day="${i}" data-slot="${k}" data-j="${j}" title="Retirer">✕</button></span>`).join("")}</div><select data-add="1" data-day="${i}" data-slot="${k}"><option value="">+ Ajouter un plat…</option>${Object.keys(S.rec).map(n=>`<option>${esc(n)}</option>`).join("")}</select></div>${delSl&&delSl.day===i&&delSl.k===k?delPanel(i,k,lab):""}`).join("")}<div class="zadd"><select data-as="1" data-day="${i}"><option value="">+ Ajouter un repas…</option>${gone.map(t=>`<option value="${t.k}">${esc(t.n)}</option>`).join("")}<option value="__new">➕ Nouveau repas…</option></select>${addDay===i&&addT?addPanel():""}</div></div>`}).join("");
  if(addDay>=0){const f=$("menu").querySelector("[data-nn]");if(f)f.focus()}}
 const marr=(i,k)=>{(C.menu[i]=C.menu[i]||{});return C.menu[i][k]=C.menu[i][k]||[]};
 $("menu").addEventListener("change",e=>{const t=e.target;if(!t.dataset.add||!t.value)return;marr(+t.dataset.day,t.dataset.slot).push(t.value);drawMenu();calc()});
-$("menu").addEventListener("change",e=>{const t=e.target,i=+t.dataset.day;if(t.dataset.as===undefined||!t.value)return;
- if(t.value==="__new"){addDay=i;drawMenu();return}
- C.off[i]=(C.off[i]||[]).filter(k=>k!==t.value);drawMenu();calc()});
-function newType(i,name){name=name.trim();if(!name)return;const k="x"+Date.now().toString(36),pos=C.types.findIndex(t=>t.k==="s"),t={k,n:name};
- if(pos>=0)C.types.splice(pos,0,t);else C.types.push(t);
- C.col[k]=COLS.find(c=>!Object.values(C.col).includes(c))||COLS[3];
- days().forEach((d,j)=>{if(j!==i)(C.off[j]=C.off[j]||[]).push(k)});addDay=-1;drawSw();drawMenu();calc()}
-$("menu").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset.nn!==undefined)newType(+e.target.dataset.nn,e.target.value)});
+$("menu").addEventListener("change",e=>{const t=e.target;if(t.dataset.as===undefined||!t.value)return;addDay=+t.dataset.day;addT=t.value;delSl=null;drawMenu()});
+function addSlot(i,scope,name){let k=addT;
+ if(k==="__new"){name=(name||"").trim();if(!name)return;k="x"+Date.now().toString(36);const pos=C.types.findIndex(t=>t.k==="s"),t={k,n:name};
+  if(pos>=0)C.types.splice(pos,0,t);else C.types.push(t);
+  C.col[k]=COLS.find(c=>!Object.values(C.col).includes(c))||COLS[3];
+  ALLD().forEach(j=>(C.off[j]=C.off[j]||[]).push(k))}
+ (scope==="all"?ALLD():[i]).forEach(j=>{C.off[j]=(C.off[j]||[]).filter(x=>x!==k)});
+ addDay=-1;addT="";drawSw();drawMenu();calc()}
+function delSlot(i,k,scope){(scope==="all"?ALLD():[i]).forEach(j=>{if(C.menu[j])C.menu[j][k]=[];const o=C.off[j]=C.off[j]||[];if(!o.includes(k))o.push(k)});delSl=null;drawMenu();calc()}
+const addGo=t=>{const p=t.closest(".nsl"),n=p.querySelector("[data-nn]");addSlot(addDay,p.querySelector("[data-sc]").value,n?n.value:"")};
+$("menu").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset.nn!==undefined)addGo(e.target)});
 $("menu").addEventListener("click",e=>{const t=e.target;
- if(t.dataset.nok!==undefined){newType(+t.dataset.nok,t.parentNode.querySelector("[data-nn]").value);return}
- if(t.dataset.nno!==undefined){addDay=-1;drawMenu();return}
- if(t.dataset.ds){const i=+t.dataset.day,k=t.dataset.slot,n=slotArr(i,k).length;if(n&&!confirm("Retirer ce repas de ce jour (et ses "+n+" plat"+(n>1?"s":"")+") ?"))return;if(C.menu[i])C.menu[i][k]=[];(C.off[i]=C.off[i]||[]).push(k);drawMenu();calc();return}
+ if(t.dataset.nok!==undefined){addGo(t);return}
+ if(t.dataset.nno!==undefined){addDay=-1;addT="";drawMenu();return}
+ if(t.dataset.ds){delSl={day:+t.dataset.day,k:t.dataset.slot};addDay=-1;addT="";drawMenu();return}
+ if(t.dataset.dsc){delSlot(+t.dataset.day,t.dataset.slot,t.dataset.dsc);return}
+ if(t.dataset.dsn!==undefined){delSl=null;drawMenu();return}
  if(!t.dataset.rm)return;marr(+t.dataset.day,t.dataset.slot).splice(+t.dataset.j,1);drawMenu();calc()});
 let dg=null,px=0,py=0,raf=0;
 const tgt=()=>{const el=document.elementFromPoint(px,py),z=el&&el.closest&&el.closest(".zone");if(!z||!$("menu").contains(z))return null;const c=el.closest(".chip");return{day:+z.dataset.day,slot:z.dataset.slot,j:c&&z.contains(c)?+c.dataset.j:null,z}};
