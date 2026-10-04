@@ -16,6 +16,10 @@ input,select,textarea,button{font:inherit;color:var(--tx);background:var(--bg);b
 button{width:auto;cursor:pointer;background:var(--ac);color:#fff;border:0}button.x{background:transparent;color:var(--mu);border:1px solid var(--bd)}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{background:var(--card);color:var(--tx);border:1px solid var(--bd)}.tabs button.on{background:var(--ac);color:#fff}
 .row{display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px;margin-bottom:8px}
+.mrow{grid-template-columns:auto 1fr 1.4fr auto;align-items:center}
+.hd{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;padding:4px 8px;color:var(--mu);font-size:1.3rem;line-height:1}
+.mrow.drag{opacity:.45}.mrow.over{outline:2px dashed var(--ac);outline-offset:2px;border-radius:8px}
+.sw{width:28px;height:28px;padding:0;border-radius:50%;border:2px solid var(--bd)}.sw.on{outline:3px solid var(--tx);outline-offset:2px}
 .w{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;padding:5px 7px;border-bottom:1px solid var(--bd);white-space:nowrap}
 td input{width:72px;padding:4px 6px}.t{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px}.t b{color:var(--ac)}
 header{background:var(--ac);color:#fff;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -23,7 +27,19 @@ header h1{margin:0;font-size:1.4rem;color:#fff}header .s{color:#d6ecdb;font-size
 #logo{cursor:pointer;flex:none;height:70px;min-width:70px;max-width:130px;border-radius:12px;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:3px;box-sizing:border-box}
 #logo img{max-width:100%;max-height:100%;object-fit:contain}
 td input.nop{border-color:#d33;background:rgba(220,50,50,.15)}
-.p{display:none}.p.on{display:block}@media print{.np,#p1,#p2,.tabs,button,#exp,#rst{display:none!important}body{background:#fff;color:#000;padding:0}.card{border:0;margin:8px 0}tr{break-inside:avoid}td input{border:0;background:none;width:auto}}
+summary{cursor:pointer;font-weight:600;margin:8px 0}
+footer{text-align:center;color:var(--mu);font-size:.85rem;padding:18px 0 8px}
+.mp{background:#fff;color:#1f2a22;border-radius:12px;padding:14px;border:1px solid var(--bd);margin:10px 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.mp h2{font-size:1.4rem;margin:0 0 2px;padding-bottom:6px;border-bottom:3px solid var(--mc);color:#1f2a22}.mp h3{color:#1f2a22}.mp .s{color:#5c6f62}
+.mt{width:100%;border-collapse:collapse;font-size:.95rem;margin-top:10px}
+.mt th{background:var(--mc);color:var(--mct);text-align:left;padding:8px 10px;white-space:normal}
+.mt td{white-space:normal;padding:7px 10px;border-bottom:1px solid var(--mcl);color:#1f2a22;vertical-align:top}
+.mt tr.day td{background:var(--mcl);color:#1f2a22;font-weight:700;text-transform:capitalize;border-left:5px solid var(--mc)}
+.mt .ad{font-size:.8rem;color:#5c6f62;font-style:italic}.mt td.ck{width:1.4em;text-align:center}.mt tr{break-inside:avoid}
+#pv{display:none}
+.p{display:none}.p.on{display:block}
+@media print{.np,#p1,#p2,.tabs,button,#exp,#rst{display:none!important}body{background:#fff;color:#000;padding:0}.card{border:0;margin:8px 0}tr{break-inside:avoid}td input{border:0;background:none;width:auto}
+body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background:#fff!important;color:#000!important}.mp{border:0;padding:0}}
 </style></head><body><main>
 <header><label id="logo" title="Clique pour changer le logo (sur cet appareil)"><img id="logoimg" alt="Logo Patro Sainte-Suzanne"><input type="file" id="logof" accept="image/*" hidden></label>
 <div><h1>Patro Sainte-Suzanne</h1><div class="s">Intendance de camp ⛺</div></div></header>
@@ -35,9 +51,24 @@ td input.nop{border-color:#d33;background:rgba(220,50,50,.15)}
 <section class="card np"><h2>Régimes &amp; allergies</h2>
 <p class="s">Nombre de personnes concernées, par section. L'appli retire l'ingrédient pour elles et ajoute le substitut à acheter.</p>
 <div class="w"><table><thead id="dh"></thead><tbody id="db"></tbody></table></div>
+<details id="dedit"><summary>✏️ Modifier / ajouter des régimes et allergies</summary>
+<div class="g"><div><label>Régime à modifier</label><select id="dsel"></select></div>
+<div><label>Nom</label><input id="dname"></div>
+<div style="align-self:end"><button id="dnew" class="x">+ Nouveau</button> <button id="ddel" class="x">Supprimer</button></div></div>
+<p class="s">Pour chaque ingrédient concerné : le <b>remplacer</b> par un substitut, ou le <b>retirer</b>.</p>
+<div class="w"><table><tbody id="drules"></tbody></table></div>
+<p><button id="dradd" class="x">+ Ajouter une règle</button></p></details>
 <label style="margin-top:10px">Autres allergies / remarques (nom, allergie, à surveiller)</label><textarea id="notes" rows="3"></textarea>
 <p class="s">⚠️ Vérifie toujours les étiquettes (traces possibles) et confirme les allergies graves avec les parents.</p></section>
-<section class="card np"><h2>Menu</h2><div id="meals"></div><button id="add" class="x">+ Ajouter un repas</button></section>
+<section class="card np"><h2>Menu</h2>
+<p class="s">Glisse ⠿ pour réordonner les repas. Commence l'intitulé par le jour (ex. « Samedi midi ») pour regrouper par jour.</p>
+<div id="meals"></div><button id="add" class="x">+ Ajouter un repas</button>
+<h2 style="margin-top:18px">Menu imprimable</h2>
+<div class="g"><div><label>Titre</label><input id="mtitle"></div>
+<div><label>Couleur du menu</label><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span id="sws" style="display:contents"></span><input type="color" id="mcol" style="width:44px;height:32px;padding:0" title="Autre couleur"></div></div></div>
+<p><label style="display:inline-block;margin-right:14px"><input type="checkbox" id="mdesc" style="width:auto"> Afficher les descriptions</label><label style="display:inline-block"><input type="checkbox" id="madp" style="width:auto"> Afficher les adaptations (régimes)</label></p>
+<div id="mprev"></div>
+<p><button id="pmenu">🖨️ Imprimer le menu</button></p></section>
 </div>
 
 <div class="p" id="p1"><section class="card"><h2>Recettes</h2>
@@ -50,25 +81,40 @@ td input.nop{border-color:#d33;background:rgba(220,50,50,.15)}
 <div class="g" id="iform" style="display:none"><div><label>Nom</label><input id="iname" placeholder="ex. Poivrons"></div>
 <div><label>Unité</label><select id="iunit"><option value="g">Poids : g (prix au kg)</option><option value="ml">Liquide : ml (prix au L)</option><option value="pc">Pièce (prix à la pièce)</option></select></div>
 <div><label>Attention régime</label><select id="idiet"><option value="">Aucun</option><option value="viande">Viande / poisson</option><option value="porc">Porc</option><option value="boeuf">Bœuf</option><option value="sl">Lactose</option><option value="sg">Gluten</option><option value="nut">Fruits à coque / arachides</option></select></div>
-<div style="align-self:end"><button id="iok">Ajouter</button> <button id="ino" class="x">Annuler</button></div></div></section></div>
+<div style="align-self:end"><button id="iok">Ajouter</button> <button id="ino" class="x">Annuler</button></div></div>
+<p style="margin-top:18px"><button id="rclr" class="x" style="color:#d33;border-color:#d33">🗑️ Tout supprimer (recettes, ingrédients, menu)</button></p></section></div>
 
 <div class="p" id="p2"><section class="card"><h2>Catalogue de prix</h2>
-<p class="s">Colle ou charge un export (CSV/texte) : une ligne par produit, <b>nom ; prix au kg, L ou pièce</b>. Chaque ingrédient prend le produit le moins cher dont le nom correspond.</p>
-<textarea id="csv" rows="5" placeholder="Spaghetti Boni 500g;1,39&#10;Riz long grain Boni;1,95"></textarea>
-<p><input type="file" id="file" accept=".csv,.txt" style="max-width:260px"> <button id="imp">Importer</button> <span class="s" id="impmsg"></span></p>
-<h2 style="margin-top:14px">Mes ingrédients ajoutés</h2><div id="cl" class="s"></div></section></div>
+<p class="s"><b>À quoi ça sert ?</b> À remplir les prix sans les taper un par un. Deux façons, au choix (aucune n'est obligatoire) :</p>
+<p class="s">① <b>Tape le prix</b> directement dans le tableau ci-dessous (ou dans la liste de courses).<br>② <b>Importe une liste de produits</b> d'un magasin : une ligne par produit, <b>nom ; prix</b>. L'appli lit le poids dans le nom (« Riz 1kg ; 1,95 » → 1,95 €/kg) et prend, pour chaque ingrédient, le produit <b>le moins cher</b> qui correspond.</p>
+<textarea id="csv" rows="4" placeholder="Spaghetti Boni 500g;1,39&#10;Riz long grain Boni 1kg;1,95"></textarea>
+<p><input type="file" id="file" accept=".csv,.txt" style="max-width:260px"> <button id="imp">Importer</button> <button id="csvx" class="x">Télécharger un exemple</button> <span class="s" id="impmsg"></span></p>
+<h2 style="margin-top:14px">Prix des ingrédients</h2>
+<div class="w" style="max-height:380px;overflow-y:auto"><table><thead><tr><th>Ingrédient</th><th>Unité</th><th>Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
+<p><button id="hrs" class="x">Restaurer les ingrédients de base</button></p></section></div>
 
 <section class="card"><h2>Liste de courses</h2>
 <div class="w"><table><thead><tr><th>Produit</th><th>Quantité</th><th>Prix €/kg, L, pc</th><th>Coût</th></tr></thead><tbody id="list"></tbody></table></div>
 <div class="t"><span>Total : <b id="tot"></b></span><span>Par personne : <b id="pp"></b></span><span class="s" id="np2"></span></div>
-<p class="np"><button onclick="print()">🖨️ Imprimer</button> <button id="exp" class="x">💾 Exporter</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer<input type="file" id="jin" accept=".json" hidden></label> <button id="rst" class="x">↺ Réinitialiser</button></p></section>
+<p class="np"><button id="plist">🖨️ Imprimer la liste</button></p></section>
 <section class="card"><h2>Coût par repas</h2><div class="w"><table><tbody id="pm"></tbody></table></div></section>
-</main>
+
+<section class="card np"><h2>Partager / imprimer</h2>
+<div class="g"><div><label>Quoi ?</label><select id="shw"><option value="list">Liste de courses</option><option value="menu">Menu</option><option value="rec">Recette affichée</option><option value="recs">Toutes les recettes</option></select></div></div>
+<p><button id="sw">💬 WhatsApp</button> <button id="sm">✉️ Mail</button> <button id="sn" class="x">📤 Partager…</button> <button id="sc" class="x">📋 Copier</button> <button id="sp" class="x">🖨️ Imprimer</button> <button id="sd" class="x">⬇️ Fichier HTML</button> <span class="s" id="shm"></span></p>
+<p class="s">« Fichier HTML » : si l'impression directe ne fonctionne pas sur ton appareil, télécharge le fichier, ouvre-le et imprime-le.</p></section>
+
+<section class="card np"><h2>Projet</h2>
+<p class="s">Sauvegarde tout (recettes, menu, effectifs, régimes, prix) dans un fichier <b>.json</b> pour le retrouver ou le passer à un autre animateur.</p>
+<p><button id="exp">💾 Exporter le projet (.json)</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json" hidden></label> <button id="rst" class="x">↺ Réinitialiser</button></p></section>
+
+<footer>Outil fait par le PSS pour les patros ⛺</footer>
+</main><div id="pv"></div>
 <script>
 const SEC=[["Benjas","5–10 ans"],["Chevaliers-Étincelles","10–13 ans"],["Conquérants-Alpines","13–16 ans"],["Animateurs","16 ans et +"]];
 const ING={pates:["Pâtes","g",1.4,"spaghetti|pâtes|penne|pasta"],riz:["Riz","g",2,"riz"],hache:["Viande hachée","g",8.5,"haché"],tom:["Tomates pelées","g",1.6,"tomates? pelées|concassées"],oig:["Oignons","g",1.5,"oignon"],fro:["Fromage râpé","g",7,"râpé"],poulet:["Blanc de poulet","g",7.5,"poulet"],leg:["Légumes","g",2.2,"courgette|légumes"],coco:["Lait de coco","ml",3.5,"coco"],pdt:["Pommes de terre","g",1.1,"pommes de terre"],sauc:["Saucisses","g",7,"saucisse"],car:["Carottes","g",1.2,"carotte"],pain:["Pain","g",2.5,"pain"],jam:["Jambon","g",12,"jambon"],beu:["Beurre","g",9,"beurre"],conf:["Confiture","g",3.5,"confiture"],cer:["Céréales","g",4,"céréales|corn flakes"],lait:["Lait","ml",1.1,"lait"],choc:["Pâte à tartiner","g",4,"tartiner"],suc:["Sucre","g",1.3,"sucre"],
 subveg:["Substitut végétarien (steaks, pilons…)","g",9,"végétari|vegan|quorn",1],hache_h:["Viande hachée halal","g",11,"halal.*haché|haché.*halal",1],poulet_h:["Poulet halal","g",9.5,"poulet.*halal|halal.*poulet",1],sauc_h:["Saucisses halal","g",10,"saucisse.*halal|halal.*saucisse",1],jam_h:["Jambon de dinde halal","g",14,"jambon.*dinde|dinde.*jambon|halal.*jambon",1],lait_sl:["Lait sans lactose","ml",1.6,"lait.*sans lactose|sans lactose.*lait",1],fro_sl:["Fromage sans lactose","g",9,"fromage.*sans lactose|sans lactose.*fromage|râpé.*sans lactose",1],margar:["Margarine végétale","g",5,"margarine",1],dinde:["Dinde hachée","g",9,"dinde.*haché|haché.*dinde",1],pates_sg:["Pâtes sans gluten","g",6,"pâtes.*sans gluten|sans gluten.*pâtes|spaghetti.*sans gluten",1],pain_sg:["Pain sans gluten","g",8,"pain.*sans gluten|sans gluten.*pain",1]};
-const DIETS={veg:{n:"Végétarien",ex:{hache:"subveg",poulet:"subveg",sauc:"subveg",jam:"subveg"}},halal:{n:"Halal (sans porc, viande halal)",ex:{hache:"hache_h",poulet:"poulet_h",sauc:"sauc_h",jam:"jam_h"}},sl:{n:"Sans lactose",ex:{lait:"lait_sl",fro:"fro_sl",beu:"margar",choc:null}},sb:{n:"Sans bœuf",ex:{hache:"dinde"}},sg:{n:"Sans gluten",ex:{pates:"pates_sg",pain:"pain_sg",cer:null}},nut:{n:"Allergie fruits à coque / arachides",ex:{choc:null}}};
+let DIETS={veg:{n:"Végétarien",ex:{hache:"subveg",poulet:"subveg",sauc:"subveg",jam:"subveg"}},halal:{n:"Halal (sans porc, viande halal)",ex:{hache:"hache_h",poulet:"poulet_h",sauc:"sauc_h",jam:"jam_h"}},sl:{n:"Sans lactose",ex:{lait:"lait_sl",fro:"fro_sl",beu:"margar",choc:null}},sb:{n:"Sans bœuf",ex:{hache:"dinde"}},sg:{n:"Sans gluten",ex:{pates:"pates_sg",pain:"pain_sg",cer:null}},nut:{n:"Allergie fruits à coque / arachides",ex:{choc:null}}};
 const F=[.5,.75,1,1],r5=v=>Math.max(1,Math.round(v/5)*5);
 const mk=(d,o)=>({desc:d,ing:Object.fromEntries(Object.entries(o).map(([k,v])=>[k,F.map(f=>r5(v*f))]))});
 const REC0={
@@ -79,14 +125,16 @@ const REC0={
 "Soupe de légumes + pain":mk("Légumes et pommes de terre en morceaux, cuire 30 min, mixer. Servir avec du pain.",{leg:250,pdt:80,pain:60}),
 "Petit-déjeuner":mk("Pain, beurre, confiture, pâte à tartiner, céréales et lait.",{pain:100,beu:10,conf:20,cer:30,lait:200,choc:15}),
 "Riz au lait (dessert)":mk("Cuire le riz dans le lait sucré à feu doux en remuant, environ 40 min.",{lait:250,riz:30,suc:20})};
-const DEF={n:[10,8,6,6],wa:10,prices:{},pn:{},rec:REC0,meals:[["Vendredi souper","Spaghetti bolognaise"],["Samedi matin","Petit-déjeuner"],["Samedi midi","Croque-monsieur"],["Samedi soir","Riz poulet curry-coco"],["Dimanche matin","Petit-déjeuner"],["Dimanche midi","Saucisses, purée, carottes"]],cur:"Spaghetti bolognaise",dt:{},notes:""};
+const COLS=["#1f7a3f","#c0392b","#2c6fbb","#e08a00","#7b4fb5","#d6457f","#333333"],DAYS=["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+const DEF={n:[10,8,6,6],wa:10,prices:{},pn:{},rec:REC0,meals:[["Vendredi souper","Spaghetti bolognaise"],["Samedi matin","Petit-déjeuner"],["Samedi midi","Croque-monsieur"],["Samedi soir","Riz poulet curry-coco"],["Dimanche matin","Petit-déjeuner"],["Dimanche midi","Saucisses, purée, carottes"]],cur:"Spaghetti bolognaise",dt:{},notes:"",mc:COLS[0],mt:"Menu du camp",md:1,ma:1,hid:[]};
 let S=JSON.parse(JSON.stringify(DEF));
 try{const x=localStorage.getItem("intendance2");if(x)S=Object.assign(S,JSON.parse(x))}catch(e){}
-const $=i=>document.getElementById(i),save=()=>{try{localStorage.setItem("intendance2",JSON.stringify(S))}catch(e){}};
+const $=i=>document.getElementById(i),save=()=>{try{S.dd=DIETS;localStorage.setItem("intendance2",JSON.stringify(S))}catch(e){}};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const eur=v=>v.toLocaleString("fr-BE",{style:"currency",currency:"EUR"});
-const price=k=>S.prices[k]??ING[k][2],per=k=>ING[k][1]==="pc"?1:1000;
-function fmt(k,q){const u=ING[k][1];if(u==="pc")return Math.ceil(q)+" pc";return q>=1000?(q/1000).toFixed(2)+" kg"+(u==="ml"?"":"" ).replace("kg","kg"):Math.round(q)+" "+u}
+const price=k=>S.prices[k]??ING[k][2],per=k=>ING[k][1]==="pc"?1:1000,ul=k=>ING[k][1]==="ml"?"L":ING[k][1]==="pc"?"pc":"kg",nn=()=>S.n.reduce((a,b)=>a+b,0);
+function qty(k,q){const u=ING[k][1];if(u==="pc")return Math.ceil(q)+" pc";return q>=1000?(q/1000).toFixed(2)+(u==="ml"?" L":" kg"):Math.round(q)+" "+u}
+function dl(c,name,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([c],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
 function meal(d){const R=S.rec[d],out={},adapt=[];if(!R)return{out,adapt};const m=1+S.wa/100;
  for(const[k,q]of Object.entries(R.ing))for(let i=0;i<4;i++){let rest=S.n[i];
   for(const dk in DIETS){const e=DIETS[dk].ex;if(!(k in e))continue;
@@ -97,69 +145,149 @@ function meal(d){const R=S.rec[d],out={},adapt=[];if(!R)return{out,adapt};const 
   const t=Object.keys(R.ing).filter(k=>k in DIETS[dk].ex).map(k=>ING[k][0]+" → "+(DIETS[dk].ex[k]?ING[DIETS[dk].ex[k]][0]:"retirer"));
   if(t.length)adapt.push(DIETS[dk].n+" ×"+P+" : "+t.join(", "))}
  return{out,adapt}}
+let LAST={keys:[],tot:{},sum:0,pm:[]};
 function calc(){
  const tot={},pm=[];
  S.meals.forEach(([l,d])=>{const r=meal(d);let c=0;for(const k in r.out){tot[k]=(tot[k]||0)+r.out[k];c+=r.out[k]/per(k)*price(k)}pm.push([l,d,c,r.adapt])});
  let sum=0;const keys=Object.keys(tot).filter(k=>tot[k]>0).sort((a,b)=>ING[a][0].localeCompare(ING[b][0],"fr"));
- $("list").innerHTML=keys.map(k=>{const c=tot[k]/per(k)*price(k);sum+=c;const u=ING[k][1]==="ml"?"L":ING[k][1]==="pc"?"pc":"kg";return `<tr><td>${esc(ING[k][0])}${price(k)?"":'<div class="s" style="color:#d33">⚠ prix manquant</div>'}${S.pn[k]?`<div class="s">↳ ${esc(S.pn[k])}</div>`:""}</td><td>${fmt(k,tot[k]).replace(/ kg$/,` ${u}`)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k)?"":"nop"}" data-p="${k}"></td><td>${eur(c)}</td></tr>`}).join("")||"<tr><td>Aucun repas</td></tr>";
- const n=S.n.reduce((a,b)=>a+b,0);$("tot").textContent=eur(sum);$("pp").textContent=n?eur(sum/n):"–";const miss=keys.filter(k=>!price(k)).length;$("np2").textContent=n+" personnes · "+S.meals.length+" repas"+(miss?" · ⚠ "+miss+" prix à renseigner (total sous-estimé)":"");$("np2").style.color=miss?"#d33":"";
- $("pm").innerHTML=pm.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${eur(r[2])}</td><td class="s" style="white-space:normal">${esc(r[3].join(" · "))}</td></tr>`).join("");save()}
-function drawMeals(){$("meals").innerHTML=S.meals.map((m,i)=>`<div class="row"><input value="${esc(m[0])}" data-i="${i}" data-f="0"><select data-i="${i}" data-f="1">${Object.keys(S.rec).map(d=>`<option${d===m[1]?" selected":""}>${esc(d)}</option>`).join("")}</select><button class="x" data-del="${i}">✕</button></div>`).join("")}
-function drawRec(){const names=Object.keys(S.rec);if(!S.rec[S.cur])S.cur=names[0];
+ $("list").innerHTML=keys.map(k=>{const c=tot[k]/per(k)*price(k);sum+=c;return `<tr><td>${esc(ING[k][0])}${price(k)?"":'<div class="s" style="color:#d33">⚠ prix manquant</div>'}${S.pn[k]?`<div class="s">↳ ${esc(S.pn[k])}</div>`:""}</td><td>${qty(k,tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k)?"":"nop"}" data-p="${k}"></td><td>${eur(c)}</td></tr>`}).join("")||"<tr><td>Aucun repas</td></tr>";
+ LAST={keys,tot,sum,pm};
+ const n=nn();$("tot").textContent=eur(sum);$("pp").textContent=n?eur(sum/n):"–";const miss=keys.filter(k=>!price(k)).length;$("np2").textContent=n+" personnes · "+S.meals.length+" repas"+(miss?" · ⚠ "+miss+" prix à renseigner (total sous-estimé)":"");$("np2").style.color=miss?"#d33":"";
+ $("pm").innerHTML=pm.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${eur(r[2])}</td><td class="s" style="white-space:normal">${esc(r[3].join(" · "))}</td></tr>`).join("");
+ $("mprev").innerHTML=menuHTML();drawCat();save()}
+/* ---------- documents imprimables / partageables ---------- */
+const cvars=()=>{const c=/^#[0-9a-f]{6}$/i.test(S.mc)?S.mc:COLS[0],n=parseInt(c.slice(1),16),l=(.299*(n>>16)+.587*(n>>8&255)+.114*(n&255))/255;return `--mc:${c};--mcl:${c}22;--mct:${l>.6?"#1f2a22":"#fff"}`};
+function menuHTML(){let last="",rows="";const dsc=+S.md,adp=+S.ma;
+ S.meals.forEach(([l,d],i)=>{const w=l.trim().split(/\s+/),isd=DAYS.includes((w[0]||"").toLowerCase()),dn=isd?w[0]:"",lab=isd?w.slice(1).join(" "):l;
+  if(dn.toLowerCase()!==last){if(dn)rows+=`<tr class="day"><td colspan="${dsc?3:2}">${esc(dn)}</td></tr>`;last=dn.toLowerCase()}
+  const R=S.rec[d],a=LAST.pm[i],ad=adp&&a&&a[3].length?`<div class="ad">${esc(a[3].join(" · "))}</div>`:"";
+  rows+=`<tr><td style="width:28%"><b>${esc(lab||dn)}</b></td><td>${esc(d)}${ad}</td>${dsc?`<td>${esc(R?R.desc:"")}</td>`:""}</tr>`});
+ return `<div class="mp pvx" style="${cvars()}"><h2>${esc(S.mt||"Menu")}</h2><div class="s">Patro Sainte-Suzanne · ${nn()} personnes</div><table class="mt"><thead><tr><th>Repas</th><th>Au menu</th>${dsc?"<th>Description</th>":""}</tr></thead><tbody>${rows||'<tr><td colspan="3">Aucun repas</td></tr>'}</tbody></table></div>`}
+function listHTML(){const rows=LAST.keys.map(k=>{const c=LAST.tot[k]/per(k)*price(k);return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${qty(k,LAST.tot[k])}</td><td>${price(k)?eur(price(k))+"/"+ul(k):"–"}</td><td>${eur(c)}</td></tr>`}).join("");
+ return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">Patro Sainte-Suzanne · ${nn()} personnes · ${S.meals.length} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn()?" · par personne : "+eur(LAST.sum/nn()):""}</p></div>`}
+function recHTML(names){return `<div class="mp pvx" style="${cvars()}"><h2>Recettes</h2>`+(names.map(n=>{const R=S.rec[n];return `<h3 style="margin:16px 0 2px;break-after:avoid">${esc(n)}</h3><div class="s">${esc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map(s=>`<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(R.ing).map(([k,q])=>`<tr><td>${esc(ING[k][0])} (${ING[k][1]})</td>${q.map(v=>`<td>${v}</td>`).join("")}</tr>`).join("")}</tbody></table>`}).join("")||"<p>Aucune recette.</p>")+`<p class="s">Quantités par personne.</p></div>`}
+const txtList=()=>"🛒 Liste de courses – Patro Sainte-Suzanne ("+nn()+" pers.)\n\n"+(LAST.keys.map(k=>"☐ "+ING[k][0]+" : "+qty(k,LAST.tot[k])).join("\n")||"(vide)")+"\n\nTotal estimé : "+eur(LAST.sum);
+const txtMenu=()=>"🍽️ "+(S.mt||"Menu")+" – Patro Sainte-Suzanne\n\n"+(S.meals.map(([l,d])=>"• "+l+" : "+d).join("\n")||"(vide)");
+const txtRec=n=>{const R=S.rec[n];return R?"📖 "+n+"\n"+(R.desc?R.desc+"\n":"")+"Par personne ("+SEC.map(s=>s[0]).join(" / ")+") :\n"+Object.entries(R.ing).map(([k,q])=>"- "+ING[k][0]+" : "+q.join(" / ")+" "+ING[k][1]).join("\n"):""};
+const SH={list:["Liste de courses",txtList,listHTML],menu:["Menu",txtMenu,menuHTML],rec:["Recette",()=>txtRec(S.cur),()=>recHTML(S.rec[S.cur]?[S.cur]:[])],recs:["Recettes",()=>Object.keys(S.rec).map(txtRec).join("\n\n"),()=>recHTML(Object.keys(S.rec))]};
+const shk=()=>SH[$("shw").value];
+function printHTML(html){$("pv").innerHTML=html;document.body.classList.add("pr");
+ setTimeout(()=>{try{window.print()}catch(e){alert("Impression impossible ici : utilise « Fichier HTML » puis imprime le fichier.")}setTimeout(()=>document.body.classList.remove("pr"),1500)},80)}
+window.addEventListener("afterprint",()=>document.body.classList.remove("pr"));
+function dlHTML(html,name){dl("<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>"+esc(name)+"</title><style>"+document.querySelector("style").textContent+"body{background:#fff;color:#000;max-width:900px;margin:auto}.mp{border:0}</style></head><body>"+html+"</body></html>",name.toLowerCase().replace(/[^a-z0-9]+/g,"-")+".html","text/html")}
+const shmsg=t=>{$("shm").textContent=t;setTimeout(()=>$("shm").textContent="",2500)};
+function shtxt(){const t=shk()[1]();if(!t.trim()){shmsg("Rien à partager.");return""}return t}
+$("plist").onclick=()=>printHTML(listHTML());
+$("pmenu").onclick=()=>printHTML(menuHTML());
+$("sp").onclick=()=>printHTML(shk()[2]());
+$("sd").onclick=()=>dlHTML(shk()[2](),"Patro "+shk()[0]);
+$("sw").onclick=()=>{const t=shtxt();if(t)window.open("https://wa.me/?text="+encodeURIComponent(t),"_blank","noopener")};
+$("sm").onclick=()=>{const t=shtxt();if(t)location.href="mailto:?subject="+encodeURIComponent("Patro Sainte-Suzanne – "+shk()[0])+"&body="+encodeURIComponent(t)};
+if(!navigator.share)$("sn").style.display="none";
+$("sn").onclick=()=>{const t=shtxt();if(t)navigator.share({title:"Patro Sainte-Suzanne – "+shk()[0],text:t}).catch(()=>{})};
+$("sc").onclick=()=>{const t=shtxt();if(!t)return;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>shmsg("Copié ✅"),()=>shmsg("Copie impossible"))};
+/* ---------- menu : édition, glisser-déposer, couleurs ---------- */
+function drawMeals(){$("meals").innerHTML=S.meals.map((m,i)=>`<div class="row mrow" data-i="${i}"><span class="hd" data-h="${i}" title="Glisser pour déplacer">⠿</span><input value="${esc(m[0])}" data-i="${i}" data-f="0"><select data-i="${i}" data-f="1">${Object.keys(S.rec).map(d=>`<option${d===m[1]?" selected":""}>${esc(d)}</option>`).join("")}</select><button class="x" data-del="${i}">✕</button></div>`).join("")}
+let dg=null;const clr=()=>$("meals").querySelectorAll(".mrow").forEach(r=>r.classList.remove("over","drag"));
+$("meals").addEventListener("pointerdown",e=>{const h=e.target.closest(".hd");if(!h)return;e.preventDefault();dg={from:+h.dataset.h,to:+h.dataset.h};try{h.setPointerCapture(e.pointerId)}catch(_){}h.closest(".mrow").classList.add("drag")});
+$("meals").addEventListener("pointermove",e=>{if(!dg)return;const el=document.elementFromPoint(e.clientX,e.clientY),r=el&&el.closest&&el.closest(".mrow");if(r&&$("meals").contains(r)){dg.to=+r.dataset.i;$("meals").querySelectorAll(".mrow").forEach(x=>x.classList.toggle("over",x===r&&dg.to!==dg.from))}});
+const dend=ok=>{if(!dg)return;const{from,to}=dg;dg=null;clr();if(ok&&from!==to){const[m]=S.meals.splice(from,1);S.meals.splice(to,0,m);drawMeals();calc()}};
+$("meals").addEventListener("pointerup",()=>dend(true));$("meals").addEventListener("pointercancel",()=>dend(false));
+$("meals").addEventListener("change",e=>{const t=e.target;if(t.dataset.i===undefined||t.dataset.f===undefined)return;S.meals[+t.dataset.i][+t.dataset.f]=t.value;calc()});
+$("meals").addEventListener("click",e=>{const i=e.target.dataset.del;if(i!==undefined){S.meals.splice(+i,1);drawMeals();calc()}});
+$("add").onclick=()=>{const n=Object.keys(S.rec);if(!n.length){alert("Crée d'abord une recette (onglet Recettes).");return}S.meals.push(["Nouveau repas",n[0]]);drawMeals();calc()};
+const drawSw=()=>{$("sws").innerHTML=COLS.map(c=>`<button class="sw${c===S.mc?" on":""}" style="background:${c}" data-c="${c}" title="${c}"></button>`).join("");$("mcol").value=S.mc};
+$("sws").addEventListener("click",e=>{const c=e.target.dataset.c;if(c){S.mc=c;drawSw();calc()}});
+$("mcol").addEventListener("input",()=>{S.mc=$("mcol").value;drawSw();calc()});
+$("mtitle").value=S.mt;$("mtitle").addEventListener("input",()=>{S.mt=$("mtitle").value;calc()});
+$("mdesc").checked=!!+S.md;$("madp").checked=!!+S.ma;
+$("mdesc").onchange=()=>{S.md=+$("mdesc").checked;calc()};$("madp").onchange=()=>{S.ma=+$("madp").checked;calc()};
+/* ---------- recettes ---------- */
+function drawRec(){const names=Object.keys(S.rec);if(!S.rec[S.cur])S.cur=names[0]||"";
  $("rsel").innerHTML=names.map(d=>`<option${d===S.cur?" selected":""}>${esc(d)}</option>`).join("");
  const R=S.rec[S.cur];$("rdesc").value=R?R.desc:"";
  $("rh").innerHTML="<tr><th>Ingrédient</th>"+SEC.map(s=>`<th>${s[0]}<div class="s">${s[1]}</div></th>`).join("")+"<th></th></tr>";
  $("rb").innerHTML=R?Object.entries(R.ing).map(([k,q])=>`<tr><td>${esc(ING[k][0])} (${ING[k][1]})</td>${q.map((v,i)=>`<td><input type="number" min="0" value="${v}" data-k="${k}" data-s="${i}"></td>`).join("")}<td><button class="x" data-rm="${k}">✕</button></td></tr>`).join(""):"";
- $("radd").innerHTML="<option value=''>+ Ajouter un ingrédient…</option>"+Object.entries(ING).filter(([k,v])=>R&&!R.ing[k]&&!v[4]).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join("")}
+ $("radd").innerHTML="<option value=''>+ Ajouter un ingrédient…</option>"+Object.entries(ING).filter(([k,v])=>R&&!R.ing[k]&&!v[4]&&!S.hid.includes(k)).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join("")}
 function tabs(){const T=["Groupe & menu","Recettes","Catalogue"];$("tabs").innerHTML=T.map((t,i)=>`<button data-t="${i}"${i?"":' class="on"'}>${t}</button>`).join("")}
 $("tabs").onclick=e=>{const t=e.target.dataset.t;if(t===undefined)return;[...$("tabs").children].forEach((b,i)=>b.classList.toggle("on",i==t));[0,1,2].forEach(i=>$("p"+i).classList.toggle("on",i==t))};
 $("cnt").innerHTML=SEC.map((s,i)=>`<div><label>${s[0]} (${s[1]})</label><input type="number" min="0" data-c="${i}"></div>`).join("");
 document.querySelectorAll("[data-c]").forEach(e=>{e.value=S.n[e.dataset.c];e.addEventListener("input",()=>{S.n[e.dataset.c]=+e.value||0;calc()})});
 $("wa").value=S.wa;$("wa").addEventListener("input",()=>{S.wa=+$("wa").value||0;calc()});
-$("meals").addEventListener("change",e=>{const t=e.target;if(t.dataset.i===undefined)return;S.meals[+t.dataset.i][+t.dataset.f]=t.value;calc()});
-$("meals").addEventListener("click",e=>{const i=e.target.dataset.del;if(i!==undefined){S.meals.splice(+i,1);drawMeals();calc()}});
-$("add").onclick=()=>{S.meals.push(["Nouveau repas",Object.keys(S.rec)[0]]);drawMeals();calc()};
 $("rsel").onchange=()=>{S.cur=$("rsel").value;drawRec()};
-$("rdesc").onchange=()=>{S.rec[S.cur].desc=$("rdesc").value;save()};
-$("rb").addEventListener("change",e=>{const d=e.target.dataset;if(d.k){S.rec[S.cur].ing[d.k][+d.s]=+e.target.value||0;calc()}});
-$("rb").addEventListener("click",e=>{const k=e.target.dataset.rm;if(k){delete S.rec[S.cur].ing[k];drawRec();calc()}});
-$("radd").onchange=()=>{const k=$("radd").value;if(k){S.rec[S.cur].ing[k]=[0,0,0,0];drawRec()}};
+$("rdesc").onchange=()=>{if(S.rec[S.cur]){S.rec[S.cur].desc=$("rdesc").value;save()}};
+$("rb").addEventListener("change",e=>{const d=e.target.dataset;if(d.k&&S.rec[S.cur]){S.rec[S.cur].ing[d.k][+d.s]=+e.target.value||0;calc()}});
+$("rb").addEventListener("click",e=>{const k=e.target.dataset.rm;if(k&&S.rec[S.cur]){delete S.rec[S.cur].ing[k];drawRec();calc()}});
+$("radd").onchange=()=>{const k=$("radd").value;if(k&&S.rec[S.cur]){S.rec[S.cur].ing[k]=[0,0,0,0];drawRec();save()}};
 $("rnew").onclick=()=>{$("rform").style.display="grid";$("rname").value="";$("rname").focus()};
 $("rno").onclick=()=>{$("rform").style.display="none"};
 $("rok").onclick=()=>{const n=$("rname").value.trim();if(!n)return;if(S.rec[n]){$("rname").value="";$("rname").placeholder="Ce nom existe déjà";return}S.rec[n]={desc:"",ing:{}};S.cur=n;$("rform").style.display="none";drawRec();drawMeals();save()};
 $("rname").addEventListener("keydown",e=>{if(e.key==="Enter")$("rok").click()});
-let dc=0;$("rdel").onclick=()=>{if(Object.keys(S.rec).length<2)return;const used=S.meals.filter(m=>m[1]===S.cur).length;if(used){alert(`Recette utilisée dans ${used} repas : modifie d'abord le menu.`);return}if(!dc){dc=1;$("rdel").textContent="Confirmer ?";setTimeout(()=>{dc=0;$("rdel").textContent="Supprimer"},3000);return}dc=0;$("rdel").textContent="Supprimer";delete S.rec[S.cur];S.meals=S.meals.filter(m=>S.rec[m[1]]);drawRec();drawMeals();calc()};
+let dc=0;$("rdel").onclick=()=>{if(!S.rec[S.cur])return;const used=S.meals.filter(m=>m[1]===S.cur).length;if(used){alert(`Recette utilisée dans ${used} repas : modifie d'abord le menu.`);return}if(!dc){dc=1;$("rdel").textContent="Confirmer ?";setTimeout(()=>{dc=0;$("rdel").textContent="Supprimer"},3000);return}dc=0;$("rdel").textContent="Supprimer";delete S.rec[S.cur];drawRec();drawMeals();calc()};
 $("list").addEventListener("change",e=>{const k=e.target.dataset.p;if(k){S.prices[k]=+e.target.value||0;delete S.pn[k];calc();}});
+/* ---------- ingrédients (supprimer / restaurer) ---------- */
+function rmIng(k){for(const r of Object.values(S.rec))delete r.ing[k];delete S.prices[k];delete S.pn[k];
+ if(S.cust[k]){delete S.cust[k];delete ING[k];for(const d in DIETS){const ex=DIETS[d].ex;delete ex[k];for(const x in ex)if(ex[x]===k)ex[x]=null}}
+ else if(!S.hid.includes(k))S.hid.push(k)}
+$("rclr").onclick=()=>{if(!confirm("Supprimer TOUTES les recettes, tous les ingrédients et le menu ? (Exporte d'abord une sauvegarde. « Réinitialiser » ou « Restaurer » les remettent.)"))return;
+ Object.keys(ING).forEach(rmIng);S.rec={};S.meals=[];S.cur="";drawRec();drawMeals();drawDietEd();calc()};
+$("hrs").onclick=()=>{S.hid=[];drawRec();drawDietEd();calc()};
+/* ---------- catalogue de prix ---------- */
+function drawCat(){$("ct").innerHTML=Object.keys(ING).filter(k=>!S.hid.includes(k)).map(k=>`<tr><td>${esc(ING[k][0])}${S.pn[k]?`<div class="s">↳ ${esc(S.pn[k])}</div>`:""}</td><td>€/${ING[k][1]==="pc"?"pièce":ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${k}"></td><td><button class="x" data-chd="${k}" title="Supprimer cet ingrédient">✕</button></td></tr>`).join("")||"<tr><td>Aucun ingrédient.</td></tr>"}
+$("ct").addEventListener("change",e=>{const k=e.target.dataset.cp;if(k){S.prices[k]=+e.target.value||0;delete S.pn[k];calc()}});
+$("ct").addEventListener("click",e=>{const k=e.target.dataset.chd;if(!k||!confirm("Supprimer « "+ING[k][0]+" » (et le retirer des recettes) ?"))return;rmIng(k);drawRec();drawDietEd();calc()});
+$("csvx").onclick=()=>dl("Spaghetti Boni 500g;1,39\nRiz long grain Boni 1kg;1,95\nLait demi-écrémé 1L;1,05\nHaché pur bœuf 500g;4,99\nJambon cuit 4 tranches 200g;2,89\n","exemple-prix.csv","text/csv");
 $("file").onchange=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=()=>{$("csv").value=r.result};r.readAsText(f)}};
-const EXCL={lait:"coco|riz au|chocolat|sans lactose",riz:"au lait|galette|soufflé",pain:"épice|sans gluten|grillé|burger",beu:"cacahu|arachide",suc:"sans sucre|glace|vanill",fro:"sans lactose",pates:"sans gluten|tartiner"};
-function perUnit(name,p){const m=name.match(/(\d+(?:[.,]\d+)?)\s*(kg|g|l|cl|ml)\b/i);if(!m)return null;
- const q=parseFloat(m[1].replace(",","."))*{kg:1000,g:1,l:1000,cl:10,ml:1}[m[2].toLowerCase()];return q?p/q*1000:null}
+const EXCL={lait:"coco|riz au|chocolat|sans lactose",riz:"au lait|galette|soufflé",pain:"épice|sans gluten|grillé|burger",beu:"cacahu|arachide",suc:"sans sucre|glace|vanill",fro:"sans lactose",pates:"sans gluten|tartiner",hache:"dinde|halal|végétari",poulet:"halal|végétari",sauc:"halal|végétari",jam:"dinde|halal"};
+function perUnit(name,p){const m=name.match(/(?:(\d+)\s*[x×]\s*)?(\d+(?:[.,]\d+)?)\s*(kg|g|l|cl|ml)\b/i);if(!m)return null;
+ const q=(m[1]?+m[1]:1)*parseFloat(m[2].replace(",","."))*{kg:1000,g:1,l:1000,cl:10,ml:1}[m[3].toLowerCase()];return q?p/q*1000:null}
 $("imp").onclick=()=>{const items=[];$("csv").value.split(/\r?\n/).forEach(l=>{const m=l.match(/^(.*?)[;\t,]\s*"?€?\s*(\d+(?:[.,]\d+)?)"?\s*€?\s*$/);
   if(m){const n=m[1].replace(/"/g,"").trim(),p=parseFloat(m[2].replace(",",".")),u=perUnit(n,p);items.push([n,u??p,u!=null])}});
  let hit=0;for(const k in ING){const re=new RegExp(ING[k][3],"i"),ex=EXCL[k]?new RegExp(EXCL[k],"i"):null;
   const c=items.filter(i=>re.test(i[0])&&!(ex&&ex.test(i[0]))).sort((a,b)=>a[1]-b[1])[0];
   if(c){S.prices[k]=+c[1].toFixed(2);S.pn[k]=c[0]+(c[2]?" (→ €/kg ou €/L calculé)":" (prix pris tel quel)");hit++}}
- $("impmsg").textContent=`${items.length} produits lus, ${hit} ingrédients reliés. Vérifie les ↳ dans la liste.`;calc()};
+ $("impmsg").textContent=`${items.length} produits lus, ${hit} ingrédients reliés. Vérifie les ↳ dans les tableaux.`;calc()};
+/* ---------- régimes & allergies (modifiables) ---------- */
 if(!S.dt)S.dt={};
-$("dh").innerHTML="<tr><th>Régime</th>"+SEC.map(x=>`<th>${x[0]}</th>`).join("")+"</tr>";
-$("db").innerHTML=Object.entries(DIETS).map(([k,v])=>`<tr><td>${v.n}</td>${SEC.map((x,i)=>`<td><input type="number" min="0" value="${(S.dt[k]||[])[i]||0}" data-d="${k}" data-s="${i}"></td>`).join("")}</tr>`).join("");
+function drawDiets(){$("dh").innerHTML="<tr><th>Régime</th>"+SEC.map(x=>`<th>${x[0]}</th>`).join("")+"</tr>";
+ $("db").innerHTML=Object.entries(DIETS).map(([k,v])=>`<tr><td>${esc(v.n)}</td>${SEC.map((x,i)=>`<td><input type="number" min="0" value="${(S.dt[k]||[])[i]||0}" data-d="${k}" data-s="${i}"></td>`).join("")}</tr>`).join("")||"<tr><td>Aucun régime. Ouvre « Modifier » pour en ajouter.</td></tr>"}
 $("db").addEventListener("input",e=>{const d=e.target.dataset;if(d.d){(S.dt[d.d]=S.dt[d.d]||[0,0,0,0])[+d.s]=+e.target.value||0;calc()}});
+let dcur=null;
+function drawDietEd(){const ks=Object.keys(DIETS);if(!DIETS[dcur])dcur=ks[0]||null;
+ $("dsel").innerHTML=ks.map(k=>`<option value="${k}"${k===dcur?" selected":""}>${esc(DIETS[k].n)}</option>`).join("");
+ $("dname").value=dcur?DIETS[dcur].n:"";$("dname").disabled=$("ddel").disabled=$("dradd").disabled=!dcur;
+ const vis=(k,sel)=>!S.hid.includes(k)||k===sel,opt=(sel,none)=>(none?`<option value=""${sel==null?" selected":""}>— retirer —</option>`:"")+Object.keys(ING).filter(k=>vis(k,sel)).map(k=>`<option value="${k}"${k===sel?" selected":""}>${esc(ING[k][0])}</option>`).join("");
+ $("drules").innerHTML=dcur?Object.entries(DIETS[dcur].ex).map(([k,v])=>`<tr><td><select data-ro="${k}">${opt(k)}</select></td><td>→</td><td><select data-rs="${k}">${opt(v,1)}</select></td><td><button class="x" data-rx="${k}">✕</button></td></tr>`).join("")||'<tr><td class="s">Aucune règle : ajoutes-en une.</td></tr>':""}
+$("dsel").onchange=()=>{dcur=$("dsel").value;drawDietEd()};
+$("dname").onchange=()=>{if(dcur){DIETS[dcur].n=$("dname").value.trim()||"Sans nom";drawDietEd();drawDiets();calc()}};
+$("dnew").onclick=()=>{const k="d_"+Date.now().toString(36);DIETS[k]={n:"Nouveau régime",ex:{}};dcur=k;drawDietEd();drawDiets();calc();$("dname").focus();$("dname").select()};
+$("ddel").onclick=()=>{if(!dcur||!confirm("Supprimer le régime « "+DIETS[dcur].n+" » ?"))return;delete DIETS[dcur];delete S.dt[dcur];drawDietEd();drawDiets();calc()};
+$("dradd").onclick=()=>{const ex=DIETS[dcur].ex,k=Object.keys(ING).find(k=>!(k in ex)&&!ING[k][4]&&!S.hid.includes(k));if(!k){alert("Aucun ingrédient disponible.");return}ex[k]=null;drawDietEd();calc()};
+$("drules").addEventListener("change",e=>{const d=e.target.dataset,ex=DIETS[dcur].ex;
+ if(d.rs!==undefined)ex[d.rs]=e.target.value||null;
+ else if(d.ro!==undefined){const nk=e.target.value;if(!(nk in ex)){const ne={};for(const[k,v]of Object.entries(ex))ne[k===d.ro?nk:k]=v;DIETS[dcur].ex=ne}}
+ drawDietEd();calc()});
+$("drules").addEventListener("click",e=>{const k=e.target.dataset.rx;if(k){delete DIETS[dcur].ex[k];drawDietEd();calc()}});
 $("notes").value=S.notes||"";$("notes").onchange=()=>{S.notes=$("notes").value;save()};
+/* ---------- logo ---------- */
 const LOGO0="data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="31" fill="#fff"/><path d="M32 10 14 40h36z" fill="#1f7a3f"/><path d="M32 26 25 40h14z" fill="#fff"/><text x="32" y="53" font-size="9" text-anchor="middle" font-family="sans-serif" fill="#1f7a3f" font-weight="700">PATRO</text></svg>');
 const LOGO1="data:image/jpeg;base64,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";
 $("logoimg").src=S.logo||LOGO1;
 $("logof").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement("canvas"),k=Math.min(1,160/Math.max(im.width,im.height));c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);S.logo=c.toDataURL("image/png");$("logoimg").src=S.logo;save()};im.src=r.result};r.readAsDataURL(f)};
-if(!S.cust)S.cust={};
-for(const k in S.cust){ING[k]=S.cust[k];(S.cust[k][5]||[]).forEach(d=>DIETS[d].ex[k]=null)}
+/* ---------- ingrédients ajoutés + nettoyage au chargement ---------- */
+if(!S.cust)S.cust={};if(!Array.isArray(S.hid))S.hid=[];
+for(const k in S.cust){ING[k]=S.cust[k];if(!S.dd)(S.cust[k][5]||[]).forEach(d=>{if(DIETS[d])DIETS[d].ex[k]=null})}
+if(S.dd&&typeof S.dd==="object")DIETS=S.dd;
+(function sanitize(){for(const r of Object.values(S.rec)){if(!r.ing)r.ing={};for(const k of Object.keys(r.ing)){if(!ING[k]||!Array.isArray(r.ing[k]))delete r.ing[k];else while(r.ing[k].length<4)r.ing[k].push(0)}}
+ for(const d in DIETS){const ex=DIETS[d].ex||(DIETS[d].ex={});for(const k of Object.keys(ex)){if(!ING[k])delete ex[k];else if(ex[k]&&!ING[ex[k]])ex[k]=null}}
+ S.meals=S.meals.filter(m=>Array.isArray(m)&&m.length>1)})();
 const DMAP={viande:["veg"],porc:["veg","halal"],boeuf:["veg","sb"],sl:["sl"],sg:["sg"],nut:["nut"]};
-function drawCust(){$("cl").innerHTML=Object.entries(S.cust).map(([k,v])=>`${esc(v[0])} (${v[1]}) <button class="x" data-ci="${k}">✕</button>`).join(" · ")||"Aucun pour l'instant."}
-$("cl").addEventListener("click",e=>{const k=e.target.dataset.ci;if(!k)return;delete S.cust[k];delete ING[k];for(const r of Object.values(S.rec))delete r.ing[k];for(const d in DIETS)delete DIETS[d].ex[k];delete S.prices[k];delete S.pn[k];drawCust();drawRec();calc()});
 $("inew").onclick=()=>{$("iform").style.display="grid";$("iname").value="";$("iname").focus()};
 $("ino").onclick=()=>{$("iform").style.display="none"};
-$("iok").onclick=()=>{const n=$("iname").value.trim();if(!n)return;const k="c_"+Date.now().toString(36);const dg=DMAP[$("idiet").value]||[];const kw=n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,"\\$&");const e=[n,$("iunit").value,0,kw,0,dg];S.cust[k]=e;ING[k]=e;dg.forEach(d=>DIETS[d].ex[k]=null);if(S.rec[S.cur])S.rec[S.cur].ing[k]=[0,0,0,0];$("iform").style.display="none";drawCust();drawRec();save()};
-drawCust();
-tabs();drawMeals();drawRec();calc();
-$("exp").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}));a.download="intendance-"+new Date().toISOString().slice(0,10)+".json";a.click()};
-$("jin").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const x=JSON.parse(t);if(!x.rec||!x.meals)throw 0;localStorage.setItem("intendance2",t);location.reload()}catch(_){alert("Fichier invalide")}})};
+$("iok").onclick=()=>{const n=$("iname").value.trim();if(!n)return;const k="c_"+Date.now().toString(36);const dg=DMAP[$("idiet").value]||[];const kw=n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,"\\$&");const e=[n,$("iunit").value,0,kw,0,dg];S.cust[k]=e;ING[k]=e;dg.forEach(d=>{if(DIETS[d])DIETS[d].ex[k]=null});if(S.rec[S.cur])S.rec[S.cur].ing[k]=[0,0,0,0];$("iform").style.display="none";drawRec();drawDietEd();calc()};
+/* ---------- projet : export / import / reset ---------- */
+$("exp").onclick=()=>{S.dd=DIETS;dl(JSON.stringify(S,null,1),"projet-patro-"+new Date().toISOString().slice(0,10)+".json","application/json")};
+$("jin").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const x=JSON.parse(t);if(!x.rec||typeof x.rec!=="object"||!Array.isArray(x.meals))throw 0;localStorage.setItem("intendance2",t);location.reload()}catch(_){alert("Fichier invalide")}})};
 $("rst").onclick=()=>{if(confirm("Tout effacer ? Exporte d'abord une sauvegarde.")){localStorage.removeItem("intendance2");location.reload()}};
+tabs();drawSw();drawDiets();drawDietEd();drawMeals();drawRec();calc();
 </script></body></html>
