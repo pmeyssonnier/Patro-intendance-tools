@@ -15,6 +15,7 @@ label{display:block;font-size:.78rem;color:var(--mu)}
 input,select,textarea,button{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:7px 9px;width:100%;box-sizing:border-box}
 button{width:auto;cursor:pointer;background:var(--ac);color:#fff;border:0}button.x{background:transparent;color:var(--mu);border:1px solid var(--bd)}
 .row{display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px;margin-bottom:8px}
+.rrow{grid-template-columns:1fr auto auto;align-items:center}.rrow select,.rrow button{padding:5px 9px}.rrow button{min-width:38px;font-size:1.1rem;line-height:1.2}
 .hd{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;padding:4px 6px;color:var(--mu);font-size:1.3rem;line-height:1}
 .dcard{border:1px solid var(--bd);border-radius:12px;margin:10px 0;overflow:hidden}.dhd{background:#2a3b2f;color:#fff;font-weight:700;padding:8px 12px}
 .zone{display:grid;grid-template-columns:72px 1fr;gap:4px 10px;align-items:start;padding:8px 12px;border-left:6px solid var(--mc);background:var(--mcl)}
@@ -112,7 +113,7 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 </div>
 
 <div class="pg" id="g-rec"><section class="card"><h2>Recettes</h2>
-<div class="row"><select id="rsel"></select><button id="rnew" class="x">+ Nouvelle recette</button><button id="rdel" class="x">Supprimer</button></div>
+<div class="row rrow"><select id="rsel" aria-label="Recette"></select><button id="rnew" class="x" title="Nouvelle recette" aria-label="Nouvelle recette">+</button><button id="rdel" class="x" title="Supprimer cette recette" aria-label="Supprimer cette recette">✕</button></div>
 <div class="row" id="rform" style="display:none;grid-template-columns:1fr auto auto"><input id="rname" placeholder="Nom de la recette"><button id="rok">Créer</button><button id="rno" class="x">Annuler</button></div>
 <label>Description / déroulé</label><textarea id="rdesc" rows="4"></textarea>
 <p class="s">Quantité <b>par personne</b> et par section (g, ml ou pièces).</p>
@@ -317,7 +318,7 @@ $("rnew").onclick=()=>{$("rform").style.display="grid";$("rname").value="";$("rn
 $("rno").onclick=()=>{$("rform").style.display="none"};
 $("rok").onclick=()=>{const n=$("rname").value.trim();if(!n)return;if(S.rec[n]){$("rname").value="";$("rname").placeholder="Ce nom existe déjà";return}S.rec[n]={desc:"",ing:{}};S.cur=n;$("rform").style.display="none";drawRec();drawMenu();save()};
 $("rname").addEventListener("keydown",e=>{if(e.key==="Enter")$("rok").click()});
-let dc=0;$("rdel").onclick=()=>{if(!S.rec[S.cur])return;const used=usedIn(S.cur);if(used){alert(`Recette utilisée ${used} fois dans les menus (tous camps) : retire-la d'abord du menu.`);return}if(!dc){dc=1;$("rdel").textContent="Confirmer ?";setTimeout(()=>{dc=0;$("rdel").textContent="Supprimer"},3000);return}dc=0;$("rdel").textContent="Supprimer";delete S.rec[S.cur];drawRec();drawMenu();calc()};
+let dc=0;$("rdel").onclick=()=>{if(!S.rec[S.cur])return;const used=usedIn(S.cur);if(used){alert(`Recette utilisée ${used} fois dans les menus (tous camps) : retire-la d'abord du menu.`);return}if(!dc){dc=1;$("rdel").textContent="Confirmer ?";setTimeout(()=>{dc=0;$("rdel").textContent="✕"},3000);return}dc=0;$("rdel").textContent="✕";delete S.rec[S.cur];drawRec();drawMenu();calc()};
 $("list").addEventListener("change",e=>{const k=e.target.dataset.p;if(k){S.prices[k]=+e.target.value||0;delete S.pn[k];calc();}});
 /* ---------- ingrédients (supprimer / restaurer) ---------- */
 function rmIng(k){for(const r of Object.values(S.rec))delete r.ing[k];delete S.prices[k];delete S.pn[k];
