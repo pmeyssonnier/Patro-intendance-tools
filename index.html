@@ -23,6 +23,7 @@ button{width:auto;cursor:pointer;background:var(--ac);color:#fff;border:0}button
 .zl{grid-row:1/3;font-weight:700;font-size:.85rem;padding:5px 6px;border-radius:6px;background:var(--mc);color:var(--mct);text-align:center}
 .zc{min-height:34px}.zone select{grid-column:2;max-width:260px;padding:4px 8px}
 .chip{display:inline-flex;align-items:center;gap:2px;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:2px 4px;margin:2px 4px 2px 0}.chip.drag{opacity:.4}.chip .x{padding:2px 7px;border:0}
+.tg{font-size:.72rem;padding:2px 8px;margin-top:3px}
 .crow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}.crow b{width:56px}.sws{display:contents}.crow input[type=color]{width:44px;height:32px;padding:0}
 .sw{width:28px;height:28px;padding:0;border-radius:50%;border:2px solid var(--bd)}.sw.on{outline:3px solid var(--tx);outline-offset:2px}
 .w{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;padding:5px 7px;border-bottom:1px solid var(--bd);white-space:nowrap}
@@ -116,7 +117,7 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 <div class="row rrow"><select id="rsel" aria-label="Recette"></select><button id="rnew" class="x" title="Nouvelle recette" aria-label="Nouvelle recette">+</button><button id="rdel" class="x" title="Supprimer cette recette" aria-label="Supprimer cette recette">✕</button></div>
 <div class="row" id="rform" style="display:none;grid-template-columns:1fr auto auto"><input id="rname" placeholder="Nom de la recette"><button id="rok">Créer</button><button id="rno" class="x">Annuler</button></div>
 <label>Description / déroulé</label><textarea id="rdesc" rows="4"></textarea>
-<p class="s">Quantité <b>par personne</b> et par section (g, ml ou pièces).</p>
+<p class="s">Quantité <b>par personne</b> et par section (g, ml ou pièces). Pour une quantité <b>unique</b> (ex. 5 pains, 5 L de lait), clique sur « → quantité unique » sous l'ingrédient.</p>
 <div class="w"><table><thead id="rh"></thead><tbody id="rb"></tbody></table></div>
 <p><select id="radd" style="max-width:260px;display:inline-block"></select> <button id="inew" class="x">+ Nouvel ingrédient</button></p>
 <div class="g" id="iform" style="display:none"><div><label>Nom</label><input id="iname" placeholder="ex. Poivrons"></div>
@@ -204,16 +205,17 @@ const $=i=>document.getElementById(i),save=()=>{try{S.dd=DIETS;localStorage.setI
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const eur=v=>v.toLocaleString("fr-BE",{style:"currency",currency:"EUR"});
 const price=k=>S.prices[k]??ING[k][2],per=k=>ING[k][1]==="pc"?1:1000,ul=k=>ING[k][1]==="ml"?"L":ING[k][1]==="pc"?"pc":"kg",nn=()=>C.n.reduce((a,b)=>a+b,0);
+const fxu=k=>ING[k][1]==="pc"?1:1000,fxl=k=>({g:"kg",ml:"L",pc:"pièces"})[ING[k][1]];
 function qty(k,q){const u=ING[k][1];if(u==="pc")return Math.ceil(q)+" pc";return q>=1000?(q/1000).toFixed(2)+(u==="ml"?" L":" kg"):Math.round(q)+" "+u}
 function dl(c,name,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([c],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
 function meal(d){const R=S.rec[d],out={},adapt=[];if(!R)return{out,adapt};const m=1+C.wa/100;
- for(const[k,q]of Object.entries(R.ing))for(let i=0;i<4;i++){let rest=C.n[i];
+ for(const[k,q]of Object.entries(R.ing)){if(R.fx&&k in R.fx){out[k]=(out[k]||0)+R.fx[k];continue}for(let i=0;i<4;i++){let rest=C.n[i];
   for(const dk in DIETS){const e=DIETS[dk].ex;if(!(k in e))continue;
    const p=Math.min(rest,(C.dt[dk]||[])[i]||0);rest-=p;const sb=e[k];
    if(sb)out[sb]=(out[sb]||0)+p*q[i]*m}
-  out[k]=(out[k]||0)+rest*q[i]*m}
+  out[k]=(out[k]||0)+rest*q[i]*m}}
  for(const dk in DIETS){const P=(C.dt[dk]||[]).reduce((a,b)=>a+b,0);if(!P)continue;
-  const t=Object.keys(R.ing).filter(k=>k in DIETS[dk].ex).map(k=>ING[k][0]+" → "+(DIETS[dk].ex[k]?ING[DIETS[dk].ex[k]][0]:"retirer"));
+  const t=Object.keys(R.ing).filter(k=>k in DIETS[dk].ex&&!(R.fx&&k in R.fx)).map(k=>ING[k][0]+" → "+(DIETS[dk].ex[k]?ING[DIETS[dk].ex[k]][0]:"retirer"));
   if(t.length)adapt.push(DIETS[dk].n+" ×"+P+" : "+t.join(", "))}
  return{out,adapt}}
 let LAST={keys:[],tot:{},sum:0,pm:[]};
@@ -237,10 +239,10 @@ function menuHTML(){const dsc=+S.md,adp=+S.ma;let rows="";
  return `<div class="mp pvx"><h2>${esc(C.mt||"Menu")}</h2><div class="s">${esc(C.name)} · ${fdate(C.start)} → ${fdate(C.end)} · ${nn()} personnes · Patro Sainte-Suzanne</div><table class="mt"><thead><tr><th>Repas</th><th>Au menu</th>${dsc?"<th>Description</th>":""}</tr></thead><tbody>${rows}</tbody></table></div>`}
 function listHTML(){const rows=LAST.keys.map(k=>{const c=LAST.tot[k]/per(k)*price(k);return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${qty(k,LAST.tot[k])}</td><td>${price(k)?eur(price(k))+"/"+ul(k):"–"}</td><td>${eur(c)}</td></tr>`}).join("");
  return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">Patro Sainte-Suzanne · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn()?" · par personne : "+eur(LAST.sum/nn()):""}</p></div>`}
-function recHTML(names){return `<div class="mp pvx" style="${cvars()}"><h2>Recettes</h2>`+(names.map(n=>{const R=S.rec[n];return `<h3 style="margin:16px 0 2px;break-after:avoid">${esc(n)}</h3><div class="s">${esc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map(s=>`<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(R.ing).map(([k,q])=>`<tr><td>${esc(ING[k][0])} (${ING[k][1]})</td>${q.map(v=>`<td>${v}</td>`).join("")}</tr>`).join("")}</tbody></table>`}).join("")||"<p>Aucune recette.</p>")+`<p class="s">Quantités par personne.</p></div>`}
+function recHTML(names){return `<div class="mp pvx" style="${cvars()}"><h2>Recettes</h2>`+(names.map(n=>{const R=S.rec[n];return `<h3 style="margin:16px 0 2px;break-after:avoid">${esc(n)}</h3><div class="s">${esc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map(s=>`<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(R.ing).map(([k,q])=>`<tr><td>${esc(ING[k][0])} (${ING[k][1]})</td>${R.fx&&k in R.fx?`<td colspan="4"><b>${qty(k,R.fx[k])}</b> au total</td>`:q.map(v=>`<td>${v}</td>`).join("")}</tr>`).join("")}</tbody></table>`}).join("")||"<p>Aucune recette.</p>")+`<p class="s">Quantités par personne, sauf mention « au total ».</p></div>`}
 const txtList=()=>"🛒 Liste de courses – Patro Sainte-Suzanne ("+nn()+" pers.)\n\n"+(LAST.keys.map(k=>"☐ "+ING[k][0]+" : "+qty(k,LAST.tot[k])).join("\n")||"(vide)")+"\n\nTotal estimé : "+eur(LAST.sum);
 const txtMenu=()=>"🍽️ "+(C.mt||"Menu")+" – "+C.name+" ("+fdate(C.start)+" → "+fdate(C.end)+")\n\n"+days().map((d,i)=>dlab(d)+"\n"+SL.map(([k,lab])=>{const rs=slotArr(i,k);return rs.length?"  • "+lab+" : "+rs.join(" + "):""}).filter(Boolean).join("\n")).join("\n\n");
-const txtRec=n=>{const R=S.rec[n];return R?"📖 "+n+"\n"+(R.desc?R.desc+"\n":"")+"Par personne ("+SEC.map(s=>s[0]).join(" / ")+") :\n"+Object.entries(R.ing).map(([k,q])=>"- "+ING[k][0]+" : "+q.join(" / ")+" "+ING[k][1]).join("\n"):""};
+const txtRec=n=>{const R=S.rec[n];return R?"📖 "+n+"\n"+(R.desc?R.desc+"\n":"")+"Par personne ("+SEC.map(s=>s[0]).join(" / ")+") :\n"+Object.entries(R.ing).map(([k,q])=>"- "+ING[k][0]+" : "+(R.fx&&k in R.fx?qty(k,R.fx[k])+" au total":q.join(" / ")+" "+ING[k][1])).join("\n"):""};
 const SH={list:["Liste de courses",txtList,listHTML],menu:["Menu",txtMenu,menuHTML],rec:["Recette",()=>txtRec(S.cur),()=>recHTML(S.rec[S.cur]?[S.cur]:[])],recs:["Recettes",()=>Object.keys(S.rec).map(txtRec).join("\n\n"),()=>recHTML(Object.keys(S.rec))]};
 const shk=()=>SH[$("shw").value];
 function printHTML(html){$("pv").innerHTML=html;document.body.classList.add("pr");
@@ -298,7 +300,7 @@ function drawRec(){const names=Object.keys(S.rec);if(!S.rec[S.cur])S.cur=names[0
  $("rsel").innerHTML=names.map(d=>`<option${d===S.cur?" selected":""}>${esc(d)}</option>`).join("");
  const R=S.rec[S.cur];$("rdesc").value=R?R.desc:"";
  $("rh").innerHTML="<tr><th>Ingrédient</th>"+SEC.map(s=>`<th>${s[0]}<div class="s">${s[1]}</div></th>`).join("")+"<th></th></tr>";
- $("rb").innerHTML=R?Object.entries(R.ing).map(([k,q])=>`<tr><td>${esc(ING[k][0])} (${ING[k][1]})</td>${q.map((v,i)=>`<td><input type="number" min="0" value="${v}" data-k="${k}" data-s="${i}"></td>`).join("")}<td><button class="x" data-rm="${k}">✕</button></td></tr>`).join(""):"";
+ $("rb").innerHTML=R?Object.entries(R.ing).map(([k,q])=>{const fx=R.fx&&k in R.fx;return `<tr><td>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${k}">${fx?"→ par personne":"→ quantité unique"}</button></div></td>${fx?`<td colspan="4"><input type="number" min="0" step="any" value="${+(R.fx[k]/fxu(k)).toFixed(3)}" data-fx="${k}" style="width:90px"> <span class="s">${fxl(k)} au total</span></td>`:q.map((v,i)=>`<td><input type="number" min="0" value="${v}" data-k="${k}" data-s="${i}"></td>`).join("")}<td><button class="x" data-rm="${k}">✕</button></td></tr>`}).join(""):"";
  $("radd").innerHTML="<option value=''>+ Ajouter un ingrédient…</option>"+Object.entries(ING).filter(([k,v])=>R&&!R.ing[k]&&!v[4]&&!S.hid.includes(k)).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join("")}
 const PG={eff:"Effectifs",reg:"Régimes & allergies",menu:"Menu",rec:"Recettes",cat:"Catalogue de prix",list:"Liste de courses",sh:"Partager / imprimer",pj:"Sauvegarde"};
 function nav(o){document.body.classList.toggle("nav",!!o);$("burger").setAttribute("aria-expanded",!!o)}
@@ -311,8 +313,10 @@ document.querySelectorAll("[data-n]").forEach(e=>e.addEventListener("input",()=>
 $("wa").addEventListener("input",()=>{C.wa=+$("wa").value||0;calc()});
 $("rsel").onchange=()=>{S.cur=$("rsel").value;drawRec()};
 $("rdesc").onchange=()=>{if(S.rec[S.cur]){S.rec[S.cur].desc=$("rdesc").value;save()}};
-$("rb").addEventListener("change",e=>{const d=e.target.dataset;if(d.k&&S.rec[S.cur]){S.rec[S.cur].ing[d.k][+d.s]=+e.target.value||0;calc()}});
-$("rb").addEventListener("click",e=>{const k=e.target.dataset.rm;if(k&&S.rec[S.cur]){delete S.rec[S.cur].ing[k];drawRec();calc()}});
+$("rb").addEventListener("change",e=>{const d=e.target.dataset,R=S.rec[S.cur];if(!R)return;if(d.k){R.ing[d.k][+d.s]=+e.target.value||0;calc()}else if(d.fx&&R.fx){R.fx[d.fx]=Math.round(Math.max(0,+e.target.value||0)*fxu(d.fx)*1000)/1000;calc()}});
+$("rb").addEventListener("click",e=>{const t=e.target.dataset,R=S.rec[S.cur];if(!R)return;
+ if(t.tg){const k=t.tg;R.fx=R.fx||{};if(k in R.fx){const n=nn(),pp=n?(ING[k][1]==="pc"?+(R.fx[k]/n).toFixed(2):Math.round(R.fx[k]/n)):0;R.ing[k]=[pp,pp,pp,pp];delete R.fx[k]}else R.fx[k]=Math.round(R.ing[k].reduce((a,q,i)=>a+q*C.n[i],0)*100)/100;drawRec();calc()}
+ else if(t.rm){delete R.ing[t.rm];if(R.fx)delete R.fx[t.rm];drawRec();calc()}});
 $("radd").onchange=()=>{const k=$("radd").value;if(k&&S.rec[S.cur]){S.rec[S.cur].ing[k]=[0,0,0,0];drawRec();save()}};
 $("rnew").onclick=()=>{$("rform").style.display="grid";$("rname").value="";$("rname").focus()};
 $("rno").onclick=()=>{$("rform").style.display="none"};
@@ -321,7 +325,7 @@ $("rname").addEventListener("keydown",e=>{if(e.key==="Enter")$("rok").click()});
 let dc=0;$("rdel").onclick=()=>{if(!S.rec[S.cur])return;const used=usedIn(S.cur);if(used){alert(`Recette utilisée ${used} fois dans les menus (tous camps) : retire-la d'abord du menu.`);return}if(!dc){dc=1;$("rdel").textContent="Confirmer ?";setTimeout(()=>{dc=0;$("rdel").textContent="✕"},3000);return}dc=0;$("rdel").textContent="✕";delete S.rec[S.cur];drawRec();drawMenu();calc()};
 $("list").addEventListener("change",e=>{const k=e.target.dataset.p;if(k){S.prices[k]=+e.target.value||0;delete S.pn[k];calc();}});
 /* ---------- ingrédients (supprimer / restaurer) ---------- */
-function rmIng(k){for(const r of Object.values(S.rec))delete r.ing[k];delete S.prices[k];delete S.pn[k];
+function rmIng(k){for(const r of Object.values(S.rec)){delete r.ing[k];if(r.fx)delete r.fx[k]}delete S.prices[k];delete S.pn[k];
  if(S.cust[k]){delete S.cust[k];delete ING[k];for(const d in DIETS){const ex=DIETS[d].ex;delete ex[k];for(const x in ex)if(ex[x]===k)ex[x]=null}}
  else if(!S.hid.includes(k))S.hid.push(k)}
 $("rclr").onclick=()=>{if(!confirm("Supprimer TOUTES les recettes, tous les ingrédients et les menus de tous les camps ? (Exporte d'abord une sauvegarde. « Réinitialiser » ou « Restaurer » les remettent.)"))return;
@@ -373,7 +377,7 @@ $("logof").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileR
 if(!S.cust)S.cust={};if(!Array.isArray(S.hid))S.hid=[];
 for(const k in S.cust){ING[k]=S.cust[k];if(!S.dd)(S.cust[k][5]||[]).forEach(d=>{if(DIETS[d])DIETS[d].ex[k]=null})}
 if(S.dd&&typeof S.dd==="object")DIETS=S.dd;
-(function sanitize(){for(const r of Object.values(S.rec)){if(!r.ing)r.ing={};for(const k of Object.keys(r.ing)){if(!ING[k]||!Array.isArray(r.ing[k]))delete r.ing[k];else while(r.ing[k].length<4)r.ing[k].push(0)}}
+(function sanitize(){for(const r of Object.values(S.rec)){if(!r.ing)r.ing={};for(const k of Object.keys(r.ing)){if(!ING[k]||!Array.isArray(r.ing[k]))delete r.ing[k];else while(r.ing[k].length<4)r.ing[k].push(0)}if(r.fx&&typeof r.fx==="object"){for(const k of Object.keys(r.fx)){if(!(k in r.ing)||!(+r.fx[k]>=0))delete r.fx[k];else r.fx[k]=+r.fx[k]}}else delete r.fx}
  for(const d in DIETS){const ex=DIETS[d].ex||(DIETS[d].ex={});for(const k of Object.keys(ex)){if(!ING[k])delete ex[k];else if(ex[k]&&!ING[ex[k]])ex[k]=null}}
  for(const c of Object.values(S.camps)){if(typeof c.name!=="string")c.name="Camp";if(!pISO(c.start))c.start=iso(nextDow(5));if(!pISO(c.end)||c.end<c.start)c.end=c.start;
   c.n=[0,1,2,3].map(i=>Math.max(0,+(Array.isArray(c.n)?c.n:[])[i]||0));c.wa=Number.isFinite(+c.wa)?+c.wa:10;if(!c.dt||typeof c.dt!=="object")c.dt={};if(typeof c.notes!=="string")c.notes="";if(typeof c.mt!=="string")c.mt="Menu du camp";
