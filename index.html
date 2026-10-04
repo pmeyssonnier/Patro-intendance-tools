@@ -288,7 +288,7 @@ function menuHTML(){const dsc=+S.md,adp=+S.ma;let rows="";
   dtypes(i).forEach(({k,n:lab})=>{const rs=slotArr(i,k);
    const dishes=rs.length?rs.map(r=>{const ad=adp?meal(r).adapt:[];return `<div><b>${esc(r)}</b>${ad.length?`<div class="ad">${esc(ad.join(" · "))}</div>`:""}</div>`}).join(""):'<span class="ad">–</span>';
    const ds=dsc?`<td>${rs.map(r=>esc(S.rec[r]?S.rec[r].desc:"")).filter(Boolean).join("<br>")}</td>`:"";
-   rows+=`<tr class="sl" style="${cvars(C.col[k])}"><td class="sn">${lab}</td><td>${dishes}</td>${ds}</tr>`})});
+   rows+=`<tr class="sl" style="${cvars(C.col[k])}"><td class="sn">${esc(lab)}</td><td>${dishes}</td>${ds}</tr>`})});
  return `<div class="mp pvx"><h2>${esc(C.mt||"Menu")}</h2><div class="s">${esc(C.name)} · ${fdate(C.start)} → ${fdate(C.end)} · ${nn()} personnes · Patro Sainte-Suzanne</div><table class="mt"><thead><tr><th>Repas</th><th>Au menu</th>${dsc?"<th>Description</th>":""}</tr></thead><tbody>${rows}</tbody></table></div>`}
 function listHTML(){const rows=LAST.keys.map(k=>{const c=LAST.tot[k]/per(k)*price(k);return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${qty(k,LAST.tot[k])}</td><td>${price(k)?eur(price(k))+"/"+ul(k):"–"}</td><td>${eur(c)}</td></tr>`}).join("");
  return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">Patro Sainte-Suzanne · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn()?" · par personne : "+eur(LAST.sum/nn()):""}</p></div>`}
