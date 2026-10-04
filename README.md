@@ -11,9 +11,9 @@ sur ordinateur, tablette et téléphone. Les données restent sur ton appareil
 
 ## Fonctions
 
-- **Effectifs** par section (Benjas, Chevaliers-Étincelles, Conquérants-Alpines, Animateurs) et marge de pertes.
+- **Un projet par camp** : nom, dates de début et de fin, effectifs par section (Benjas, Chevaliers-Étincelles, Conquérants-Alpines, Animateurs), marge de pertes, régimes/allergies et menu. On peut créer, dupliquer, supprimer et changer de camp. Recettes, ingrédients et prix sont partagés entre les camps.
 - **Régimes & allergies** modifiables : végétarien, halal, sans lactose, sans gluten, etc. L'appli retire l'ingrédient concerné et ajoute le substitut à acheter. On peut créer ses propres régimes.
-- **Menu** : repas réordonnables par glisser-déposer, menu imprimable avec couleur au choix.
+- **Menu** : un tableau par jour (« Vendredi 22/03 ») avec Matin, Midi et Soir ; les plats se glissent d'un repas ou d'un jour à l'autre ; une couleur au choix pour chaque repas ; menu imprimable ; copie du menu d'un autre camp.
 - **Recettes** : quantités par personne et par section, ingrédients personnalisés, bouton « Tout supprimer ».
 - **Catalogue de prix** : saisie à la main ou import d'une liste de produits (CSV/texte, `nom ; prix`).
 - **Liste de courses** et coût total / par personne / par repas.
