@@ -53,6 +53,7 @@ footer{text-align:center;color:var(--mu);font-size:.85rem;padding:18px 0 8px}
 .mt tr.day td{background:#dfe8e1;color:#1f2a22;font-weight:700;border-top:2px solid #2a3b2f}.mt tr.sl td{background:var(--mcl)}.mt tr.sl td.sn{background:var(--mc);color:var(--mct);font-weight:700;width:84px}
 .mt .ad{font-size:.8rem;color:#5c6f62;font-style:italic}.mt td.ck{width:1.4em;text-align:center}.mt tr{break-inside:avoid}
 #pv{display:none}
+#warn{position:fixed;left:8px;right:8px;bottom:8px;z-index:60;background:#8c1d18;color:#fff;border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 12px rgba(0,0,0,.35)}#warn[hidden]{display:none}#warn button{background:#fff;color:#8c1d18}#warn .x{background:transparent;color:#fff;border-color:#fff}
 .top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;background:var(--bg);margin:-16px -16px 10px;padding:8px 12px;border-bottom:1px solid var(--bd)}
 .burger{background:transparent;color:var(--tx);font-size:1.6rem;line-height:1;padding:2px 10px;border:0}#ptitle{font-weight:600}
 #scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}body.nav #scrim{opacity:1;pointer-events:auto}
@@ -162,7 +163,7 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 </div><div class="pg" id="g-pj">
 <section class="card np"><h2>Sauvegarde du projet</h2>
 <p class="s">Sauvegarde tout (recettes, menu, effectifs, régimes, prix) dans un fichier <b>.json</b> pour le retrouver ou le passer à un autre animateur.</p>
-<p><button id="exp">💾 Exporter le projet (.json)</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json" hidden></label> </p>
+<p><button id="exp">💾 Exporter le projet (.json)</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json,application/json" hidden></label> <span class="s" id="jmsg" role="status"></span> </p>
 <h2 style="margin-top:18px">Zone sensible</h2>
 <p><button id="rclr" class="x" style="color:#d33;border-color:#d33">🗑️ Vider recettes, ingrédients et menus</button></p>
 <p class="s">Supprime toutes les recettes, tous les ingrédients et les menus de tous les camps. Les camps (dates, effectifs, régimes) sont conservés.</p>
@@ -172,6 +173,7 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 </div>
 <footer>Outil fait par le PSS pour les patros ⛺</footer>
 </main><div id="pv"></div>
+<div id="warn" class="np" role="alert" hidden><span id="warnt"></span> <button id="warnx">💾 Exporter</button> <button id="warnc" class="x" aria-label="Fermer l'avertissement">✕</button></div>
 <script>
 const SEC=[["Benjas","5–10 ans"],["Chevaliers-Étincelles","10–13 ans"],["Conquérants-Alpines","13–16 ans"],["Animateurs","16 ans et +"]];
 const ING={pates:["Pâtes","g",1.4,"spaghetti|pâtes|penne|pasta"],riz:["Riz","g",2,"riz"],hache:["Viande hachée","g",8.5,"haché"],tom:["Tomates pelées","g",1.6,"tomates? pelées|concassées"],oig:["Oignons","g",1.5,"oignon"],fro:["Fromage râpé","g",7,"râpé"],poulet:["Blanc de poulet","g",7.5,"poulet"],leg:["Légumes","g",2.2,"courgette|légumes"],coco:["Lait de coco","ml",3.5,"coco"],pdt:["Pommes de terre","g",1.1,"pommes de terre"],sauc:["Saucisses","g",7,"saucisse"],car:["Carottes","g",1.2,"carotte"],pain:["Pain","g",2.5,"pain"],jam:["Jambon","g",12,"jambon"],beu:["Beurre","g",9,"beurre"],conf:["Confiture","g",3.5,"confiture"],cer:["Céréales","g",4,"céréales|corn flakes"],lait:["Lait","ml",1.1,"lait"],choc:["Pâte à tartiner","g",4,"tartiner"],suc:["Sucre","g",1.3,"sucre"],
@@ -187,10 +189,45 @@ const REC0={
 "Soupe de légumes + pain":mk("Légumes et pommes de terre en morceaux, cuire 30 min, mixer. Servir avec du pain.",{leg:250,pdt:80,pain:60}),
 "Petit-déjeuner":mk("Pain, beurre, confiture, pâte à tartiner, céréales et lait.",{pain:100,beu:10,conf:20,cer:30,lait:200,choc:15}),
 "Riz au lait (dessert)":mk("Cuire le riz dans le lait sucré à feu doux en remuant, environ 40 min.",{lait:250,riz:30,suc:20})};
-const COLS=["#1f7a3f","#c0392b","#2c6fbb","#e08a00","#7b4fb5","#d6457f","#333333"],DAYS=["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
+const COLS=["#1f7a3f","#c0392b","#2c6fbb","#e08a00","#7b4fb5","#c2185b","#333333"],DAYS=["lundi","mardi","mercredi","jeudi","vendredi","samedi","dimanche"];
 const DEF={n:[10,8,6,6],wa:10,prices:{},pn:{},rec:REC0,meals:[["Vendredi souper","Spaghetti bolognaise"],["Samedi matin","Petit-déjeuner"],["Samedi midi","Croque-monsieur"],["Samedi soir","Riz poulet curry-coco"],["Dimanche matin","Petit-déjeuner"],["Dimanche midi","Saucisses, purée, carottes"]],cur:"Spaghetti bolognaise",dt:{},notes:"",mc:COLS[0],mt:"Menu du camp",md:1,ma:1,hid:[]};
-let S=JSON.parse(JSON.stringify(DEF));
-try{const x=localStorage.getItem("intendance2");if(x)S=Object.assign(S,JSON.parse(x))}catch(e){}
+/* ---------- validation des données (stockage et import) ---------- */
+const ID=/^[A-Za-z0-9_]{1,40}$/,HEX=/^#[0-9a-fA-F]{6}$/,ISOD=/^\d{4}-\d{2}-\d{2}$/;
+const okid=k=>ID.test(k)&&k!=="__proto__",obj=v=>v&&typeof v==="object"&&!Array.isArray(v)?v:null;
+const str=(v,max,d)=>typeof v==="string"?v.slice(0,max):(d||""),num=(v,min,max,d)=>{v=+v;return Number.isFinite(v)?Math.min(max,Math.max(min,v)):(d||0)};
+const ent=o=>obj(o)?Object.entries(o).slice(0,500):[],q4=a=>[0,1,2,3].map(i=>num((Array.isArray(a)?a:[])[i],0,1e6));
+function cleanCamp(c){if(!obj(c))return null;
+ const o={name:str(c.name,80,"Camp"),start:ISOD.test(c.start)?c.start:"",end:ISOD.test(c.end)?c.end:"",n:q4(c.n).map(v=>Math.min(v,1e4)),wa:num(c.wa,0,500,10),dt:{},notes:str(c.notes,5000),mt:str(c.mt,80,"Menu du camp"),menu:{},types:[],off:{},col:{}};
+ for(const[k,v]of ent(c.dt))if(okid(k)&&Array.isArray(v))o.dt[k]=q4(v).map(x=>Math.min(x,1e4));
+ for(const t of(Array.isArray(c.types)?c.types:[]).slice(0,30))if(obj(t)&&okid(t.k)&&typeof t.n==="string")o.types.push({k:t.k,n:t.n.slice(0,30)});
+ for(const[k,v]of ent(c.col))if(okid(k)&&typeof v==="string"&&HEX.test(v))o.col[k]=v.toLowerCase();
+ for(const[j,dm]of ent(c.menu)){if(!/^\d{1,2}$/.test(j)||!obj(dm))continue;o.menu[j]={};for(const[k,a]of ent(dm))if(okid(k)&&Array.isArray(a))o.menu[j][k]=a.filter(r=>typeof r==="string"&&r.length<=100).slice(0,50)}
+ for(const[j,a]of ent(c.off))if(/^\d{1,2}$/.test(j)&&Array.isArray(a))o.off[j]=a.filter(k=>typeof k==="string"&&okid(k)).slice(0,40);
+ return o}
+function cleanProject(x){
+ if(!obj(x)||!obj(x.rec)||!(Array.isArray(x.meals)||obj(x.camps)))throw new Error("ce fichier n'est pas un projet Intendance PSS (recettes ou camps manquants).");
+ const o={rec:{},cur:str(x.cur,100),prices:{},pn:{},cust:{},hid:Array.isArray(x.hid)?x.hid.filter(k=>typeof k==="string"&&okid(k)).slice(0,200):[]};
+ for(const[n,r]of ent(x.rec)){if(!n||n.length>100||n==="__proto__"||!obj(r))continue;const R={desc:str(r.desc,5000),ing:{}};
+  for(const[k,a]of ent(r.ing))if(okid(k)&&Array.isArray(a))R.ing[k]=q4(a);
+  if(obj(r.fx)){R.fx={};for(const[k,v]of ent(r.fx))if(okid(k)&&k in R.ing)R.fx[k]=num(v,0,1e7)}
+  o.rec[n]=R}
+ for(const[k,v]of ent(x.prices))if(okid(k))o.prices[k]=num(v,0,1e5);
+ for(const[k,v]of ent(x.pn))if(okid(k))o.pn[k]=str(v,200);
+ for(const[k,v]of ent(x.cust)){if(!okid(k)||!Array.isArray(v)||typeof v[0]!=="string"||!v[0].trim())continue;const n=v[0].slice(0,100);let kw=str(v[3],200);try{new RegExp(kw)}catch(_){kw=""}
+  if(!kw)kw=n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  o.cust[k]=[n,["g","ml","pc"].includes(v[1])?v[1]:"g",num(v[2],0,1e5),kw,0,(Array.isArray(v[5])?v[5]:[]).filter(d=>typeof d==="string"&&okid(d)).slice(0,20)]}
+ if(obj(x.dd)){o.dd={};for(const[k,v]of ent(x.dd)){if(!okid(k)||!obj(v))continue;const ex={};for(const[a,b]of ent(v.ex))if(okid(a)&&(b===null||(typeof b==="string"&&okid(b))))ex[a]=b;o.dd[k]={n:str(v.n,80,"Sans nom"),ex}}}
+ if(typeof x.logo==="string"&&x.logo.length<4e5&&/^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(x.logo))o.logo=x.logo;
+ if(x.md!==undefined)o.md=+x.md?1:0;if(x.ma!==undefined)o.ma=+x.ma?1:0;
+ if(obj(x.camps)){o.camps={};for(const[k,c]of ent(x.camps)){if(!okid(k))continue;const cc=cleanCamp(c);if(cc)o.camps[k]=cc}
+  if(!Object.keys(o.camps).length)throw new Error("aucun camp valide dans ce fichier.");
+  o.ccur=typeof x.ccur==="string"&&o.camps[x.ccur]?x.ccur:Object.keys(o.camps)[0]}
+ else{o.n=q4(x.n).map(v=>Math.min(v,1e4));o.wa=num(x.wa,0,500,10);o.notes=str(x.notes,5000);o.mt=str(x.mt,80,"Menu du camp");o.dt={};
+  for(const[k,v]of ent(x.dt))if(okid(k)&&Array.isArray(v))o.dt[k]=q4(v).map(z=>Math.min(z,1e4));
+  o.meals=x.meals.filter(m=>Array.isArray(m)&&typeof m[0]==="string"&&typeof m[1]==="string").slice(0,500).map(m=>[m[0].slice(0,100),m[1].slice(0,100)])}
+ return o}
+let S=JSON.parse(JSON.stringify(DEF)),badStore=false;
+try{const x=localStorage.getItem("intendance2");if(x){try{S=Object.assign(S,cleanProject(JSON.parse(x)))}catch(e){badStore=true;try{localStorage.setItem("intendance2_illisible",x)}catch(_){}}}}catch(e){}
 const SL=[["m","Matin"],["d","Midi"],["s","Soir"]],DEFT=()=>SL.map(([k,n])=>({k,n})),SCOL={m:"#e08a00",d:"#1f7a3f",s:"#2c6fbb"},WD=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
 const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const pISO=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||"");return m?new Date(+m[1],+m[2]-1,+m[3]):null};
@@ -213,7 +250,9 @@ const slotArr=(i,k)=>((C.menu[i]||{})[k])||[];
 function mealList(){const o=[];days().forEach((d,i)=>dtypes(i).forEach(t=>slotArr(i,t.k).forEach(r=>o.push([dlab(d)+" · "+t.n,r,i,t.k]))));return o}
 const filled=()=>{let n=0;days().forEach((d,i)=>dtypes(i).forEach(t=>{if(slotArr(i,t.k).length)n++}));return n};
 const usedIn=nm=>Object.values(S.camps).reduce((a,c)=>a+Object.values(c.menu).reduce((b,dm)=>b+Object.values(dm).reduce((x,arr)=>x+arr.filter(r=>r===nm).length,0),0),0);
-const $=i=>document.getElementById(i),save=()=>{try{S.dd=DIETS;localStorage.setItem("intendance2",JSON.stringify(S))}catch(e){}};
+let sfail=0;
+const $=i=>document.getElementById(i),showWarn=t=>{$("warnt").textContent=t;$("warn").hidden=!t},
+save=()=>{try{S.dd=DIETS;localStorage.setItem("intendance2",JSON.stringify(S));if(sfail){sfail=0;showWarn("")}}catch(e){if(!sfail){sfail=1;showWarn(e&&e.name==="QuotaExceededError"?"La mémoire du navigateur est pleine : tes dernières modifications ne sont pas enregistrées. Exporte ton projet (.json) maintenant.":"Impossible d'enregistrer sur cet appareil (navigation privée ou stockage bloqué). Exporte ton projet (.json) pour ne rien perdre.")}}};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const eur=v=>v.toLocaleString("fr-BE",{style:"currency",currency:"EUR"});
 const price=k=>S.prices[k]??ING[k][2],per=k=>ING[k][1]==="pc"?1:1000,ul=k=>ING[k][1]==="ml"?"L":ING[k][1]==="pc"?"pc":"kg",nn=()=>C.n.reduce((a,b)=>a+b,0);
@@ -235,13 +274,15 @@ function calc(){
  const tot={},pm=[];
  mealList().forEach(([l,d])=>{const r=meal(d);let c=0;for(const k in r.out){tot[k]=(tot[k]||0)+r.out[k];c+=r.out[k]/per(k)*price(k)}pm.push([l,d,c,r.adapt])});
  let sum=0;const keys=Object.keys(tot).filter(k=>tot[k]>0).sort((a,b)=>ING[a][0].localeCompare(ING[b][0],"fr"));
- $("list").innerHTML=keys.map(k=>{const c=tot[k]/per(k)*price(k);sum+=c;return `<tr><td>${esc(ING[k][0])}${price(k)?"":'<div class="s" style="color:#d33">⚠ prix manquant</div>'}${S.pn[k]?`<div class="s">↳ ${esc(S.pn[k])}</div>`:""}</td><td>${qty(k,tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k)?"":"nop"}" data-p="${k}"></td><td>${eur(c)}</td></tr>`}).join("")||"<tr><td>Aucun repas</td></tr>";
+ $("list").innerHTML=keys.map(k=>{const c=tot[k]/per(k)*price(k);sum+=c;return `<tr><td>${esc(ING[k][0])}${price(k)?"":'<div class="s" style="color:#d33">⚠ prix manquant</div>'}${S.pn[k]?`<div class="s">↳ ${esc(S.pn[k])}</div>`:""}</td><td>${qty(k,tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k)?"":"nop"}" data-p="${esc(k)}"></td><td>${eur(c)}</td></tr>`}).join("")||"<tr><td>Aucun repas</td></tr>";
  LAST={keys,tot,sum,pm};
  const n=nn();$("tot").textContent=eur(sum);$("ntot").textContent=eur(sum);$("pp").textContent=n?eur(sum/n):"–";const miss=keys.filter(k=>!price(k)).length;$("np2").textContent=n+" personnes · "+filled()+" repas"+(miss?" · ⚠ "+miss+" prix à renseigner (total sous-estimé)":"");$("np2").style.color=miss?"#d33":"";
  $("pm").innerHTML=pm.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${eur(r[2])}</td><td class="s" style="white-space:normal">${esc(r[3].join(" · "))}</td></tr>`).join("");
  $("mprev").innerHTML=menuHTML();drawCat();save()}
 /* ---------- documents imprimables / partageables ---------- */
-const cvars=c=>{c=/^#[0-9a-f]{6}$/i.test(c)?c:COLS[0];const n=parseInt(c.slice(1),16),l=(.299*(n>>16)+.587*(n>>8&255)+.114*(n&255))/255;return `--mc:${c};--mcl:${c}22;--mct:${l>.6?"#1f2a22":"#fff"}`};
+const rlum=c=>{const n=parseInt(c.slice(1),16),f=v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4};return .2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)};
+const crat=(a,b)=>{const x=rlum(a),y=rlum(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)},INK="#1f2a22",best=c=>crat(c,"#ffffff")>=crat(c,INK)?"#ffffff":INK,lowc=c=>HEX.test(c)&&Math.max(crat(c,"#ffffff"),crat(c,INK))<4.5;
+const cvars=c=>{c=HEX.test(c)?c:COLS[0];return `--mc:${c};--mcl:${c}22;--mct:${best(c)}`};
 function menuHTML(){const dsc=+S.md,adp=+S.ma;let rows="";
  days().forEach((d,i)=>{rows+=`<tr class="day"><td colspan="${dsc?3:2}">${esc(dlab(d))}</td></tr>`;
   dtypes(i).forEach(({k,n:lab})=>{const rs=slotArr(i,k);
@@ -275,11 +316,11 @@ $("sc").onclick=()=>{const t=shtxt();if(!t)return;(navigator.clipboard?navigator
 /* ---------- menu : édition, glisser-déposer, couleurs ---------- */
 let addDay=-1,addT="",delSl=null;const ALLD=()=>[...Array(31).keys()];
 const delPanel=(i,k,lab)=>{const n1=slotArr(i,k).length,n2=days().reduce((a,d,j)=>a+slotArr(j,k).length,0),f=n=>n?` (${n} plat${n>1?"s":""} supprimé${n>1?"s":""})`:"";
- return `<div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${k}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${k}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div>`};
+ return `<div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${esc(k)}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${esc(k)}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div>`};
 const addPanel=()=>{const nw=addT==="__new",t=C.types.find(x=>x.k===addT);
  return `<div class="nsl">${nw?'<input data-nn="1" placeholder="Nom (ex. Goûter)" maxlength="30">':`<b>${esc(t?t.n:"")}</b>`}<select data-sc="1"><option value="one">Ce jour seulement</option><option value="all">Tous les jours</option></select><button data-nok="1">Ajouter</button><button class="x" data-nno="1">Annuler</button></div>`};
 function drawMenu(){
- $("menu").innerHTML=days().map((d,i)=>{const gone=C.types.filter(t=>hid(i,t.k));return `<div class="dcard"><div class="dhd">${esc(dlab(d))}</div>${dtypes(i).map(({k,n:lab})=>`<div class="zone" data-day="${i}" data-slot="${k}" style="${cvars(C.col[k])}"><div class="zl"><span>${esc(lab)}</span><button class="zx" data-ds="1" data-day="${i}" data-slot="${k}" title="Retirer ce repas de ce jour" aria-label="Retirer ${esc(lab)} de ce jour">✕</button></div><div class="zc">${slotArr(i,k).map((r,j)=>`<span class="chip" data-j="${j}"><span class="hd" data-day="${i}" data-slot="${k}" data-j="${j}" title="Glisser pour déplacer">⠿</span><span class="cn">${esc(r)}</span><button class="x" data-rm="1" data-day="${i}" data-slot="${k}" data-j="${j}" title="Retirer">✕</button></span>`).join("")}</div><select data-add="1" data-day="${i}" data-slot="${k}"><option value="">+ Ajouter un plat…</option>${Object.keys(S.rec).map(n=>`<option>${esc(n)}</option>`).join("")}</select></div>${delSl&&delSl.day===i&&delSl.k===k?delPanel(i,k,lab):""}`).join("")}<div class="zadd"><select data-as="1" data-day="${i}"><option value="">+ Ajouter un repas…</option>${gone.map(t=>`<option value="${t.k}">${esc(t.n)}</option>`).join("")}<option value="__new">➕ Nouveau repas…</option></select>${addDay===i&&addT?addPanel():""}</div></div>`}).join("");
+ $("menu").innerHTML=days().map((d,i)=>{const gone=C.types.filter(t=>hid(i,t.k));return `<div class="dcard"><div class="dhd">${esc(dlab(d))}</div>${dtypes(i).map(({k,n:lab})=>`<div class="zone" data-day="${i}" data-slot="${esc(k)}" style="${cvars(C.col[k])}"><div class="zl"><span>${esc(lab)}</span><button class="zx" data-ds="1" data-day="${i}" data-slot="${esc(k)}" title="Retirer ce repas de ce jour" aria-label="Retirer ${esc(lab)} de ce jour">✕</button></div><div class="zc">${slotArr(i,k).map((r,j)=>`<span class="chip" data-j="${j}"><span class="hd" data-day="${i}" data-slot="${esc(k)}" data-j="${j}" title="Glisser pour déplacer">⠿</span><span class="cn">${esc(r)}</span><button class="x" data-rm="1" data-day="${i}" data-slot="${esc(k)}" data-j="${j}" title="Retirer">✕</button></span>`).join("")}</div><select data-add="1" data-day="${i}" data-slot="${esc(k)}"><option value="">+ Ajouter un plat…</option>${Object.keys(S.rec).map(n=>`<option>${esc(n)}</option>`).join("")}</select></div>${delSl&&delSl.day===i&&delSl.k===k?delPanel(i,k,lab):""}`).join("")}<div class="zadd"><select data-as="1" data-day="${i}"><option value="">+ Ajouter un repas…</option>${gone.map(t=>`<option value="${esc(t.k)}">${esc(t.n)}</option>`).join("")}<option value="__new">➕ Nouveau repas…</option></select>${addDay===i&&addT?addPanel():""}</div></div>`}).join("");
  if(addDay>=0){const f=$("menu").querySelector("[data-nn]");if(f)f.focus()}}
 const marr=(i,k)=>{(C.menu[i]=C.menu[i]||{});return C.menu[i][k]=C.menu[i][k]||[]};
 $("menu").addEventListener("change",e=>{const t=e.target;if(!t.dataset.add||!t.value)return;marr(+t.dataset.day,t.dataset.slot).push(t.value);drawMenu();calc()});
@@ -310,10 +351,10 @@ function dend(ok){if(!dg)return;cancelAnimationFrame(raf);const g=dg,t=ok?tgt():
  if(t&&!(t.day===g.day&&t.slot===g.slot&&t.j===g.j)){const src=marr(g.day,g.slot),[r]=src.splice(g.j,1),dst=marr(t.day,t.slot),same=t.day===g.day&&t.slot===g.slot;let at=t.j==null?dst.length:t.j;if(same&&at>g.j)at--;dst.splice(at,0,r);calc()}
  drawMenu()}
 $("menu").addEventListener("pointerup",e=>{px=e.clientX;py=e.clientY;dend(true)});$("menu").addEventListener("pointercancel",()=>dend(false));
-function drawSw(){$("types").innerHTML=C.types.map((t,i)=>`<div class="trow"><div class="tl"><input class="tn" value="${esc(t.n)}" data-tn="${t.k}" maxlength="30" aria-label="Nom du repas"><button class="x" data-tu="${t.k}" title="Monter"${i?"":" disabled"}>▲</button><button class="x" data-td="${t.k}" title="Descendre"${i<C.types.length-1?"":" disabled"}>▼</button><button class="x" data-tx="${t.k}" title="Supprimer ce type de repas" aria-label="Supprimer ${esc(t.n)}">🗑</button></div><div class="crow"><span class="sws">${COLS.map(c=>`<button class="sw${c.toLowerCase()===String(C.col[t.k]).toLowerCase()?" on":""}" style="background:${c}" data-c="${c}" data-ck="${t.k}" title="${c}"></button>`).join("")}</span><input type="color" data-ci="${t.k}" value="${C.col[t.k]}" title="Autre couleur"></div></div>`).join("")}
+function drawSw(){$("types").innerHTML=C.types.map((t,i)=>`<div class="trow"><div class="tl"><input class="tn" value="${esc(t.n)}" data-tn="${esc(t.k)}" maxlength="30" aria-label="Nom du repas"><button class="x" data-tu="${esc(t.k)}" title="Monter"${i?"":" disabled"}>▲</button><button class="x" data-td="${esc(t.k)}" title="Descendre"${i<C.types.length-1?"":" disabled"}>▼</button><button class="x" data-tx="${esc(t.k)}" title="Supprimer ce type de repas" aria-label="Supprimer ${esc(t.n)}">🗑</button></div><div class="crow"><span class="sws">${COLS.map(c=>`<button class="sw${c.toLowerCase()===String(C.col[t.k]).toLowerCase()?" on":""}" style="background:${c}" data-c="${c}" data-ck="${esc(t.k)}" title="${c}"></button>`).join("")}</span><input type="color" data-ci="${esc(t.k)}" value="${esc(C.col[t.k])}" title="Autre couleur" aria-label="Autre couleur pour ${esc(t.n)}"><span class="s cw" style="color:#d33">${lowc(C.col[t.k])?"⚠ contraste faible":""}</span></div></div>`).join("")}
 $("types").addEventListener("input",e=>{const d=e.target.dataset;
  if(d.tn){const t=C.types.find(x=>x.k===d.tn);if(t){t.n=e.target.value;drawMenu();calc()}}
- else if(d.ci){C.col[d.ci]=e.target.value;e.target.closest(".trow").querySelectorAll(".sw").forEach(b=>b.classList.toggle("on",b.dataset.c.toLowerCase()===e.target.value.toLowerCase()));drawMenu();calc()}});
+ else if(d.ci){C.col[d.ci]=e.target.value;e.target.closest(".trow").querySelectorAll(".sw").forEach(b=>b.classList.toggle("on",b.dataset.c.toLowerCase()===e.target.value.toLowerCase()));e.target.closest(".trow").querySelector(".cw").textContent=lowc(e.target.value)?"⚠ contraste faible":"";drawMenu();calc()}});
 $("types").addEventListener("change",e=>{const d=e.target.dataset;if(d.tn){const t=C.types.find(x=>x.k===d.tn);if(t&&!t.n.trim()){t.n="Repas";drawSw();drawMenu();calc()}}});
 $("types").addEventListener("click",e=>{const d=e.target.dataset,T=C.types;
  if(d.ck){C.col[d.ck]=d.c;drawSw();drawMenu();calc();return}
@@ -327,8 +368,8 @@ $("mdesc").checked=!!+S.md;$("madp").checked=!!+S.ma;
 $("mdesc").onchange=()=>{S.md=+$("mdesc").checked;calc()};$("madp").onchange=()=>{S.ma=+$("madp").checked;calc()};
 /* ---------- camps ---------- */
 const cdays=()=>{const n=days().length;$("cdays").textContent=n+" jour"+(n>1?"s":"")+" · "+dlab(days()[0])+" → "+dlab(days()[n-1])+(n>=31?" (maximum 31 jours)":"")};
-function drawCamps(){const o=Object.entries(S.camps).map(([k,c])=>`<option value="${k}"${k===S.ccur?" selected":""}>${esc(c.name)} · ${fdate(c.start)}</option>`).join("");$("csel").innerHTML=o;$("csel2").innerHTML=o;
- $("mcp").innerHTML=Object.entries(S.camps).filter(([k])=>k!==S.ccur).map(([k,c])=>`<option value="${k}">${esc(c.name)} · ${fdate(c.start)}</option>`).join("")||"<option value=''>(aucun autre camp)</option>";
+function drawCamps(){const o=Object.entries(S.camps).map(([k,c])=>`<option value="${esc(k)}"${k===S.ccur?" selected":""}>${esc(c.name)} · ${fdate(c.start)}</option>`).join("");$("csel").innerHTML=o;$("csel2").innerHTML=o;
+ $("mcp").innerHTML=Object.entries(S.camps).filter(([k])=>k!==S.ccur).map(([k,c])=>`<option value="${esc(k)}">${esc(c.name)} · ${fdate(c.start)}</option>`).join("")||"<option value=''>(aucun autre camp)</option>";
  $("cinfo").textContent=C.name+" · "+fdate(C.start)+" → "+fdate(C.end)}
 function fillCamp(){$("cname").value=C.name;$("cstart").value=C.start;$("cend").value=C.end;$("wa").value=C.wa;$("mtitle").value=C.mt;$("notes").value=C.notes||"";document.querySelectorAll("[data-n]").forEach(e=>e.value=C.n[e.dataset.n]);cdays()}
 function setCamp(id){S.ccur=id;C=S.camps[id];fillCamp();drawCamps();drawSw();drawDiets();drawMenu();calc()}
@@ -345,8 +386,8 @@ function drawRec(){const names=Object.keys(S.rec);if(!S.rec[S.cur])S.cur=names[0
  $("rsel").innerHTML=names.map(d=>`<option${d===S.cur?" selected":""}>${esc(d)}</option>`).join("");
  const R=S.rec[S.cur];$("rdesc").value=R?R.desc:"";
  $("rh").innerHTML="<tr><th>Ingrédient</th>"+SEC.map(s=>`<th>${s[0]}<div class="s">${s[1]}</div></th>`).join("")+"<th></th></tr>";
- $("rb").innerHTML=R?Object.entries(R.ing).map(([k,q])=>{const fx=R.fx&&k in R.fx;return `<tr><td>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${k}">${fx?"→ par personne":"→ quantité unique"}</button></div></td>${fx?`<td colspan="4"><input type="number" min="0" step="any" value="${+(R.fx[k]/fxu(k)).toFixed(3)}" data-fx="${k}" style="width:90px"> <span class="s">${fxl(k)} au total</span></td>`:q.map((v,i)=>`<td><input type="number" min="0" value="${v}" data-k="${k}" data-s="${i}"></td>`).join("")}<td><button class="x" data-rm="${k}">✕</button></td></tr>`}).join(""):"";
- $("radd").innerHTML="<option value=''>+ Ajouter un ingrédient…</option>"+Object.entries(ING).filter(([k,v])=>R&&!R.ing[k]&&!v[4]&&!S.hid.includes(k)).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join("")}
+ $("rb").innerHTML=R?Object.entries(R.ing).map(([k,q])=>{const fx=R.fx&&k in R.fx;return `<tr><td>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${esc(k)}">${fx?"→ par personne":"→ quantité unique"}</button></div></td>${fx?`<td colspan="4"><input type="number" min="0" step="any" value="${+(R.fx[k]/fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px"> <span class="s">${fxl(k)} au total</span></td>`:q.map((v,i)=>`<td><input type="number" min="0" value="${v}" data-k="${esc(k)}" data-s="${i}"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}">✕</button></td></tr>`}).join(""):"";
+ $("radd").innerHTML="<option value=''>+ Ajouter un ingrédient…</option>"+Object.entries(ING).filter(([k,v])=>R&&!R.ing[k]&&!v[4]&&!S.hid.includes(k)).map(([k,v])=>`<option value="${esc(k)}">${esc(v[0])}</option>`).join("")}
 const PG={eff:"Effectifs",reg:"Régimes & allergies",menu:"Menu",rec:"Recettes",cat:"Catalogue de prix",list:"Liste de courses",sh:"Partager / imprimer",pj:"Sauvegarde"};
 function nav(o){document.body.classList.toggle("nav",!!o);$("burger").setAttribute("aria-expanded",!!o)}
 function go(g){document.querySelectorAll(".pg").forEach(x=>x.classList.toggle("on",x.id==="g-"+g));document.querySelectorAll(".ni").forEach(x=>x.classList.toggle("on",x.dataset.g===g));$("ptitle").textContent=PG[g];nav(0);window.scrollTo(0,0);try{sessionStorage.setItem("pg",g)}catch(_){}}
@@ -377,7 +418,7 @@ $("rclr").onclick=()=>{if(!confirm("Supprimer TOUTES les recettes, tous les ingr
  Object.keys(ING).forEach(rmIng);S.rec={};Object.values(S.camps).forEach(c=>c.menu={});S.cur="";drawRec();drawMenu();drawDietEd();calc()};
 $("hrs").onclick=()=>{S.hid=[];drawRec();drawDietEd();calc()};
 /* ---------- catalogue de prix ---------- */
-function drawCat(){$("ct").innerHTML=Object.keys(ING).filter(k=>!S.hid.includes(k)).map(k=>`<tr><td>${esc(ING[k][0])}${S.pn[k]?`<div class="s">↳ ${esc(S.pn[k])}</div>`:""}</td><td>€/${ING[k][1]==="pc"?"pièce":ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${k}"></td><td><button class="x" data-chd="${k}" title="Supprimer cet ingrédient">✕</button></td></tr>`).join("")||"<tr><td>Aucun ingrédient.</td></tr>"}
+function drawCat(){$("ct").innerHTML=Object.keys(ING).filter(k=>!S.hid.includes(k)).map(k=>`<tr><td>${esc(ING[k][0])}${S.pn[k]?`<div class="s">↳ ${esc(S.pn[k])}</div>`:""}</td><td>€/${ING[k][1]==="pc"?"pièce":ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}"></td><td><button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient">✕</button></td></tr>`).join("")||"<tr><td>Aucun ingrédient.</td></tr>"}
 $("ct").addEventListener("change",e=>{const k=e.target.dataset.cp;if(k){S.prices[k]=+e.target.value||0;delete S.pn[k];calc()}});
 $("ct").addEventListener("click",e=>{const k=e.target.dataset.chd;if(!k||!confirm("Supprimer « "+ING[k][0]+" » (et le retirer des recettes) ?"))return;rmIng(k);drawRec();drawDietEd();calc()});
 $("csvx").onclick=()=>dl("Spaghetti Boni 500g;1,39\nRiz long grain Boni 1kg;1,95\nLait demi-écrémé 1L;1,05\nHaché pur bœuf 500g;4,99\nJambon cuit 4 tranches 200g;2,89\n","exemple-prix.csv","text/csv");
@@ -394,14 +435,14 @@ $("imp").onclick=()=>{const items=[];$("csv").value.split(/\r?\n/).forEach(l=>{c
 /* ---------- régimes & allergies (modifiables) ---------- */
 if(!C.dt)C.dt={};
 function drawDiets(){$("dh").innerHTML="<tr><th>Régime</th>"+SEC.map(x=>`<th>${x[0]}</th>`).join("")+"</tr>";
- $("db").innerHTML=Object.entries(DIETS).map(([k,v])=>`<tr><td>${esc(v.n)}</td>${SEC.map((x,i)=>`<td><input type="number" min="0" value="${(C.dt[k]||[])[i]||0}" data-d="${k}" data-s="${i}"></td>`).join("")}</tr>`).join("")||"<tr><td>Aucun régime. Ouvre « Modifier » pour en ajouter.</td></tr>"}
+ $("db").innerHTML=Object.entries(DIETS).map(([k,v])=>`<tr><td>${esc(v.n)}</td>${SEC.map((x,i)=>`<td><input type="number" min="0" value="${(C.dt[k]||[])[i]||0}" data-d="${esc(k)}" data-s="${i}"></td>`).join("")}</tr>`).join("")||"<tr><td>Aucun régime. Ouvre « Modifier » pour en ajouter.</td></tr>"}
 $("db").addEventListener("input",e=>{const d=e.target.dataset;if(d.d){(C.dt[d.d]=C.dt[d.d]||[0,0,0,0])[+d.s]=+e.target.value||0;calc()}});
 let dcur=null;
 function drawDietEd(){const ks=Object.keys(DIETS);if(!DIETS[dcur])dcur=ks[0]||null;
- $("dsel").innerHTML=ks.map(k=>`<option value="${k}"${k===dcur?" selected":""}>${esc(DIETS[k].n)}</option>`).join("");
+ $("dsel").innerHTML=ks.map(k=>`<option value="${esc(k)}"${k===dcur?" selected":""}>${esc(DIETS[k].n)}</option>`).join("");
  $("dname").value=dcur?DIETS[dcur].n:"";$("dname").disabled=$("ddel").disabled=$("dradd").disabled=!dcur;
- const vis=(k,sel)=>!S.hid.includes(k)||k===sel,opt=(sel,none)=>(none?`<option value=""${sel==null?" selected":""}>— retirer —</option>`:"")+Object.keys(ING).filter(k=>vis(k,sel)).map(k=>`<option value="${k}"${k===sel?" selected":""}>${esc(ING[k][0])}</option>`).join("");
- $("drules").innerHTML=dcur?Object.entries(DIETS[dcur].ex).map(([k,v])=>`<tr><td><select data-ro="${k}">${opt(k)}</select></td><td>→</td><td><select data-rs="${k}">${opt(v,1)}</select></td><td><button class="x" data-rx="${k}">✕</button></td></tr>`).join("")||'<tr><td class="s">Aucune règle : ajoutes-en une.</td></tr>':""}
+ const vis=(k,sel)=>!S.hid.includes(k)||k===sel,opt=(sel,none)=>(none?`<option value=""${sel==null?" selected":""}>— retirer —</option>`:"")+Object.keys(ING).filter(k=>vis(k,sel)).map(k=>`<option value="${esc(k)}"${k===sel?" selected":""}>${esc(ING[k][0])}</option>`).join("");
+ $("drules").innerHTML=dcur?Object.entries(DIETS[dcur].ex).map(([k,v])=>`<tr><td><select data-ro="${esc(k)}">${opt(k)}</select></td><td>→</td><td><select data-rs="${esc(k)}">${opt(v,1)}</select></td><td><button class="x" data-rx="${esc(k)}">✕</button></td></tr>`).join("")||'<tr><td class="s">Aucune règle : ajoutes-en une.</td></tr>':""}
 $("dsel").onchange=()=>{dcur=$("dsel").value;drawDietEd()};
 $("dname").onchange=()=>{if(dcur){DIETS[dcur].n=$("dname").value.trim()||"Sans nom";drawDietEd();drawDiets();calc()}};
 $("dnew").onclick=()=>{const k="d_"+Date.now().toString(36);DIETS[k]={n:"Nouveau régime",ex:{}};dcur=k;drawDietEd();drawDiets();calc();$("dname").focus();$("dname").select()};
@@ -427,7 +468,7 @@ if(S.dd&&typeof S.dd==="object")DIETS=S.dd;
  for(const c of Object.values(S.camps)){if(typeof c.name!=="string")c.name="Camp";if(!pISO(c.start))c.start=iso(nextDow(5));if(!pISO(c.end)||c.end<c.start)c.end=c.start;
   c.n=[0,1,2,3].map(i=>Math.max(0,+(Array.isArray(c.n)?c.n:[])[i]||0));c.wa=Number.isFinite(+c.wa)?+c.wa:10;if(!c.dt||typeof c.dt!=="object")c.dt={};if(typeof c.notes!=="string")c.notes="";if(typeof c.mt!=="string")c.mt="Menu du camp";
   if(!Array.isArray(c.types))c.types=[];c.types=c.types.filter(t=>t&&typeof t.k==="string"&&typeof t.n==="string");if(!c.types.length)c.types=DEFT();
-  c.col=Object.assign({...SCOL},c.col||{});c.types.forEach((t,i)=>{if(!/^#[0-9a-f]{6}$/i.test(c.col[t.k]||""))c.col[t.k]=COLS[i%COLS.length]});
+  c.col=Object.assign({...SCOL},c.col||{});for(const k in c.col)if(String(c.col[k]).toLowerCase()==="#d6457f")c.col[k]="#c2185b";c.types.forEach((t,i)=>{if(!/^#[0-9a-f]{6}$/i.test(c.col[t.k]||""))c.col[t.k]=COLS[i%COLS.length]});
   if(!c.off||typeof c.off!=="object")c.off={};for(const j of Object.keys(c.off))c.off[j]=Array.isArray(c.off[j])?c.off[j].filter(k=>c.types.some(t=>t.k===k)):[];if(!c.menu||typeof c.menu!=="object")c.menu={};
   for(const dk of Object.keys(c.menu)){const dm=c.menu[dk];for(const k of Object.keys(dm)){if(!c.types.some(t=>t.k===k))delete dm[k];else dm[k]=Array.isArray(dm[k])?dm[k].filter(r=>S.rec[r]):[]}}}})();
 const DMAP={viande:["veg"],porc:["veg","halal"],boeuf:["veg","sb"],sl:["sl"],sg:["sg"],nut:["nut"]};
@@ -441,9 +482,18 @@ addEventListener("appinstalled",()=>{$("inst").style.display="none"});
 $("inst").onclick=()=>{if(dip){dip.prompt();dip.userChoice.finally(()=>{dip=null;$("inst").style.display="none"})}};
 if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone)$("ioshint").style.display="block";
 if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+/* ---------- stockage : avertissement, protection ---------- */
+$("warnx").onclick=()=>$("exp").click();$("warnc").onclick=()=>showWarn("");
+if(badStore)showWarn("Les données enregistrées étaient illisibles : une copie brute est conservée dans le navigateur. Importe ta dernière sauvegarde (.json) depuis la page Sauvegarde.");
+addEventListener("pointerdown",()=>{try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(_){}},{once:true});
 /* ---------- projet : export / import / reset ---------- */
 $("exp").onclick=()=>{S.dd=DIETS;dl(JSON.stringify(S,null,1),"projet-patro-"+new Date().toISOString().slice(0,10)+".json","application/json")};
-$("jin").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const x=JSON.parse(t);if(!x.rec||typeof x.rec!=="object"||!(Array.isArray(x.meals)||(x.camps&&typeof x.camps==="object")))throw 0;localStorage.setItem("intendance2",t);location.reload()}catch(_){alert("Fichier invalide")}})};
+$("jin").onchange=e=>{const f=e.target.files[0],msg=t=>{$("jmsg").textContent=t};e.target.value="";if(!f)return;msg("");
+ if(f.size>3e6){msg("Import impossible : fichier trop volumineux (3 Mo maximum).");return}
+ f.text().then(t=>{let c;try{c=cleanProject(JSON.parse(t))}catch(err){msg("Import impossible : "+(err instanceof SyntaxError?"ce fichier n'est pas du JSON valide.":err.message));return}
+  if(!confirm("Remplacer toutes les données actuelles par ce projet ?"))return;
+  try{localStorage.setItem("intendance2",JSON.stringify(c))}catch(err){msg("Import impossible : la mémoire du navigateur est pleine.");return}
+  location.reload()})};
 $("rst").onclick=()=>{if(confirm("Tout effacer ? Exporte d'abord une sauvegarde.")){localStorage.removeItem("intendance2");location.reload()}};
 go((()=>{try{const g=sessionStorage.getItem("pg");return PG[g]?g:"eff"}catch(_){return"eff"}})());fillCamp();drawCamps();drawSw();drawDiets();drawDietEd();drawMenu();drawRec();calc();
 </script></body></html>
