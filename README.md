@@ -9,21 +9,35 @@ Aucune installation : c'est une page web unique (`index.html`) qui fonctionne
 sur ordinateur, tablette et téléphone. Les données restent sur ton appareil
 (stockage du navigateur) ; rien n'est envoyé sur un serveur.
 
-## Fonctions
+## Prise en main
 
-- **Un projet par camp** : nom, dates de début et de fin, effectifs par section (Benjas, Chevaliers-Étincelles, Conquérants-Alpines, Animateurs), marge de pertes, régimes/allergies et menu. On peut créer, dupliquer, supprimer et changer de camp. Recettes, ingrédients et prix sont partagés entre les camps.
-- **Régimes & allergies** modifiables : végétarien, halal, sans lactose, sans gluten, etc. L'appli retire l'ingrédient concerné et ajoute le substitut à acheter. On peut créer ses propres régimes.
-- **Menu** : un tableau par jour (« Vendredi 22/03 ») avec Matin, Midi et Soir ; les plats se glissent d'un repas ou d'un jour à l'autre ; une couleur au choix pour chaque repas ; menu imprimable ; copie du menu d'un autre camp.
+1. Ouvre le menu ☰ (en haut à gauche) : chaque page s'y trouve, une à la fois.
+2. **Camp & effectifs** : donne un nom au camp, ses dates de début et de fin, et le nombre de personnes par section.
+3. **Régimes & allergies** : indique combien de personnes sont concernées, par section.
+4. **Menu** : compose les repas (Matin, Midi, Soir) de chaque jour ; glisse ⠿ pour déplacer un plat.
+5. **Liste de courses** : consulte les quantités et le budget, puis imprime ou partage la liste.
+6. **Sauvegarde** : exporte le projet (`.json`) pour ne rien perdre.
+
+## Pages et fonctions
+
+- **Camp & effectifs** : un projet par camp (nom, dates, effectifs par section – Benjas, Chevaliers-Étincelles, Conquérants-Alpines, Animateurs –, marge de pertes, régimes/allergies et menu). On peut créer, dupliquer, supprimer et changer de camp (sélecteur dans le menu ☰). Recettes, ingrédients et prix sont partagés entre les camps.
+- **Régimes & allergies** : végétarien, halal, sans lactose, sans gluten, etc. L'appli retire l'ingrédient concerné et ajoute le substitut à acheter. Les régimes sont modifiables : on peut en créer, les renommer, en supprimer et définir les règles de remplacement.
+- **Menu** : un tableau par jour (« Vendredi 22/03 ») avec Matin, Midi et Soir, d'après les dates du camp. Les plats se glissent d'un repas ou d'un jour à l'autre. Chaque repas a sa propre couleur. Menu imprimable (avec ou sans descriptions et adaptations) et copie du menu d'un autre camp.
 - **Recettes** : quantités par personne et par section, ingrédients personnalisés.
-- **Catalogue de prix** : saisie à la main ou import d'une liste de produits (CSV/texte, `nom ; prix`).
-- **Liste de courses** et coût total / par personne / par repas.
-- **Partage et impression** : liste, menu et recettes par WhatsApp, mail, copie, impression ou fichier HTML.
-- **Sauvegarde** : export / import en `.json` pour sauvegarder ou transmettre le travail ; vider les recettes/ingrédients/menus ou réinitialiser l'application.
+- **Catalogue de prix** : saisie à la main ou import d'une liste de produits (CSV/texte, `nom ; prix`) ; l'appli lit le poids dans le nom du produit et retient le moins cher pour chaque ingrédient.
+- **Liste de courses** : quantités, coût total, par personne et par repas.
+- **Partager / imprimer** : liste, menu et recettes par WhatsApp, mail, partage du téléphone, copie, impression ou fichier HTML (utile si l'impression directe ne marche pas sur l'appareil).
+- **Sauvegarde** : export / import du projet en `.json`. Une « zone sensible » permet de vider les recettes, ingrédients et menus (les camps sont conservés) ou de tout réinitialiser (camps compris, retour aux données d'exemple).
 
 ## Conseils
 
-- Exporte régulièrement ton projet (`.json`) : vider les données du navigateur efface la sauvegarde locale.
+- Les données sont enregistrées **dans le navigateur de l'appareil** : change d'appareil ou vide le navigateur, et elles disparaissent. Exporte régulièrement ton projet (`.json`) et importe-le sur l'autre appareil pour le retrouver.
+- Si tu changes les dates d'un camp, les plats restent attachés au numéro du jour : le menu n'est pas perdu, seuls les jours de la semaine affichés se décalent.
 - Vérifie toujours les étiquettes (traces possibles) et confirme les allergies graves avec les parents.
+
+## Pour les développeurs
+
+Tout le code (HTML, CSS, JavaScript) est dans `index.html`, sans dépendance ni étape de compilation. Pour essayer en local, ouvre simplement le fichier dans un navigateur. Le site est publié par GitHub Pages à partir de la branche `main`.
 
 ## Licence
 
