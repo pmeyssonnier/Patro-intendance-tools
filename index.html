@@ -153,14 +153,14 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 <section class="card"><h2>Liste de courses</h2>
 <div class="w"><table><thead><tr><th>Produit</th><th>Quantité</th><th>Prix €/kg, L, pc</th><th>Coût</th></tr></thead><tbody id="list"></tbody></table></div>
 <div class="t"><span>Total : <b id="tot"></b></span><span>Par personne : <b id="pp"></b></span><span class="s" id="np2"></span></div>
-<p class="np"><button id="plist">🖨️ Imprimer la liste</button></p></section>
+<p class="np"><button id="plist">🖨️ Imprimer la liste</button> <button id="lcsv" class="x">📊 Exporter en CSV</button></p></section>
 <section class="card"><h2>Coût par repas</h2><div class="w"><table><tbody id="pm"></tbody></table></div></section></div>
 
 <div class="pg" id="g-sh">
 <section class="card np"><h2>Partager / imprimer</h2>
 <div class="g"><div><label>Quoi ?</label><select id="shw" aria-label="Document à partager ou imprimer"><option value="list">Liste de courses</option><option value="menu">Menu</option><option value="rec">Recette affichée</option><option value="recs">Toutes les recettes</option></select></div></div>
-<p><button id="sw">💬 WhatsApp</button> <button id="sm">✉️ Mail</button> <button id="sn" class="x">📤 Partager…</button> <button id="sc" class="x">📋 Copier</button> <button id="sp" class="x">🖨️ Imprimer</button> <button id="sd" class="x">⬇️ Fichier HTML</button> <span class="s" id="shm"></span></p>
-<p class="s">« Fichier HTML » : si l'impression directe ne fonctionne pas sur ton appareil, télécharge le fichier, ouvre-le et imprime-le.</p></section>
+<p><button id="sw">💬 WhatsApp</button> <button id="sm">✉️ Mail</button> <button id="sn" class="x">📤 Partager…</button> <button id="sc" class="x">📋 Copier</button> <button id="sp" class="x">🖨️ Imprimer</button> <button id="sd" class="x">⬇️ Fichier HTML</button> <button id="sx" class="x">📊 Fichier CSV (Excel)</button> <span class="s" id="shm"></span></p>
+<p class="s">« Fichier HTML » : si l'impression directe ne fonctionne pas sur ton appareil, télécharge le fichier, ouvre-le et imprime-le. « Fichier CSV » s'ouvre directement dans Excel (accents et virgules décimales corrects), pratique pour le budget.</p></section>
 
 </div><div class="pg" id="g-pj">
 <section class="card np"><h2>Sauvegarde du projet</h2>
@@ -304,7 +304,22 @@ function recHTML(names){return `<div class="mp pvx" style="${cvars()}"><h2>Recet
 const txtList=()=>"🛒 Liste de courses – Patro Sainte-Suzanne ("+nn()+" pers.)\n\n"+(LAST.keys.map(k=>"☐ "+ING[k][0]+" : "+qty(k,LAST.tot[k])).join("\n")||"(vide)")+"\n\nTotal estimé : "+eur(LAST.sum);
 const txtMenu=()=>"🍽️ "+(C.mt||"Menu")+" – "+C.name+" ("+fdate(C.start)+" → "+fdate(C.end)+")\n\n"+days().map((d,i)=>dlab(d)+"\n"+dtypes(i).map(({k,n:lab})=>{const rs=slotArr(i,k);return rs.length?"  • "+lab+" : "+rs.join(" + "):""}).filter(Boolean).join("\n")).join("\n\n");
 const txtRec=n=>{const R=S.rec[n];return R?"📖 "+n+"\n"+(R.desc?R.desc+"\n":"")+"Par personne ("+SEC.map(s=>s[0]).join(" / ")+") :\n"+Object.entries(R.ing).map(([k,q])=>"- "+ING[k][0]+" : "+(R.fx&&k in R.fx?qty(k,R.fx[k])+" au total":q.join(" / ")+" "+ING[k][1])).join("\n"):""};
-const SH={list:["Liste de courses",txtList,listHTML],menu:["Menu",txtMenu,menuHTML],rec:["Recette",()=>txtRec(S.cur),()=>recHTML(S.rec[S.cur]?[S.cur]:[])],recs:["Recettes",()=>Object.keys(S.rec).map(txtRec).join("\n\n"),()=>recHTML(Object.keys(S.rec))]};
+/* ---------- export CSV (Excel en français : séparateur « ; », virgule décimale, UTF-8 avec BOM) ---------- */
+const cs=v=>{let s=String(v==null?"":v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return /[;"\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+const cn=(v,d)=>(+v).toFixed(d==null?2:d).replace(".",","),cq=v=>String(v).replace(".",",");
+const csvOut=rows=>"﻿"+rows.map(r=>r.map(cs).join(";")).join("\r\n")+"\r\n";
+const qparts=(k,q)=>{const u=ING[k][1];if(u==="pc")return[String(Math.ceil(q)),"pc"];return q>=1000?[cn(q/1000),u==="ml"?"L":"kg"]:[String(Math.round(q)),u]};
+function csvList(){const r=[["Produit","Quantité","Unité","Prix unitaire (€)","Prix par","Coût (€)","Remarque"]],n=nn();
+ LAST.keys.forEach(k=>{const[q,u]=qparts(k,LAST.tot[k]);r.push([ING[k][0],q,u,cn(price(k)),ul(k),cn(LAST.tot[k]/per(k)*price(k)),price(k)?"":"prix manquant"])});
+ r.push([]);r.push(["TOTAL","","","","",cn(LAST.sum),""]);if(n)r.push(["Par personne","","","","",cn(LAST.sum/n),""]);
+ r.push([]);r.push(["Camp",C.name]);r.push(["Dates",fdate(C.start)+" → "+fdate(C.end)]);r.push(["Personnes",n]);return csvOut(r)}
+function csvMenu(){const r=[["Date","Jour","Repas","Plat","Description","Adaptations (régimes)"]];
+ days().forEach((d,i)=>dtypes(i).forEach(t=>slotArr(i,t.k).forEach(x=>{const R=S.rec[x];r.push([dd2(d)+"/"+d.getFullYear(),WD[d.getDay()],t.n,x,R?R.desc:"",meal(x).adapt.join(" | ")])})));return csvOut(r)}
+function csvRec(names){const r=[["Recette","Ingrédient","Unité",...SEC.map(s=>s[0]+" (par personne)"),"Quantité totale (si unique)"]];
+ names.forEach(n=>{const R=S.rec[n];if(!R)return;for(const[k,q]of Object.entries(R.ing)){const fx=R.fx&&k in R.fx;r.push([n,ING[k][0],ING[k][1],...(fx?["","","",""]:q.map(cq)),fx?cq(R.fx[k]):""])}});return csvOut(r)}
+const slug=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"export";
+const csvName=t=>slug(t)+"-"+slug(C.name)+"-"+iso(new Date())+".csv",dlCsv=(t,txt)=>dl(txt,csvName(t),"text/csv;charset=utf-8");
+const SH={list:["Liste de courses",txtList,listHTML,csvList],menu:["Menu",txtMenu,menuHTML,csvMenu],rec:["Recette",()=>txtRec(S.cur),()=>recHTML(S.rec[S.cur]?[S.cur]:[]),()=>csvRec(S.rec[S.cur]?[S.cur]:[])],recs:["Recettes",()=>Object.keys(S.rec).map(txtRec).join("\n\n"),()=>recHTML(Object.keys(S.rec)),()=>csvRec(Object.keys(S.rec))]};
 const shk=()=>SH[$("shw").value];
 function printHTML(html){$("pv").innerHTML=html;document.body.classList.add("pr");
  setTimeout(()=>{try{window.print()}catch(e){alert("Impression impossible ici : utilise « Fichier HTML » puis imprime le fichier.")}setTimeout(()=>document.body.classList.remove("pr"),1500)},80)}
@@ -316,6 +331,8 @@ $("plist").onclick=()=>printHTML(listHTML());
 $("pmenu").onclick=()=>printHTML(menuHTML());
 $("sp").onclick=()=>printHTML(shk()[2]());
 $("sd").onclick=()=>dlHTML(shk()[2](),"Patro "+shk()[0]);
+$("sx").onclick=()=>dlCsv(shk()[0],shk()[3]());
+$("lcsv").onclick=()=>dlCsv("Liste de courses",csvList());
 $("sw").onclick=()=>{const t=shtxt();if(t)window.open("https://wa.me/?text="+encodeURIComponent(t),"_blank","noopener")};
 $("sm").onclick=()=>{const t=shtxt();if(t)location.href="mailto:?subject="+encodeURIComponent("Patro Sainte-Suzanne – "+shk()[0])+"&body="+encodeURIComponent(t)};
 if(!navigator.share)$("sn").style.display="none";
