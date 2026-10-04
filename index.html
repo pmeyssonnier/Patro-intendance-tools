@@ -122,7 +122,7 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 <div><label>Unité</label><select id="iunit"><option value="g">Poids : g (prix au kg)</option><option value="ml">Liquide : ml (prix au L)</option><option value="pc">Pièce (prix à la pièce)</option></select></div>
 <div><label>Attention régime</label><select id="idiet"><option value="">Aucun</option><option value="viande">Viande / poisson</option><option value="porc">Porc</option><option value="boeuf">Bœuf</option><option value="sl">Lactose</option><option value="sg">Gluten</option><option value="nut">Fruits à coque / arachides</option></select></div>
 <div style="align-self:end"><button id="iok">Ajouter</button> <button id="ino" class="x">Annuler</button></div></div>
-<p style="margin-top:18px"><button id="rclr" class="x" style="color:#d33;border-color:#d33">🗑️ Tout supprimer (recettes, ingrédients, menu)</button></p></section></div>
+</section></div>
 
 <div class="pg" id="g-cat"><section class="card"><h2>Catalogue de prix</h2>
 <p class="s"><b>À quoi ça sert ?</b> À remplir les prix sans les taper un par un. Deux façons, au choix (aucune n'est obligatoire) :</p>
@@ -149,7 +149,12 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 </div><div class="pg" id="g-pj">
 <section class="card np"><h2>Sauvegarde du projet</h2>
 <p class="s">Sauvegarde tout (recettes, menu, effectifs, régimes, prix) dans un fichier <b>.json</b> pour le retrouver ou le passer à un autre animateur.</p>
-<p><button id="exp">💾 Exporter le projet (.json)</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json" hidden></label> <button id="rst" class="x">↺ Réinitialiser</button></p></section>
+<p><button id="exp">💾 Exporter le projet (.json)</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json" hidden></label> </p>
+<h2 style="margin-top:18px">Zone sensible</h2>
+<p><button id="rclr" class="x" style="color:#d33;border-color:#d33">🗑️ Vider recettes, ingrédients et menus</button></p>
+<p class="s">Supprime toutes les recettes, tous les ingrédients et les menus de tous les camps. Les camps (dates, effectifs, régimes) sont conservés.</p>
+<p><button id="rst" class="x" style="color:#d33;border-color:#d33">↺ Réinitialiser l'application</button></p>
+<p class="s">Efface <b>tout</b> (camps compris) et remet les données d'exemple du départ.</p></section>
 
 </div>
 <footer>Outil fait par le PSS pour les patros ⛺</footer>
