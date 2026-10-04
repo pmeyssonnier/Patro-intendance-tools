@@ -14,7 +14,6 @@ main{max-width:900px;margin:auto}h1{font-size:1.5rem;margin:0 0 4px}h2{font-size
 label{display:block;font-size:.78rem;color:var(--mu)}
 input,select,textarea,button{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:7px 9px;width:100%;box-sizing:border-box}
 button{width:auto;cursor:pointer;background:var(--ac);color:#fff;border:0}button.x{background:transparent;color:var(--mu);border:1px solid var(--bd)}
-.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{background:var(--card);color:var(--tx);border:1px solid var(--bd)}.tabs button.on{background:var(--ac);color:#fff}
 .row{display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px;margin-bottom:8px}
 .mrow{grid-template-columns:auto 1fr 1.4fr auto;align-items:center}
 .hd{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;padding:4px 8px;color:var(--mu);font-size:1.3rem;line-height:1}
@@ -37,17 +36,41 @@ footer{text-align:center;color:var(--mu);font-size:.85rem;padding:18px 0 8px}
 .mt tr.day td{background:var(--mcl);color:#1f2a22;font-weight:700;text-transform:capitalize;border-left:5px solid var(--mc)}
 .mt .ad{font-size:.8rem;color:#5c6f62;font-style:italic}.mt td.ck{width:1.4em;text-align:center}.mt tr{break-inside:avoid}
 #pv{display:none}
-.p{display:none}.p.on{display:block}
-@media print{.np,#p1,#p2,.tabs,button,#exp,#rst{display:none!important}body{background:#fff;color:#000;padding:0}.card{border:0;margin:8px 0}tr{break-inside:avoid}td input{border:0;background:none;width:auto}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;background:var(--bg);margin:-16px -16px 10px;padding:8px 12px;border-bottom:1px solid var(--bd)}
+.burger{background:transparent;color:var(--tx);font-size:1.6rem;line-height:1;padding:2px 10px;border:0}#ptitle{font-weight:600}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}body.nav #scrim{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;left:0;bottom:0;width:min(300px,85vw);background:var(--card);border-right:1px solid var(--bd);z-index:40;transform:translateX(-100%);transition:transform .22s;overflow-y:auto;padding:16px;padding-top:max(16px,env(safe-area-inset-top));box-sizing:border-box}body.nav #drawer{transform:none}
+.dh{display:flex;align-items:center;gap:12px;margin-bottom:6px}.dt{font-weight:700;font-size:1.1rem;line-height:1.2}
+.dsec{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin:18px 6px 6px}
+.ni{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;color:var(--tx);border:0;padding:11px 12px;border-radius:10px;font-size:1rem}
+.ni.on{background:color-mix(in srgb,var(--ac) 16%,transparent);color:var(--ac);font-weight:600}.dfoot{margin:24px 6px 0}
+.pg{display:none}.pg.on{display:block}
+@media(min-width:900px){#drawer{transform:none}#scrim{display:none}.burger{display:none}body{padding-left:316px}.top{margin:-16px -16px 10px 0}}
+@media print{.np,.top,#drawer,#scrim,button,#exp,#rst{display:none!important}body{background:#fff;color:#000;padding:0!important}.card{border:0;margin:8px 0}tr{break-inside:avoid}td input{border:0;background:none;width:auto}
 body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background:#fff!important;color:#000!important}.mp{border:0;padding:0}}
 </style></head><body><main>
-<header><label id="logo" title="Clique pour changer le logo (sur cet appareil)"><img id="logoimg" alt="Logo Patro Sainte-Suzanne"><input type="file" id="logof" accept="image/*" hidden></label>
-<div><h1>Patro Sainte-Suzanne</h1><div class="s">Intendance de camp ⛺</div></div></header>
-<div class="tabs np" id="tabs"></div>
+<div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span></div>
+<div id="scrim" class="np"></div>
+<nav id="drawer" class="np" aria-label="Navigation">
+<div class="dh"><label id="logo" title="Clique pour changer le logo (sur cet appareil)"><img id="logoimg" alt="Logo Patro Sainte-Suzanne"><input type="file" id="logof" accept="image/*" hidden></label><div><div class="dt">Patro Sainte-Suzanne</div><div class="s">Intendance de camp ⛺</div></div></div>
+<div class="dsec">Préparer</div>
+<button class="ni on" data-g="eff"><span>👥</span>Effectifs</button>
+<button class="ni" data-g="reg"><span>🥗</span>Régimes &amp; allergies</button>
+<button class="ni" data-g="menu"><span>🍽️</span>Menu</button>
+<button class="ni" data-g="rec"><span>📖</span>Recettes</button>
+<button class="ni" data-g="cat"><span>🏷️</span>Catalogue de prix</button>
+<div class="dsec">Résultats</div>
+<button class="ni" data-g="list"><span>🛒</span>Liste de courses<b class="s" id="ntot" style="margin-left:auto"></b></button>
+<button class="ni" data-g="sh"><span>📤</span>Partager / imprimer</button>
+<div class="dsec">Projet</div>
+<button class="ni" data-g="pj"><span>💾</span>Sauvegarde</button>
+<div class="s dfoot">Outil fait par le PSS pour les patros ⛺</div>
+</nav>
 
-<div class="p on" id="p0">
+<div class="pg on" id="g-eff">
 <section class="card np"><h2>Effectifs par section</h2><div class="g" id="cnt"></div>
 <div class="g" style="margin-top:10px"><div><label>Marge / pertes (%)</label><input id="wa" type="number" min="0" value="10"></div></div></section>
+</div><div class="pg" id="g-reg">
 <section class="card np"><h2>Régimes &amp; allergies</h2>
 <p class="s">Nombre de personnes concernées, par section. L'appli retire l'ingrédient pour elles et ajoute le substitut à acheter.</p>
 <div class="w"><table><thead id="dh"></thead><tbody id="db"></tbody></table></div>
@@ -60,6 +83,7 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 <p><button id="dradd" class="x">+ Ajouter une règle</button></p></details>
 <label style="margin-top:10px">Autres allergies / remarques (nom, allergie, à surveiller)</label><textarea id="notes" rows="3"></textarea>
 <p class="s">⚠️ Vérifie toujours les étiquettes (traces possibles) et confirme les allergies graves avec les parents.</p></section>
+</div><div class="pg" id="g-menu">
 <section class="card np"><h2>Menu</h2>
 <p class="s">Glisse ⠿ pour réordonner les repas. Commence l'intitulé par le jour (ex. « Samedi midi ») pour regrouper par jour.</p>
 <div id="meals"></div><button id="add" class="x">+ Ajouter un repas</button>
@@ -71,7 +95,7 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 <p><button id="pmenu">🖨️ Imprimer le menu</button></p></section>
 </div>
 
-<div class="p" id="p1"><section class="card"><h2>Recettes</h2>
+<div class="pg" id="g-rec"><section class="card"><h2>Recettes</h2>
 <div class="row"><select id="rsel"></select><button id="rnew" class="x">+ Nouvelle recette</button><button id="rdel" class="x">Supprimer</button></div>
 <div class="row" id="rform" style="display:none;grid-template-columns:1fr auto auto"><input id="rname" placeholder="Nom de la recette"><button id="rok">Créer</button><button id="rno" class="x">Annuler</button></div>
 <label>Description / déroulé</label><textarea id="rdesc" rows="4"></textarea>
@@ -84,7 +108,7 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 <div style="align-self:end"><button id="iok">Ajouter</button> <button id="ino" class="x">Annuler</button></div></div>
 <p style="margin-top:18px"><button id="rclr" class="x" style="color:#d33;border-color:#d33">🗑️ Tout supprimer (recettes, ingrédients, menu)</button></p></section></div>
 
-<div class="p" id="p2"><section class="card"><h2>Catalogue de prix</h2>
+<div class="pg" id="g-cat"><section class="card"><h2>Catalogue de prix</h2>
 <p class="s"><b>À quoi ça sert ?</b> À remplir les prix sans les taper un par un. Deux façons, au choix (aucune n'est obligatoire) :</p>
 <p class="s">① <b>Tape le prix</b> directement dans le tableau ci-dessous (ou dans la liste de courses).<br>② <b>Importe une liste de produits</b> d'un magasin : une ligne par produit, <b>nom ; prix</b>. L'appli lit le poids dans le nom (« Riz 1kg ; 1,95 » → 1,95 €/kg) et prend, pour chaque ingrédient, le produit <b>le moins cher</b> qui correspond.</p>
 <textarea id="csv" rows="4" placeholder="Spaghetti Boni 500g;1,39&#10;Riz long grain Boni 1kg;1,95"></textarea>
@@ -93,21 +117,25 @@ body.pr main{display:none!important}body.pr #pv{display:block}body.pr{background
 <div class="w" style="max-height:380px;overflow-y:auto"><table><thead><tr><th>Ingrédient</th><th>Unité</th><th>Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
 <p><button id="hrs" class="x">Restaurer les ingrédients de base</button></p></section></div>
 
+<div class="pg" id="g-list">
 <section class="card"><h2>Liste de courses</h2>
 <div class="w"><table><thead><tr><th>Produit</th><th>Quantité</th><th>Prix €/kg, L, pc</th><th>Coût</th></tr></thead><tbody id="list"></tbody></table></div>
 <div class="t"><span>Total : <b id="tot"></b></span><span>Par personne : <b id="pp"></b></span><span class="s" id="np2"></span></div>
 <p class="np"><button id="plist">🖨️ Imprimer la liste</button></p></section>
-<section class="card"><h2>Coût par repas</h2><div class="w"><table><tbody id="pm"></tbody></table></div></section>
+<section class="card"><h2>Coût par repas</h2><div class="w"><table><tbody id="pm"></tbody></table></div></section></div>
 
+<div class="pg" id="g-sh">
 <section class="card np"><h2>Partager / imprimer</h2>
 <div class="g"><div><label>Quoi ?</label><select id="shw"><option value="list">Liste de courses</option><option value="menu">Menu</option><option value="rec">Recette affichée</option><option value="recs">Toutes les recettes</option></select></div></div>
 <p><button id="sw">💬 WhatsApp</button> <button id="sm">✉️ Mail</button> <button id="sn" class="x">📤 Partager…</button> <button id="sc" class="x">📋 Copier</button> <button id="sp" class="x">🖨️ Imprimer</button> <button id="sd" class="x">⬇️ Fichier HTML</button> <span class="s" id="shm"></span></p>
 <p class="s">« Fichier HTML » : si l'impression directe ne fonctionne pas sur ton appareil, télécharge le fichier, ouvre-le et imprime-le.</p></section>
 
-<section class="card np"><h2>Projet</h2>
+</div><div class="pg" id="g-pj">
+<section class="card np"><h2>Sauvegarde du projet</h2>
 <p class="s">Sauvegarde tout (recettes, menu, effectifs, régimes, prix) dans un fichier <b>.json</b> pour le retrouver ou le passer à un autre animateur.</p>
 <p><button id="exp">💾 Exporter le projet (.json)</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json" hidden></label> <button id="rst" class="x">↺ Réinitialiser</button></p></section>
 
+</div>
 <footer>Outil fait par le PSS pour les patros ⛺</footer>
 </main><div id="pv"></div>
 <script>
@@ -152,7 +180,7 @@ function calc(){
  let sum=0;const keys=Object.keys(tot).filter(k=>tot[k]>0).sort((a,b)=>ING[a][0].localeCompare(ING[b][0],"fr"));
  $("list").innerHTML=keys.map(k=>{const c=tot[k]/per(k)*price(k);sum+=c;return `<tr><td>${esc(ING[k][0])}${price(k)?"":'<div class="s" style="color:#d33">⚠ prix manquant</div>'}${S.pn[k]?`<div class="s">↳ ${esc(S.pn[k])}</div>`:""}</td><td>${qty(k,tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k)?"":"nop"}" data-p="${k}"></td><td>${eur(c)}</td></tr>`}).join("")||"<tr><td>Aucun repas</td></tr>";
  LAST={keys,tot,sum,pm};
- const n=nn();$("tot").textContent=eur(sum);$("pp").textContent=n?eur(sum/n):"–";const miss=keys.filter(k=>!price(k)).length;$("np2").textContent=n+" personnes · "+S.meals.length+" repas"+(miss?" · ⚠ "+miss+" prix à renseigner (total sous-estimé)":"");$("np2").style.color=miss?"#d33":"";
+ const n=nn();$("tot").textContent=eur(sum);$("ntot").textContent=eur(sum);$("pp").textContent=n?eur(sum/n):"–";const miss=keys.filter(k=>!price(k)).length;$("np2").textContent=n+" personnes · "+S.meals.length+" repas"+(miss?" · ⚠ "+miss+" prix à renseigner (total sous-estimé)":"");$("np2").style.color=miss?"#d33":"";
  $("pm").innerHTML=pm.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${eur(r[2])}</td><td class="s" style="white-space:normal">${esc(r[3].join(" · "))}</td></tr>`).join("");
  $("mprev").innerHTML=menuHTML();drawCat();save()}
 /* ---------- documents imprimables / partageables ---------- */
@@ -195,7 +223,7 @@ const dend=ok=>{if(!dg)return;const{from,to}=dg;dg=null;clr();if(ok&&from!==to){
 $("meals").addEventListener("pointerup",()=>dend(true));$("meals").addEventListener("pointercancel",()=>dend(false));
 $("meals").addEventListener("change",e=>{const t=e.target;if(t.dataset.i===undefined||t.dataset.f===undefined)return;S.meals[+t.dataset.i][+t.dataset.f]=t.value;calc()});
 $("meals").addEventListener("click",e=>{const i=e.target.dataset.del;if(i!==undefined){S.meals.splice(+i,1);drawMeals();calc()}});
-$("add").onclick=()=>{const n=Object.keys(S.rec);if(!n.length){alert("Crée d'abord une recette (onglet Recettes).");return}S.meals.push(["Nouveau repas",n[0]]);drawMeals();calc()};
+$("add").onclick=()=>{const n=Object.keys(S.rec);if(!n.length){alert("Crée d'abord une recette (menu Recettes).");return}S.meals.push(["Nouveau repas",n[0]]);drawMeals();calc()};
 const drawSw=()=>{$("sws").innerHTML=COLS.map(c=>`<button class="sw${c===S.mc?" on":""}" style="background:${c}" data-c="${c}" title="${c}"></button>`).join("");$("mcol").value=S.mc};
 $("sws").addEventListener("click",e=>{const c=e.target.dataset.c;if(c){S.mc=c;drawSw();calc()}});
 $("mcol").addEventListener("input",()=>{S.mc=$("mcol").value;drawSw();calc()});
@@ -209,8 +237,12 @@ function drawRec(){const names=Object.keys(S.rec);if(!S.rec[S.cur])S.cur=names[0
  $("rh").innerHTML="<tr><th>Ingrédient</th>"+SEC.map(s=>`<th>${s[0]}<div class="s">${s[1]}</div></th>`).join("")+"<th></th></tr>";
  $("rb").innerHTML=R?Object.entries(R.ing).map(([k,q])=>`<tr><td>${esc(ING[k][0])} (${ING[k][1]})</td>${q.map((v,i)=>`<td><input type="number" min="0" value="${v}" data-k="${k}" data-s="${i}"></td>`).join("")}<td><button class="x" data-rm="${k}">✕</button></td></tr>`).join(""):"";
  $("radd").innerHTML="<option value=''>+ Ajouter un ingrédient…</option>"+Object.entries(ING).filter(([k,v])=>R&&!R.ing[k]&&!v[4]&&!S.hid.includes(k)).map(([k,v])=>`<option value="${k}">${esc(v[0])}</option>`).join("")}
-function tabs(){const T=["Groupe & menu","Recettes","Catalogue"];$("tabs").innerHTML=T.map((t,i)=>`<button data-t="${i}"${i?"":' class="on"'}>${t}</button>`).join("")}
-$("tabs").onclick=e=>{const t=e.target.dataset.t;if(t===undefined)return;[...$("tabs").children].forEach((b,i)=>b.classList.toggle("on",i==t));[0,1,2].forEach(i=>$("p"+i).classList.toggle("on",i==t))};
+const PG={eff:"Effectifs",reg:"Régimes & allergies",menu:"Menu",rec:"Recettes",cat:"Catalogue de prix",list:"Liste de courses",sh:"Partager / imprimer",pj:"Sauvegarde"};
+function nav(o){document.body.classList.toggle("nav",!!o);$("burger").setAttribute("aria-expanded",!!o)}
+function go(g){document.querySelectorAll(".pg").forEach(x=>x.classList.toggle("on",x.id==="g-"+g));document.querySelectorAll(".ni").forEach(x=>x.classList.toggle("on",x.dataset.g===g));$("ptitle").textContent=PG[g];nav(0);window.scrollTo(0,0);try{sessionStorage.setItem("pg",g)}catch(_){}}
+$("burger").onclick=()=>nav(!document.body.classList.contains("nav"));$("scrim").onclick=()=>nav(0);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")nav(0)});
+$("drawer").addEventListener("click",e=>{const b=e.target.closest(".ni");if(b)go(b.dataset.g)});
 $("cnt").innerHTML=SEC.map((s,i)=>`<div><label>${s[0]} (${s[1]})</label><input type="number" min="0" data-c="${i}"></div>`).join("");
 document.querySelectorAll("[data-c]").forEach(e=>{e.value=S.n[e.dataset.c];e.addEventListener("input",()=>{S.n[e.dataset.c]=+e.value||0;calc()})});
 $("wa").value=S.wa;$("wa").addEventListener("input",()=>{S.wa=+$("wa").value||0;calc()});
@@ -289,5 +321,5 @@ $("iok").onclick=()=>{const n=$("iname").value.trim();if(!n)return;const k="c_"+
 $("exp").onclick=()=>{S.dd=DIETS;dl(JSON.stringify(S,null,1),"projet-patro-"+new Date().toISOString().slice(0,10)+".json","application/json")};
 $("jin").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const x=JSON.parse(t);if(!x.rec||typeof x.rec!=="object"||!Array.isArray(x.meals))throw 0;localStorage.setItem("intendance2",t);location.reload()}catch(_){alert("Fichier invalide")}})};
 $("rst").onclick=()=>{if(confirm("Tout effacer ? Exporte d'abord une sauvegarde.")){localStorage.removeItem("intendance2");location.reload()}};
-tabs();drawSw();drawDiets();drawDietEd();drawMeals();drawRec();calc();
+go((()=>{try{const g=sessionStorage.getItem("pg");return PG[g]?g:"eff"}catch(_){return"eff"}})());drawSw();drawDiets();drawDietEd();drawMeals();drawRec();calc();
 </script></body></html>
