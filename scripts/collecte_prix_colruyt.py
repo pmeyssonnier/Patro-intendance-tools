@@ -23,8 +23,10 @@ except ImportError:  # exécution hors Colab (tests locaux)
     APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
 
 ACTOR = "studio-amba~colruyt-scraper"  # à vérifier
-STORE_ID = ""                          # peut être inutile (prix identiques dans tous les magasins ?)
-MAX_ITEMS = 30
+STORE_ID = 871                         # placeId Colruyt (871 = défaut de l'acteur ; les prix varient peu d'un magasin à l'autre)
+MAX_ITEMS = 10                         # résultats par recherche : 2 $ / 1 000 résultats, donc 10 suffit pour le moins cher
+LANGUE = "fr"                          # langue des noms de produits ("nl" ou "fr")
+PROXY_BE = False                       # True = proxys résidentiels belges (conseillés par l'acteur si Colruyt bloque ; peuvent coûter en plus)
 SORTIE = "prix_colruyt.json"
 
 # Les id sont IDENTIQUES à ceux de js/data-defaults.js (objet ING).
@@ -107,7 +109,13 @@ def norm_unite(u):
 
 def appeler_apify(query):
     url = f"https://api.apify.com/v2/acts/{ACTOR}/run-sync-get-dataset-items"
-    payload = {"searchQuery": query, "storeId": STORE_ID, "maxItems": MAX_ITEMS}  # à vérifier
+    payload = {"searchQuery": query, "maxResults": MAX_ITEMS, "language": LANGUE, "placeId": STORE_ID}
+    if PROXY_BE:
+        payload["proxyConfiguration"] = {
+            "useApifyProxy": True,
+            "apifyProxyGroups": ["RESIDENTIAL"],
+            "apifyProxyCountry": "BE",
+        }
     # jeton dans un en-tête (et non dans l'URL) : il n'apparaît pas dans les messages d'erreur
     r = requests.post(
         url,
@@ -196,7 +204,7 @@ print(f"\n{len(resultats)}/{len(INGREDIENTS)} ingrédients trouvés. Sans résul
 
 export = {
     "source": "Colruyt via Apify",
-    "magasin": STORE_ID,
+    "magasin": str(STORE_ID),
     "date_maj": datetime.datetime.now().isoformat(timespec="seconds"),
     "ingredients": resultats,
 }
