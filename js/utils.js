@@ -3,6 +3,15 @@
 
 const $ = (i) => document.getElementById(i);
 
+// Date « AAAA-MM-JJ » réelle : « 2026-02-30 » est refusée au lieu d'être décalée au 2 mars.
+// Ici (et non dans state.js) car storage.js, chargé avant state.js, en a besoin.
+const dateReelle = (s) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return false;
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3];
+};
+
 const esc = (s) =>
   String(s).replace(
     /[&<>"]/g,

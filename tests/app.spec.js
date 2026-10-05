@@ -171,6 +171,51 @@ test("sauvegarde : un fichier invalide est refusé sans toucher aux données", a
   expect(await page.evaluate(() => localStorage.getItem("intendance2"))).toBe(avant);
 });
 
+/** Exporte le projet, remplace les dates du premier camp, réimporte et renvoie les dates affichées. */
+async function importerAvecDates(page, start, end) {
+  await aller(page, "pj");
+  const projet = JSON.parse((await telecharger(page, "#exp")).texte);
+  const camp = Object.values(projet.camps)[0];
+  camp.start = start;
+  camp.end = end;
+  await importer(page, {
+    name: "dates.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(projet)),
+  });
+  return page.evaluate(() => ({
+    start: C.start,
+    end: C.end,
+    champ: $("cstart").value,
+    jours: days().length,
+  }));
+}
+
+test("import : des dates impossibles sont remplacées, pas décalées", async ({ page }) => {
+  await ouvrir(page);
+  for (const [start, end] of [
+    ["2026-99-99", "2026-99-99"],
+    ["2026-02-30", "2026-03-02"],
+    ["2027-02-29", "2027-03-02"],
+    ["2026-13-01", "2026-13-05"],
+    ["0000-01-01", "0050-01-01"],
+  ]) {
+    const r = await importerAvecDates(page, start, end);
+    // la date de départ n'est ni conservée ni « corrigée » en une autre date : elle est remplacée par une date réelle
+    expect(r.start, start).not.toBe(start);
+    expect(await page.evaluate((d) => iso(pISO(d)) === d, r.start), start).toBe(true);
+    expect(r.champ).toBe(r.start);
+    expect(r.end >= r.start).toBe(true);
+    expect(r.jours).toBeGreaterThanOrEqual(1);
+  }
+});
+
+test("import : les dates réelles sont conservées (jour bissextile compris)", async ({ page }) => {
+  await ouvrir(page);
+  const r = await importerAvecDates(page, "2028-02-28", "2028-03-01");
+  expect(r).toMatchObject({ start: "2028-02-28", end: "2028-03-01", jours: 3 });
+});
+
 test("sécurité : un fichier piégé n'exécute aucun script", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "pj");
