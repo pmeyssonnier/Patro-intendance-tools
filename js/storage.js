@@ -2,8 +2,7 @@
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
 const ID = /^[A-Za-z0-9_]{1,40}$/,
-  HEX = /^#[0-9a-fA-F]{6}$/,
-  ISOD = /^\d{4}-\d{2}-\d{2}$/;
+  HEX = /^#[0-9a-fA-F]{6}$/;
 
 const okid = (k) => ID.test(k) && k !== "__proto__",
   obj = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : null);
@@ -21,8 +20,8 @@ function cleanCamp(c) {
   if (!obj(c)) return null;
   const o = {
     name: str(c.name, 80, "Camp"),
-    start: ISOD.test(c.start) ? c.start : "",
-    end: ISOD.test(c.end) ? c.end : "",
+    start: dateReelle(c.start) ? c.start : "",
+    end: dateReelle(c.end) ? c.end : "",
     n: q4(c.n).map((v) => Math.min(v, 1e4)),
     wa: num(c.wa, 0, 500, 10),
     dt: {},

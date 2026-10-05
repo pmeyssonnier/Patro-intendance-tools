@@ -17,10 +17,8 @@ const iso = (d) =>
   "-" +
   String(d.getDate()).padStart(2, "0");
 
-const pISO = (s) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
-  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
-};
+const pISO = (s) =>
+  dateReelle(s) ? new Date(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) : null;
 
 const dd2 = (d) =>
   String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0");
