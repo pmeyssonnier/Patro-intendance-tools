@@ -317,6 +317,16 @@ table.fit {
   font-size: 0.72rem;
   overflow-wrap: normal;
 }
+.fit.rec th {
+  font-size: 0.6rem;
+}
+.fit.rec th .s {
+  font-size: 0.56rem;
+}
+.fit.rec th:first-child,
+.fit.rec td:first-child {
+  min-width: 96px;
+}
 .fit .nw,
 #list td:last-child {
   white-space: nowrap;
