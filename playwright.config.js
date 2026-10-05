@@ -14,7 +14,10 @@ module.exports = defineConfig({
     locale: "fr-BE",
   },
   projects: [
-    { name: "ordinateur", use: { ...devices["Desktop Chrome"], viewport: { width: 1200, height: 900 } } },
+    {
+      name: "ordinateur",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1200, height: 900 } },
+    },
     { name: "telephone", use: { ...devices["Pixel 7"] } },
   ],
 });

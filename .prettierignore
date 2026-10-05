@@ -1,0 +1,10 @@
+# Fichiers non formatés automatiquement
+index.html
+README.md
+package-lock.json
+manifest.webmanifest
+assets/
+icons/
+node_modules/
+test-results/
+playwright-report/

@@ -62,6 +62,10 @@ Aucune dépendance ni étape de compilation :
 
 Les fichiers doivent rester ensemble dans le même dossier. Pour modifier les styles ou le script, édite `styles.css` ou `app.js` directement. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement `index.html` dans un navigateur.
 
+### Mise en forme du code
+
+`app.js`, `styles.css` et les tests sont formatés automatiquement avec [Prettier](https://prettier.io) (réglages dans `.prettierrc.json`). Après une modification : `npm run format` (ou `npm run format:check` pour seulement vérifier). `index.html` n'est pas reformaté automatiquement, pour ne pas décaler l'affichage.
+
 ### Tests
 
 Des tests de bout en bout (Playwright) ouvrent la page dans un vrai navigateur, sur ordinateur et au format téléphone : navigation, camps et dates, menu (ajout, repas supplémentaires, déplacement au clavier), quantité unique et régimes, export/import, sécurité de l'import, export CSV, avertissement de stockage et accessibilité.
