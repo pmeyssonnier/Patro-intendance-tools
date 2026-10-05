@@ -10,6 +10,7 @@
 import datetime
 import json
 import re
+import unicodedata
 
 import pandas as pd
 import requests
@@ -144,11 +145,16 @@ def norm_unite(u):
     return None
 
 
+def sans_accents(t):
+    return "".join(c for c in unicodedata.normalize("NFD", str(t or "")) if not unicodedata.combining(c))
+
+
 def pertinent(nom, ing_id):
-    """True si le nom du produit correspond à l'ingrédient (mêmes règles que le catalogue de l'appli)."""
+    """True si le nom du produit correspond à l'ingrédient (mêmes règles que le catalogue de l'appli,
+    sans tenir compte des accents : « cotelettes » correspond à « côtelettes »)."""
     inc, exc = FILTRES[ing_id]
-    nom = str(nom or "")
-    return bool(re.search(inc, nom, re.I)) and not (exc and re.search(exc, nom, re.I))
+    nom = sans_accents(nom)
+    return bool(re.search(sans_accents(inc), nom, re.I)) and not (exc and re.search(sans_accents(exc), nom, re.I))
 
 
 def appeler_apify(query):
@@ -217,12 +223,17 @@ def normaliser(item):
 # et produit un JSON relié aux mêmes identifiants : à recharger dans l'appli SUR LE MÊME APPAREIL.
 UTILISER_CATALOGUE = False
 SEULEMENT_PERSO = False  # True : ne collecter que les ingrédients ajoutés à la main (moins cher)
+# Recherche à utiliser à la place du nom de l'ingrédient (identifiant -> texte cherché sur Colruyt) :
+REQUETES_PERSO = {}  # ex. {"c_xxxxxxx": "cotelettes de porc"}
+# Ingrédient compté à la pièce mais vendu au kilo : poids moyen d'une pièce en grammes (identifiant -> g) :
+POIDS_PIECE_G = {}  # ex. {"c_yyyyyyy": 200}  -> prix d'une pièce = prix au kilo x 0,2
 
 
 def mots_filtre(nom):
     """Filtre d'un ingrédient ajouté à la main : tous ses mots (début de mot) doivent figurer dans le nom du produit."""
-    mots = [re.escape(m[:5]) for m in re.findall(r"\w{3,}", str(nom).lower())]
-    return "".join(f"(?=.*{m})" for m in mots) or re.escape(str(nom).lower())
+    nom = sans_accents(nom).lower()
+    mots = [re.escape(m[:5]) for m in re.findall(r"\w{3,}", nom)]
+    return "".join(f"(?=.*{m})" for m in mots) or re.escape(nom)
 
 
 def appliquer_catalogue(cat):
@@ -238,9 +249,13 @@ def appliquer_catalogue(cat):
             nom = v.get("nom")
             if not nom:
                 raise ValueError(f"Ingrédient {k} sans nom : réexporter le catalogue depuis l'appli à jour")
-            nouveaux.append({"id": k, "q": nom, "unite": unites.get(v.get("unite"), "kg")})
-            FILTRES[k] = (mots_filtre(nom), None)
-            perso.append(f"{k} ({nom})")
+            q = REQUETES_PERSO.get(k, nom)
+            ing = {"id": k, "q": q, "unite": unites.get(v.get("unite"), "kg")}
+            if k in POIDS_PIECE_G:
+                ing["poids_piece_g"] = POIDS_PIECE_G[k]
+            nouveaux.append(ing)
+            FILTRES[k] = (mots_filtre(q), None)
+            perso.append(f"{k} ({nom}" + (f" -> recherche « {q} »" if q != nom else "") + ")")
     INGREDIENTS[:] = nouveaux
     print(f"{len(nouveaux)} ingrédients à collecter dont {len(perso)} ajoutés à la main : {perso or 'aucun'}")
 
@@ -270,6 +285,18 @@ for ing in INGREDIENTS:
     if ing.get("epingle"):
         cands = [c for c in cands if str(c["produit_id"]) == str(ing["epingle"])] or cands
     en_unite = [c for c in cands if c["prix_unitaire"] and c["unite"] == ing["unite"]]
+    if ing["unite"] == "piece" and ing.get("poids_piece_g"):
+        # produits vendus au kilo : prix d'une pièce = prix au kilo x poids moyen d'une pièce
+        en_unite += [
+            {
+                **c,
+                "nom": f"{c['nom']} (≈{ing['poids_piece_g']} g/pièce)",
+                "prix_unitaire": round(c["prix_unitaire"] * ing["poids_piece_g"] / 1000, 2),
+                "unite": "piece",
+            }
+            for c in cands
+            if c["prix_unitaire"] and c["unite"] == "kg"
+        ]
     ok = sorted(
         [c for c in en_unite if ing.get("epingle") or pertinent(c["nom"], ing["id"])],
         key=lambda c: c["prix_unitaire"],
