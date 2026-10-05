@@ -263,7 +263,7 @@ test("export CSV : accents, virgules et total identiques à l'appli", async ({ p
   const csv = await telecharger(page, "#lcsv");
   expect(csv.nom).toMatch(/^liste-de-courses-.*\.csv$/);
   expect([...csv.octets.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]); // BOM UTF-8 pour Excel
-  const lignes = csv.texte.replace(/^﻿/, "").split("\r\n");
+  const lignes = csv.texte.replace(/^\uFEFF/, "").split("\r\n");
   expect(lignes[0]).toBe("Produit;Quantité;Unité;Prix unitaire (€);Prix par;Coût (€);Remarque");
   const total = lignes.find((l) => l.startsWith("TOTAL;"));
   expect(parseFloat(total.split(";")[5].replace(",", "."))).toBeCloseTo(totalAffiche, 2);

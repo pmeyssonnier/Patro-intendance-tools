@@ -46,6 +46,7 @@ Tous les boutons et champs ont un nom pour les lecteurs d'écran, le menu ☰ et
 - Les données sont enregistrées **dans le navigateur de l'appareil** : change d'appareil ou vide le navigateur, et elles disparaissent. Exporte régulièrement ton projet (`.json`) et importe-le sur l'autre appareil pour le retrouver.
 - Si l'appli ne peut plus enregistrer (mémoire pleine, navigation privée), un bandeau rouge te le dit et propose d'exporter tout de suite. Installer l'appli sur l'écran d'accueil protège aussi mieux tes données : sur iPhone, Safari peut effacer les données d'un site simplement consulté, après une longue période sans l'ouvrir.
 - Si tu changes les dates d'un camp, les plats restent attachés au numéro du jour : le menu n'est pas perdu, seuls les jours de la semaine affichés se décalent.
+- **Une personne, un seul régime par ingrédient.** Les régimes se comptent par section, pas par personne : si quelqu'un cumule deux régimes qui touchent le **même ingrédient**, il est compté une fois par régime. Exemple : un enfant végétarien et halal, compté dans les deux, fait acheter une portion de substitut végétarien **et** une de viande halal, et retire deux portions de viande normale au lieu d'une. Les régimes qui touchent des ingrédients différents (par exemple végétarien et sans gluten) ne posent aucun problème. Les cas cumulés étant rares, deux solutions : ne compter la personne que dans le régime le plus strict (ici végétarien, qui exclut déjà la viande), ou créer dans « Régimes & allergies » un régime à part (« Végétarien + halal ») avec ses propres règles.
 - Vérifie toujours les étiquettes (traces possibles) et confirme les allergies graves avec les parents.
 
 ## Pour les développeurs
@@ -85,6 +86,10 @@ Les fichiers doivent rester ensemble dans le même dossier. Pour modifier les st
 
 `js/`, `styles.css` et les tests sont formatés automatiquement avec [Prettier](https://prettier.io) (réglages dans `.prettierrc.json`). Après une modification : `npm run format` (ou `npm run format:check` pour seulement vérifier). `index.html` n'est pas reformaté automatiquement, pour ne pas décaler l'affichage.
 
+### Contrôle du code (ESLint)
+
+`npm run lint` repère les fautes de frappe et les oublis avant même d'ouvrir la page : variable ou fonction inconnue (`no-undef`), variable locale inutilisée, `==` au lieu de `===` (sauf `x == null`, voulu). Comme les fichiers de `js/` partagent leurs variables, `eslint.config.js` lit lui-même ce que chaque fichier déclare au premier niveau : il n'y a aucune liste à tenir à jour. Ce contrôle ne vérifie pas l'ordre de chargement des fichiers (voir plus haut) : les tests s'en chargent.
+
 ### Tests
 
 Des tests de bout en bout (Playwright) ouvrent la page dans un vrai navigateur, sur ordinateur et au format téléphone : navigation, camps et dates, menu (ajout, repas supplémentaires, déplacement au clavier), quantité unique et régimes, export/import, sécurité de l'import, export CSV, avertissement de stockage, accessibilité et **mode hors connexion** (l'appli est alors servie en HTTP par un petit serveur local, pour tester le service worker : fichiers en cache, rechargement sans réseau).
@@ -97,7 +102,7 @@ npm test
 
 Pour utiliser un Chromium déjà installé : `CHROMIUM_PATH=/chemin/vers/chromium npm test`.
 
-Sur GitHub, ces tests se lancent automatiquement à chaque pull request et à chaque envoi sur `main` (onglet « Actions », fichier `.github/workflows/tests.yml`) ; en cas d'échec, les captures sont conservées 7 jours. Le site est publié par GitHub Pages à partir de la branche `main`.
+Sur GitHub, le contrôle du code (ESLint, Prettier) puis ces tests se lancent automatiquement à chaque pull request et à chaque envoi sur `main` (onglet « Actions », fichier `.github/workflows/tests.yml`) ; en cas d'échec, les captures sont conservées 7 jours. Le site est publié par GitHub Pages à partir de la branche `main`.
 
 ## Licence
 
