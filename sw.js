@@ -1,6 +1,6 @@
 /* Service worker : permet l'installation et l'usage hors connexion.
    Stratégie « réseau d'abord » : la dernière version est toujours chargée si on est en ligne. */
-const V = "pss-v3";
+const V = "pss-v4";
 const FILES = [
   "./",
   "index.html",
@@ -23,8 +23,10 @@ const FILES = [
   "js/main.js",
   "assets/logo-pss.jpg",
   "manifest.webmanifest",
+  "icons/favicon-32.png",
   "icons/icon-192.png",
   "icons/icon-512.png",
+  "icons/icon-maskable-512.png",
   "icons/apple-touch-icon.png",
 ];
 self.addEventListener("install", (e) => {
@@ -53,6 +55,12 @@ self.addEventListener("fetch", (e) => {
         caches.open(V).then((c) => c.put(r, copy));
         return res;
       })
-      .catch(() => caches.match(r).then((m) => m || caches.match("index.html")))
+      .catch(() =>
+        caches.match(r).then((m) => {
+          if (m) return m;
+          // index.html seulement pour une navigation : un script ou une image manquant ne doit pas recevoir du HTML
+          return r.mode === "navigate" ? caches.match("index.html") : Response.error();
+        })
+      )
   );
 });

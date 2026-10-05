@@ -75,7 +75,7 @@ Aucune dépendance ni étape de compilation :
 | `assets/logo-pss.jpg` | logo par défaut |
 | `manifest.webmanifest`, `sw.js`, `icons/` | installation et usage hors connexion |
 
-Ce sont des **scripts classiques**, pas des modules : les fichiers `js/` partagent les mêmes variables et **l'ordre de chargement** (`index.html`) compte, chacun dépendant de ceux qui le précèdent. Un nouveau fichier doit aussi être ajouté à la liste de `sw.js` pour fonctionner hors connexion.
+Ce sont des **scripts classiques**, pas des modules : les fichiers `js/` partagent les mêmes variables et **l'ordre de chargement** (`index.html`) compte, chacun dépendant de ceux qui le précèdent. Un nouveau fichier doit aussi être ajouté à la liste de `sw.js` pour fonctionner hors connexion (un test le vérifie) ; changer cette liste impose de changer le nom du cache (`pss-v…`) dans `sw.js`.
 
 Le numéro de version affiché en bas du menu vient de `APP_VERSION` dans `js/data-defaults.js` : à mettre à jour à chaque release, avec `"version"` dans `package.json` (un test vérifie qu'ils sont identiques).
 
@@ -87,7 +87,7 @@ Les fichiers doivent rester ensemble dans le même dossier. Pour modifier les st
 
 ### Tests
 
-Des tests de bout en bout (Playwright) ouvrent la page dans un vrai navigateur, sur ordinateur et au format téléphone : navigation, camps et dates, menu (ajout, repas supplémentaires, déplacement au clavier), quantité unique et régimes, export/import, sécurité de l'import, export CSV, avertissement de stockage et accessibilité.
+Des tests de bout en bout (Playwright) ouvrent la page dans un vrai navigateur, sur ordinateur et au format téléphone : navigation, camps et dates, menu (ajout, repas supplémentaires, déplacement au clavier), quantité unique et régimes, export/import, sécurité de l'import, export CSV, avertissement de stockage, accessibilité et **mode hors connexion** (l'appli est alors servie en HTTP par un petit serveur local, pour tester le service worker : fichiers en cache, rechargement sans réseau).
 
 ```
 npm install
