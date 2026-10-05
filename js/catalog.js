@@ -39,6 +39,7 @@ $("csvx").onclick = () =>
 
 $("file").onchange = (e) => {
   const f = e.target.files[0];
+  $("fname").textContent = f ? f.name : "Aucun fichier choisi";
   if (f) {
     const r = new FileReader();
     r.onload = () => {

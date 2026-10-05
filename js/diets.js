@@ -3,25 +3,77 @@
 
 if (!C.dt) C.dt = {};
 
+/* Téléphone : une liste, un seul régime déplié à la fois ; ordinateur (≥ 900 px) : tableau. */
+const mqRg = matchMedia("(min-width:900px)");
+let rgOpen = null;
+
+const nbDt = (k) => (C.dt[k] || []).reduce((a, v) => a + (+v || 0), 0);
+
 function drawDiets() {
-  $("dh").innerHTML =
-    "<tr><th>Régime</th>" + SEC.map((x) => `<th>${esc(x[0])}</th>`).join("") + "</tr>";
-  $("db").innerHTML =
-    Object.entries(DIETS)
+  const ks = Object.keys(DIETS),
+    vide = "<tr><td>Aucun régime. Ouvre « Modifier » pour en ajouter.</td></tr>",
+    val = (k, i) => (C.dt[k] || [])[i] || 0;
+  if (!DIETS[rgOpen]) rgOpen = ks[0] || null;
+  $("dtab").hidden = !mqRg.matches;
+  $("dlist").hidden = mqRg.matches;
+  if (mqRg.matches) {
+    $("dlist").innerHTML = "";
+    $("dh").innerHTML =
+      "<tr><th>Régime</th>" + SEC.map((x) => `<th>${esc(x[0])}</th>`).join("") + "</tr>";
+    $("db").innerHTML =
+      ks
+        .map(
+          (k) =>
+            `<tr><td>${esc(DIETS[k].n)}</td>${SEC.map((x, i) => `<td><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></td>`).join("")}</tr>`
+        )
+        .join("") || vide;
+    return;
+  }
+  $("dh").innerHTML = $("db").innerHTML = "";
+  $("dlist").innerHTML =
+    ks
       .map(
-        ([k, v]) =>
-          `<tr><td>${esc(v.n)}</td>${SEC.map((x, i) => `<td><input type="number" min="0" value="${(C.dt[k] || [])[i] || 0}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(v.n)} : ${esc(x[0])}"></td>`).join("")}</tr>`
+        (k) =>
+          `<details class="rg" data-rg="${esc(k)}"${k === rgOpen ? " open" : ""}><summary><span>${esc(DIETS[k].n)}</span><b class="rgn" data-rn="${esc(k)}"${nbDt(k) ? "" : " hidden"}>${nbDt(k)}</b></summary>${SEC.map((x, i) => `<label class="rgl"><span>${esc(x[0])}<small>${esc(x[1])}</small></span><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></label>`).join("")}</details>`
       )
-      .join("") || "<tr><td>Aucun régime. Ouvre « Modifier » pour en ajouter.</td></tr>";
+      .join("") || "<p class='s'>Aucun régime. Ouvre « Modifier » pour en ajouter.</p>";
 }
 
-$("db").addEventListener("input", (e) => {
+mqRg.addEventListener("change", drawDiets);
+
+function saisieRegime(e) {
   const d = e.target.dataset;
   if (d.d) {
     (C.dt[d.d] = C.dt[d.d] || SEC.map(() => 0))[+d.s] = +e.target.value || 0;
+    const n = document.querySelector(`[data-rn="${CSS.escape(d.d)}"]`);
+    if (n) {
+      n.textContent = nbDt(d.d);
+      n.hidden = !nbDt(d.d);
+    }
     calc();
   }
-});
+}
+
+$("db").addEventListener("input", saisieRegime);
+$("dlist").addEventListener("input", saisieRegime);
+
+// un seul régime déplié à la fois (l'événement « toggle » ne remonte pas : on l'écoute en capture)
+$("dlist").addEventListener(
+  "toggle",
+  (e) => {
+    const k = e.target.dataset.rg;
+    if (!k) return;
+    if (e.target.open) {
+      rgOpen = k;
+      $("dlist")
+        .querySelectorAll("details.rg[open]")
+        .forEach((x) => {
+          if (x !== e.target) x.open = false;
+        });
+    } else if (rgOpen === k) rgOpen = null;
+  },
+  true
+);
 
 let dcur = null;
 

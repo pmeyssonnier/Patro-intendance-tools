@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { ouvrir, aller, telecharger, importer, montant } = require("./helpers");
+const { ouvrir, aller, telecharger, importer, montant, deplierRegime } = require("./helpers");
 
 test("la page s'ouvre sans erreur avec le camp d'exemple", async ({ page }) => {
   const erreurs = await ouvrir(page);
@@ -138,6 +138,7 @@ test("recette : une quantité unique est répartie entre les régimes", async ({
   await ouvrir(page);
   await aller(page, "reg");
   // 3 personnes sans gluten (2 chez les Conquérants, 1 chez les animateurs)
+  await deplierRegime(page, "sg");
   await page.locator('input[data-d="sg"][data-s="2"]').fill("2");
   await page.locator('input[data-d="sg"][data-s="3"]').fill("1");
   await aller(page, "rec");
@@ -157,6 +158,7 @@ test("recette : une quantité unique est répartie entre les régimes", async ({
 test("régimes : l'adaptation apparaît dans le menu imprimable", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "reg");
+  await deplierRegime(page, "veg");
   await page.locator('input[data-d="veg"][data-s="0"]').fill("2");
   await aller(page, "menu");
   await expect(page.locator("#mprev")).toContainText("Végétarien ×2");
@@ -384,7 +386,7 @@ test("configuration : sections renommées, triées, ajoutées et supprimées par
   await aller(page, "eff");
   await expect(page.locator("#cnt input")).toHaveCount(3);
   await aller(page, "reg");
-  await expect(page.locator("#dh th")).toHaveCount(4);
+  await expect(page.locator('input[data-d="veg"]')).toHaveCount(3);
   // la dernière section ne peut pas être supprimée
   await aller(page, "cfg");
   await page.locator('[data-sx="0"]').click();
@@ -506,4 +508,59 @@ test("menu : le camp n'est pas répété en haut", async ({ page }) => {
   await ouvrir(page);
   await expect(page.locator("#cinfo")).toHaveCount(0);
   await expect(page.locator("#csel")).toBeVisible();
+});
+
+test("régimes : sur téléphone, un seul régime déplié à la fois avec son total", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "reg");
+  if (page.viewportSize().width >= 900) {
+    await expect(page.locator("#dh th")).toHaveCount(5);
+    await expect(page.locator("#dlist details")).toHaveCount(0);
+    return;
+  }
+  await expect(page.locator("#dh th")).toHaveCount(0);
+  await expect(page.locator("details.rg[open]")).toHaveCount(1);
+  await expect(page.locator('details.rg[data-rg="veg"]')).toHaveAttribute("open", "");
+  await page.locator('input[data-d="veg"][data-s="0"]').fill("2");
+  await page.locator('input[data-d="veg"][data-s="3"]').fill("1");
+  await expect(page.locator('[data-rn="veg"]')).toHaveText("3");
+  // en ouvrir un autre referme le premier
+  await deplierRegime(page, "sg");
+  await expect(page.locator("details.rg[open]")).toHaveCount(1);
+  await expect(page.locator('details.rg[data-rg="sg"]')).toHaveAttribute("open", "");
+  // les valeurs saisies sont conservées et sans débordement horizontal
+  await page.reload();
+  await aller(page, "reg");
+  await expect(page.locator('[data-rn="veg"]')).toHaveText("3");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
+    true
+  );
+});
+
+test("catalogue : le bouton de fichier de l'appli affiche le nom du fichier choisi", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await expect(page.locator("#fname")).toHaveText("Aucun fichier choisi");
+  await page.locator("#file").setInputFiles({
+    name: "prix-magasin.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("Riz long grain 1kg;1,95\n"),
+  });
+  await expect(page.locator("#fname")).toHaveText("prix-magasin.csv");
+  await expect(page.locator("#csv")).toHaveValue(/Riz long grain/);
+});
+
+test("recettes : en-têtes lisibles sur ordinateur, réduits sur téléphone", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const taille = await page
+    .locator("#rh th")
+    .nth(1)
+    .evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  if (page.viewportSize().width >= 900) expect(taille).toBeGreaterThan(12);
+  else expect(taille).toBeLessThan(11);
 });
