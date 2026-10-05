@@ -211,6 +211,45 @@ def normaliser(item):
         "promo": pick(f, "promotionPrice", "promotion", "promo"),
     }
 
+# %% Catalogue exporté de l'appli (facultatif : ingrédients ajoutés à la main dans les recettes)
+# Dans l'appli : Catalogue de prix > « 💾 Exporter le catalogue », puis mettre UTILISER_CATALOGUE = True.
+# Le script cherche alors chaque ingrédient du catalogue (les 31 de base ET ceux ajoutés à la main, de la forme c_xxxx)
+# et produit un JSON relié aux mêmes identifiants : à recharger dans l'appli SUR LE MÊME APPAREIL.
+UTILISER_CATALOGUE = False
+SEULEMENT_PERSO = False  # True : ne collecter que les ingrédients ajoutés à la main (moins cher)
+
+
+def mots_filtre(nom):
+    """Filtre d'un ingrédient ajouté à la main : tous ses mots (début de mot) doivent figurer dans le nom du produit."""
+    mots = [re.escape(m[:5]) for m in re.findall(r"\w{3,}", str(nom).lower())]
+    return "".join(f"(?=.*{m})" for m in mots) or re.escape(str(nom).lower())
+
+
+def appliquer_catalogue(cat):
+    """Remplace INGREDIENTS par ceux du catalogue exporté : recherche connue pour les 31 de base, le nom pour les autres."""
+    base = {i["id"]: i for i in INGREDIENTS}
+    unites = {"kg": "kg", "l": "l", "piece": "piece"}
+    nouveaux, perso = [], []
+    for k, v in cat["ingredients"].items():
+        if k in base:
+            if not SEULEMENT_PERSO:
+                nouveaux.append(base[k])
+        else:
+            nom = v.get("nom")
+            if not nom:
+                raise ValueError(f"Ingrédient {k} sans nom : réexporter le catalogue depuis l'appli à jour")
+            nouveaux.append({"id": k, "q": nom, "unite": unites.get(v.get("unite"), "kg")})
+            FILTRES[k] = (mots_filtre(nom), None)
+            perso.append(f"{k} ({nom})")
+    INGREDIENTS[:] = nouveaux
+    print(f"{len(nouveaux)} ingrédients à collecter dont {len(perso)} ajoutés à la main : {perso or 'aucun'}")
+
+
+if UTILISER_CATALOGUE:
+    envoye = files.upload()  # choisir « catalogue-prix-….json »
+    with open(next(iter(envoye)), encoding="utf-8") as f:
+        appliquer_catalogue(json.load(f))
+
 # %% DEBUG : champs réellement renvoyés par l'acteur (adapter les noms candidats ci-dessus si besoin)
 test = appeler_apify("spaghetti")
 print(len(test), "résultats")
