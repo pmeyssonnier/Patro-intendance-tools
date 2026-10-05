@@ -624,6 +624,30 @@ test("catalogue : le filtre cherche dans le nom de l'ingrédient et du produit",
   await expect(lignes).toHaveCount(total);
 });
 
+test("catalogue : l'export du catalogue se relit tel quel", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
+  await page.locator("#imp").click();
+  await page.locator('input[data-cp="riz"]').fill("2.5");
+  await page.locator('input[data-cp="riz"]').press("Tab");
+  const f = await telecharger(page, "#cexp");
+  expect(f.nom).toMatch(/^catalogue-prix-\d{4}-\d{2}-\d{2}\.json$/);
+  const j = JSON.parse(f.texte);
+  expect(j.ingredients.pates).toMatchObject({ unite: "kg", prix_unitaire: 2.78 });
+  expect(j.ingredients.pates.produit.nom).toBe("Spaghetti Boni 500g");
+  expect(j.ingredients.riz.prix_unitaire).toBe(2.5);
+  expect(j.ingredients.lait.unite).toBe("l");
+  // le fichier exporté se recharge dans le catalogue sans rien ignorer
+  await page.locator("#file").setInputFiles({
+    name: f.nom,
+    mimeType: "application/json",
+    buffer: Buffer.from(f.octets),
+  });
+  await expect(page.locator("#impmsg")).toContainText(/\d+ prix prêts\./);
+  await expect(page.locator("#impmsg")).not.toContainText("ignorés");
+});
+
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");

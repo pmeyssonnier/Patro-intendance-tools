@@ -43,6 +43,34 @@ $("ct").addEventListener("click", (e) => {
   calc();
 });
 
+/** Exporte les prix du catalogue en .json, au format que « Choisir un fichier » sait relire. */
+$("cexp").onclick = () => {
+  const unit = { g: "kg", ml: "l", pc: "piece" },
+    ingredients = {};
+  Object.keys(ING)
+    .filter((k) => !S.hid.includes(k))
+    .forEach((k) => {
+      ingredients[k] = {
+        nom: ING[k][0],
+        unite: unit[ING[k][1]],
+        prix_unitaire: price(k),
+        produit: {
+          nom: (S.pn[k] || "").replace(/ \((?:→ €\/kg ou €\/L calculé|prix pris tel quel)\)$/, ""),
+        },
+      };
+    });
+  const jour = new Date().toISOString().slice(0, 10);
+  dl(
+    JSON.stringify(
+      { source: "Export du catalogue de prix", date_maj: jour + "T00:00:00", ingredients },
+      null,
+      2
+    ),
+    "catalogue-prix-" + jour + ".json",
+    "application/json"
+  );
+};
+
 $("csvx").onclick = () =>
   dl(
     "Spaghetti Boni 500g;1,39\nRiz long grain Boni 1kg;1,95\nLait demi-écrémé 1L;1,05\nHaché pur bœuf 500g;4,99\nJambon cuit 4 tranches 200g;2,89\n",
