@@ -1,6 +1,9 @@
 /* Intendance PSS – Données par défaut : sections, ingrédients, recettes d'exemple, régimes, couleurs, état initial.
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
+// Numéro de version affiché dans le menu : à mettre à jour à chaque release (avec "version" dans package.json).
+const APP_VERSION = "1.4.0";
+
 const SEC = [
   ["Benjas", "5–10 ans"],
   ["Chevaliers-Étincelles", "10–13 ans"],

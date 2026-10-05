@@ -582,6 +582,10 @@ body.nav #drawer {
 .dfoot {
   margin: 24px 6px 0;
 }
+.dver {
+  margin: 6px 6px 0;
+  font-size: 0.78rem;
+}
 .pg {
   display: none;
 }

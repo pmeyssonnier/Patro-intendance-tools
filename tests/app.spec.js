@@ -28,6 +28,17 @@ test("les fichiers de l'application (styles, script, logo) sont tous chargés", 
   ).toBeGreaterThan(100);
 });
 
+test("le numéro de version est affiché en bas du menu", async ({ page }) => {
+  await ouvrir(page);
+  // sur téléphone, le menu est replié : on l'ouvre
+  if (await page.locator("#burger").isVisible()) await page.locator("#burger").click();
+  const version = require("../package.json").version;
+  await expect(page.locator("#appver")).toBeVisible();
+  await expect(page.locator("#appver")).toHaveText("Version " + version);
+  // c'est le dernier élément du menu
+  expect(await page.locator("#drawer").evaluate((d) => d.lastElementChild.id)).toBe("appver");
+});
+
 test("chaque page du menu s'affiche", async ({ page }) => {
   await ouvrir(page);
   const titres = {
