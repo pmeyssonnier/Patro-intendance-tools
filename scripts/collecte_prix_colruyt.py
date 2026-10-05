@@ -124,9 +124,13 @@ def appeler_apify(query):
         json=payload,
         timeout=320,
     )
-    if r.status_code == 402:
-        raise RuntimeError("402 Payment Required : crédit Apify épuisé ou acteur payant (voir Billing sur la console Apify)")
-    r.raise_for_status()
+    if not r.ok:  # message d'erreur exact d'Apify (type et texte), sans le jeton
+        try:
+            err = r.json().get("error", {})
+            detail = f"{err.get('type', '?')} : {err.get('message', r.text[:300])}"
+        except ValueError:
+            detail = r.text[:300]
+        raise RuntimeError(f"Apify {r.status_code} {detail}")
     return r.json()
 
 
