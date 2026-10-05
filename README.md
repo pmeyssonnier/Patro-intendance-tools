@@ -43,7 +43,7 @@ L'outil s'installe comme une application, avec son icône sur l'écran d'accueil
 
 Colruyt n'a pas d'API publique et son site bloque les accès depuis un navigateur : les prix sont donc collectés **hors de l'appli**, dans un fichier `prix_colruyt.json` que tu charges toi-même dans le catalogue. L'appli ne contacte jamais Colruyt et fonctionne comme avant sans ce fichier.
 
-1. **Collecte** : ouvre `scripts/collecte_prix_colruyt.py` dans [Google Colab](https://colab.research.google.com) et copie-y les cellules (celles séparées par `# %%`). Il faut un compte Apify ; enregistre son jeton dans les secrets de Colab (icône clé) sous le nom `APIFY_TOKEN`. Aucun jeton GitHub n'est nécessaire.
+1. **Collecte** : [![Ouvrir dans Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pmeyssonnier/Patro-intendance-tools/blob/claude/new-session-4fax9s/scripts/collecte_prix_colruyt.ipynb) (notebook `scripts/collecte_prix_colruyt.ipynb`). Il faut un compte Apify ; enregistre son jeton dans les secrets de Colab (icône clé) sous le nom `APIFY_TOKEN`. Aucun jeton GitHub n'est nécessaire.
 2. **Vérification** : lance d'abord la cellule DEBUG, qui affiche les champs réellement renvoyés par le service ; si besoin, adapte les noms de champs dans `normaliser()`. Lance ensuite la cellule de collecte : elle liste les ingrédients sans résultat (les articles halal ou sans gluten en ont souvent), puis la dernière cellule télécharge `prix_colruyt.json`.
 3. **Chargement** : dans l'appli, page *Catalogue de prix* → « Choisir un fichier » → sélectionne le `.json`. Un aperçu (ancien prix → nouveau prix) s'affiche ; clique sur « Importer » pour l'appliquer. Un exemple à tester se trouve dans `exemples/prix_colruyt_exemple.json`.
 
