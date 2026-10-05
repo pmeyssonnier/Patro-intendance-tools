@@ -28,7 +28,6 @@ function drawCamps() {
       .filter(([k]) => k !== S.ccur)
       .map(([k, c]) => `<option value="${esc(k)}">${esc(c.name)} · ${fdate(c.start)}</option>`)
       .join("") || "<option value=''>(aucun autre camp)</option>";
-  $("cinfo").textContent = C.name + " · " + fdate(C.start) + " → " + fdate(C.end);
 }
 
 function fillCamp() {

@@ -72,6 +72,17 @@ $("drawer").addEventListener("click", (e) => {
 
 $("gear").onclick = () => go("cfg");
 
+/** Hauteur de la barre du haut : les titres de tableaux se collent juste en dessous. */
+const mesureBarre = () =>
+  document.documentElement.style.setProperty(
+    "--topH",
+    document.querySelector(".top").offsetHeight + "px"
+  );
+
+mesureBarre();
+
+addEventListener("resize", mesureBarre);
+
 /** Lit l'image choisie, la réduit (160 px) et en fait le logo ; le même code sert au menu et à la Configuration. */
 const choisirLogo = (e) => {
   const f = e.target.files[0];

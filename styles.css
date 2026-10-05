@@ -327,6 +327,25 @@ table.fit {
 .fit.rec td:first-child {
   min-width: 96px;
 }
+/* Recettes : colonnes de taille fixe, quel que soit le nombre de sections ; le tableau défile si besoin */
+table.fit.rec {
+  width: max-content;
+  min-width: 100%;
+}
+.fit.rec th:not(:first-child) {
+  min-width: 64px;
+  max-width: 80px;
+}
+.fit.rec td input[type="number"] {
+  width: 64px;
+  max-width: none;
+}
+/* Effectifs : champs alignés en bas de chaque ligne, même si un libellé passe sur deux lignes */
+#cnt > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
 .fit .nw,
 #list td:last-child {
   white-space: nowrap;
@@ -597,11 +616,6 @@ body.nav #drawer {
 .dh > div {
   min-width: 0;
 }
-#cinfo {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .dt {
   font-weight: 700;
   font-size: 1.1rem;
@@ -750,5 +764,37 @@ body.nav #drawer {
   }
   .secrow input:first-child {
     grid-column: 1 / -1;
+  }
+}
+
+/* Tableaux longs : la ligne de titre reste visible quand on fait défiler la page (--topH : hauteur de la barre du haut, mesurée au démarrage) */
+.w.st {
+  overflow: visible;
+}
+.st th {
+  position: sticky;
+  top: var(--topH, 49px);
+  z-index: 1;
+  background: var(--card);
+  box-shadow: 0 1px 0 var(--bd);
+}
+/* Recettes : le tableau peut défiler de côté, donc il a son propre cadre ; le titre reste en haut du cadre */
+.w.sv {
+  max-height: calc(100dvh - var(--topH, 49px) - 24px);
+  overflow: auto;
+}
+.sv th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--card);
+  box-shadow: 0 1px 0 var(--bd);
+}
+@media print {
+  .w.sv {
+    max-height: none;
+  }
+  .w.st {
+    overflow: visible;
   }
 }
