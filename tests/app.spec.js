@@ -586,6 +586,17 @@ test("catalogue : un JSON de prix s'applique après aperçu, par identifiant", a
   await expect(page.locator("#ct")).toContainText("Boni Spaghetti 500g");
 });
 
+test("catalogue : le CSV de départ relie les 31 ingrédients de base", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#file").setInputFiles("exemples/prix_depart.csv");
+  await expect(page.locator("#csv")).toHaveValue(/Spaghetti Boni 1kg;1,40/);
+  await page.locator("#imp").click();
+  await expect(page.locator("#impmsg")).toContainText("31 ingrédients reliés");
+  await expect(page.locator('input[data-cp="pates"]')).toHaveValue("1.4");
+  await expect(page.locator('input[data-cp="hache_h"]')).toHaveValue("11");
+});
+
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");
