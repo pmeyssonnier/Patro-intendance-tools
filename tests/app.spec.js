@@ -568,6 +568,11 @@ test("catalogue : un JSON de prix s'applique après aperçu, par identifiant", a
         prix_unitaire: 1.89,
         produit: { marque: "Boni", nom: "Spaghetti 500g" },
       },
+      riz: {
+        unite: "kg",
+        prix_unitaire: 0.89,
+        produit: { marque: "EVERYDAY", nom: "EVERYDAY riz long grain 2kg" }, // marque déjà dans le nom
+      },
       lait: { unite: "kg", prix_unitaire: 1.05 }, // unité incompatible : ignoré
       inconnu: { unite: "kg", prix_unitaire: 2 }, // identifiant absent : ignoré
     },
@@ -578,12 +583,14 @@ test("catalogue : un JSON de prix s'applique après aperçu, par identifiant", a
     buffer: Buffer.from(JSON.stringify(json)),
   });
   await expect(page.locator("#csv")).toHaveValue(/→ 1\.89 €\/kg/);
-  await expect(page.locator("#impmsg")).toContainText("1 prix prêts (2 ignorés)");
+  await expect(page.locator("#impmsg")).toContainText("2 prix prêts (2 ignorés)");
   await expect(page.locator('input[data-cp="pates"]')).not.toHaveValue("1.89"); // pas encore appliqué
   await page.locator("#imp").click();
-  await expect(page.locator("#impmsg")).toContainText("1 prix chargés (Colruyt, 05/10/2026)");
+  await expect(page.locator("#impmsg")).toContainText("2 prix chargés (Colruyt, 05/10/2026)");
   await expect(page.locator('input[data-cp="pates"]')).toHaveValue("1.89");
   await expect(page.locator("#ct")).toContainText("Boni Spaghetti 500g");
+  await expect(page.locator("#ct")).toContainText("↳ EVERYDAY riz long grain 2kg");
+  await expect(page.locator("#ct")).not.toContainText("EVERYDAY EVERYDAY");
 });
 
 test("catalogue : le CSV de départ relie les 31 ingrédients de base", async ({ page }) => {

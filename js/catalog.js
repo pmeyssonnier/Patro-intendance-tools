@@ -100,7 +100,12 @@ function parsePrixJson(txt) {
       continue;
     }
     const pr = x.produit || {};
-    lignes.push([k, +p.toFixed(2), [pr.marque, pr.nom].filter(Boolean).join(" ")]);
+    // Colruyt met déjà la marque au début du nom (« EVERYDAY spaghetti 500g ») : ne pas la doubler
+    const nom = String(pr.nom || ""),
+      marque = String(pr.marque || "");
+    const complet =
+      marque && !nom.toLowerCase().startsWith(marque.toLowerCase()) ? marque + " " + nom : nom;
+    lignes.push([k, +p.toFixed(2), complet.trim()]);
   }
   return {
     lignes,
