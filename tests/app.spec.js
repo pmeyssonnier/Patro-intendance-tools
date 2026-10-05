@@ -12,6 +12,18 @@ test("la page s'ouvre sans erreur avec le camp d'exemple", async ({ page }) => {
   expect(erreurs).toEqual([]);
 });
 
+test("les fichiers de l'application (styles, script, logo) sont tous chargés", async ({ page }) => {
+  const echecs = [];
+  page.on("requestfailed", (r) => echecs.push(r.url()));
+  page.on("response", (r) => { if (r.status() >= 400) echecs.push(r.url()); });
+  await ouvrir(page);
+  await page.waitForLoadState("networkidle");
+  expect(echecs).toEqual([]);
+  // la feuille de styles est appliquée (le tiroir est en position fixe) et le logo s'affiche
+  expect(await page.locator("#drawer").evaluate((d) => getComputedStyle(d).position)).toBe("fixed");
+  expect(await page.locator("#logoimg").evaluate((i) => i.complete && i.naturalWidth)).toBeGreaterThan(100);
+});
+
 test("chaque page du menu s'affiche", async ({ page }) => {
   await ouvrir(page);
   const titres = { eff: "Camp & effectifs", reg: "Régimes & allergies", menu: "Menu", rec: "Recettes", cat: "Catalogue de prix", list: "Liste de courses", sh: "Partager / imprimer", pj: "Sauvegarde" };
@@ -133,6 +145,22 @@ test("sécurité : un fichier piégé n'exécute aucun script", async ({ page })
   await page.waitForTimeout(500);
   expect(await page.evaluate(() => window.__pwn)).toBeUndefined();
   expect(await page.locator('img[src="x"]').count()).toBe(0);
+});
+
+test("fichier HTML téléchargé : autonome et mis en forme", async ({ page, browser }) => {
+  await ouvrir(page);
+  await aller(page, "sh");
+  await page.locator("#shw").selectOption("menu");
+  const fichier = await telecharger(page, "#sd");
+  expect(fichier.nom).toMatch(/\.html$/);
+  expect(fichier.texte).not.toMatch(/<script|<link/); // aucune dépendance externe
+  const autre = await browser.newPage();
+  await autre.setContent(fichier.texte);
+  expect(await autre.locator(".mt tr.day").count()).toBeGreaterThan(0);
+  // l'étiquette « Matin » garde sa couleur orange dans le fichier téléchargé
+  const fond = await autre.locator("tr.sl td.sn", { hasText: "Matin" }).first().evaluate((e) => getComputedStyle(e).backgroundColor);
+  expect(fond).toBe("rgb(224, 138, 0)");
+  await autre.close();
 });
 
 test("export CSV : accents, virgules et total identiques à l'appli", async ({ page }) => {
