@@ -66,6 +66,43 @@ INGREDIENTS = [
     {"id": "pain_sg", "q": "pain sans gluten", "unite": "kg"},
 ]
 
+# Filtre de pertinence par ingrédient : (mots à trouver dans le nom du produit, mots à exclure).
+# Copie de js/data-defaults.js (ING[id][3]) et de js/catalog.js (EXCL) : la recherche Colruyt renvoie aussi
+# des produits voisins (ex. « halal » -> viande normale), qu'on écarte ici plutôt que de prendre le moins cher.
+FILTRES = {
+    "pates": (r"spaghetti|pâtes|penne|pasta", r"sans gluten|tartiner"),
+    "riz": (r"riz", r"au lait|galette|soufflé"),
+    "hache": (r"haché", r"dinde|halal|végétari"),
+    "tom": (r"tomates? pelées|concassées", None),
+    "oig": (r"oignon", None),
+    "fro": (r"râpé", r"sans lactose"),
+    "poulet": (r"poulet", r"halal|végétari"),
+    "leg": (r"courgette|légumes", None),
+    "coco": (r"coco", None),
+    "pdt": (r"pommes de terre", None),
+    "sauc": (r"saucisse", r"halal|végétari"),
+    "car": (r"carotte", None),
+    "pain": (r"pain", r"épice|sans gluten|grillé|burger"),
+    "jam": (r"jambon", r"dinde|halal"),
+    "beu": (r"beurre", r"cacahu|arachide"),
+    "conf": (r"confiture", None),
+    "cer": (r"céréales|corn flakes", None),
+    "lait": (r"lait", r"coco|riz au|chocolat|sans lactose"),
+    "choc": (r"tartiner", None),
+    "suc": (r"sucre", r"sans sucre|glace|vanill"),
+    "subveg": (r"végétari|vegan|quorn", None),
+    "hache_h": (r"halal.*haché|haché.*halal", None),
+    "poulet_h": (r"poulet.*halal|halal.*poulet", None),
+    "sauc_h": (r"saucisse.*halal|halal.*saucisse", None),
+    "jam_h": (r"jambon.*dinde|dinde.*jambon|halal.*jambon", None),
+    "lait_sl": (r"lait.*sans lactose|sans lactose.*lait", None),
+    "fro_sl": (r"fromage.*sans lactose|sans lactose.*fromage|râpé.*sans lactose", None),
+    "margar": (r"margarine", None),
+    "dinde": (r"dinde.*haché|haché.*dinde", None),
+    "pates_sg": (r"pâtes.*sans gluten|sans gluten.*pâtes|spaghetti.*sans gluten", None),
+    "pain_sg": (r"pain.*sans gluten|sans gluten.*pain", None),
+}
+
 # %% Utilitaires
 def aplatir(d, parent=""):
     out = {}
@@ -105,6 +142,13 @@ def norm_unite(u):
     if any(x in u for x in ("st", "pièce", "piece", "stuk", "pc")):
         return "piece"
     return None
+
+
+def pertinent(nom, ing_id):
+    """True si le nom du produit correspond à l'ingrédient (mêmes règles que le catalogue de l'appli)."""
+    inc, exc = FILTRES[ing_id]
+    nom = str(nom or "")
+    return bool(re.search(inc, nom, re.I)) and not (exc and re.search(exc, nom, re.I))
 
 
 def appeler_apify(query):
@@ -185,12 +229,14 @@ for ing in INGREDIENTS:
         continue
     if ing.get("epingle"):
         cands = [c for c in cands if str(c["produit_id"]) == str(ing["epingle"])] or cands
+    en_unite = [c for c in cands if c["prix_unitaire"] and c["unite"] == ing["unite"]]
     ok = sorted(
-        [c for c in cands if c["prix_unitaire"] and c["unite"] == ing["unite"]],
+        [c for c in en_unite if ing.get("epingle") or pertinent(c["nom"], ing["id"])],
         key=lambda c: c["prix_unitaire"],
     )
     if not ok:
-        print(f"⚠️ {ing['id']} : aucun candidat en €/{ing['unite']}")
+        motif = "aucun produit pertinent" if en_unite else f"aucun candidat en €/{ing['unite']}"
+        print(f"⚠️ {ing['id']} : {motif} (le prix de l'appli est conservé)")
         sans_resultat.append(ing["id"])
         continue
     choix = ok[0]
