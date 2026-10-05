@@ -15,18 +15,31 @@ test("la page s'ouvre sans erreur avec le camp d'exemple", async ({ page }) => {
 test("les fichiers de l'application (styles, script, logo) sont tous chargés", async ({ page }) => {
   const echecs = [];
   page.on("requestfailed", (r) => echecs.push(r.url()));
-  page.on("response", (r) => { if (r.status() >= 400) echecs.push(r.url()); });
+  page.on("response", (r) => {
+    if (r.status() >= 400) echecs.push(r.url());
+  });
   await ouvrir(page);
   await page.waitForLoadState("networkidle");
   expect(echecs).toEqual([]);
   // la feuille de styles est appliquée (le tiroir est en position fixe) et le logo s'affiche
   expect(await page.locator("#drawer").evaluate((d) => getComputedStyle(d).position)).toBe("fixed");
-  expect(await page.locator("#logoimg").evaluate((i) => i.complete && i.naturalWidth)).toBeGreaterThan(100);
+  expect(
+    await page.locator("#logoimg").evaluate((i) => i.complete && i.naturalWidth)
+  ).toBeGreaterThan(100);
 });
 
 test("chaque page du menu s'affiche", async ({ page }) => {
   await ouvrir(page);
-  const titres = { eff: "Camp & effectifs", reg: "Régimes & allergies", menu: "Menu", rec: "Recettes", cat: "Catalogue de prix", list: "Liste de courses", sh: "Partager / imprimer", pj: "Sauvegarde" };
+  const titres = {
+    eff: "Camp & effectifs",
+    reg: "Régimes & allergies",
+    menu: "Menu",
+    rec: "Recettes",
+    cat: "Catalogue de prix",
+    list: "Liste de courses",
+    sh: "Partager / imprimer",
+    pj: "Sauvegarde",
+  };
   for (const [id, titre] of Object.entries(titres)) {
     await aller(page, id);
     await expect(page.locator("#ptitle")).toHaveText(titre);
@@ -42,14 +55,20 @@ test("camp : les dates donnent les jours du menu", async ({ page }) => {
   await page.locator("#cend").fill("2026-03-22");
   await page.locator("#cend").dispatchEvent("change");
   await aller(page, "menu");
-  await expect(page.locator(".dhd")).toHaveText(["Vendredi 20/03", "Samedi 21/03", "Dimanche 22/03"]);
+  await expect(page.locator(".dhd")).toHaveText([
+    "Vendredi 20/03",
+    "Samedi 21/03",
+    "Dimanche 22/03",
+  ]);
 });
 
 test("menu : ajouter un plat augmente le budget", async ({ page }) => {
   await ouvrir(page);
   const avant = montant(await page.locator("#tot").innerText());
   await aller(page, "menu");
-  await page.locator('select[data-add][data-day="0"][data-slot="m"]').selectOption("Spaghetti bolognaise");
+  await page
+    .locator('select[data-add][data-day="0"][data-slot="m"]')
+    .selectOption("Spaghetti bolognaise");
   await aller(page, "list");
   expect(montant(await page.locator("#tot").innerText())).toBeGreaterThan(avant);
 });
@@ -64,7 +83,12 @@ test("menu : un repas supplémentaire pour tous les jours, retiré d'un seul", a
   const jours = await page.locator(".dcard").count();
   await expect(page.locator(".zl", { hasText: "Goûter" })).toHaveCount(jours);
   // retirer le goûter du premier jour seulement
-  await page.locator('.dcard').first().locator(".zone", { hasText: "Goûter" }).locator(".zx").click();
+  await page
+    .locator(".dcard")
+    .first()
+    .locator(".zone", { hasText: "Goûter" })
+    .locator(".zx")
+    .click();
   await page.locator('button[data-dsc="one"]').click();
   await expect(page.locator(".zl", { hasText: "Goûter" })).toHaveCount(jours - 1);
 });
@@ -75,7 +99,9 @@ test("menu : un plat se déplace au clavier d'un repas à l'autre", async ({ pag
   const poignee = page.locator('.zone[data-day="1"][data-slot="m"] .hd').first();
   await poignee.focus();
   await page.keyboard.press("ArrowRight");
-  await expect(page.locator('.zone[data-day="1"][data-slot="d"] .cn', { hasText: "Petit-déjeuner" })).toHaveCount(1);
+  await expect(
+    page.locator('.zone[data-day="1"][data-slot="d"] .cn', { hasText: "Petit-déjeuner" })
+  ).toHaveCount(1);
   await expect(page.locator("#live")).toContainText("Petit-déjeuner");
 });
 
@@ -125,7 +151,11 @@ test("sauvegarde : un fichier invalide est refusé sans toucher aux données", a
   await ouvrir(page);
   await aller(page, "pj");
   const avant = await page.evaluate(() => localStorage.getItem("intendance2"));
-  await page.locator("#jin").setInputFiles({ name: "mauvais.json", mimeType: "application/json", buffer: Buffer.from('{"a":1}') });
+  await page.locator("#jin").setInputFiles({
+    name: "mauvais.json",
+    mimeType: "application/json",
+    buffer: Buffer.from('{"a":1}'),
+  });
   await expect(page.locator("#jmsg")).toContainText("Import impossible");
   expect(await page.evaluate(() => localStorage.getItem("intendance2"))).toBe(avant);
 });
@@ -139,7 +169,11 @@ test("sécurité : un fichier piégé n'exécute aucun script", async ({ page })
   piege.camps['k"><img src=x onerror="window.__pwn=1">'] = piege.camps[id];
   piege.camps[id].types[0].n = "<img src=x onerror=__pwn=2>";
   piege.camps[id].name = '<img src=x onerror="window.__pwn=3">';
-  await importer(page, { name: "piege.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(piege)) });
+  await importer(page, {
+    name: "piege.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(piege)),
+  });
   await aller(page, "menu");
   await aller(page, "list");
   await page.waitForTimeout(500);
@@ -158,7 +192,10 @@ test("fichier HTML téléchargé : autonome et mis en forme", async ({ page, bro
   await autre.setContent(fichier.texte);
   expect(await autre.locator(".mt tr.day").count()).toBeGreaterThan(0);
   // l'étiquette « Matin » garde sa couleur orange dans le fichier téléchargé
-  const fond = await autre.locator("tr.sl td.sn", { hasText: "Matin" }).first().evaluate((e) => getComputedStyle(e).backgroundColor);
+  const fond = await autre
+    .locator("tr.sl td.sn", { hasText: "Matin" })
+    .first()
+    .evaluate((e) => getComputedStyle(e).backgroundColor);
   expect(fond).toBe("rgb(224, 138, 0)");
   await autre.close();
 });
@@ -179,7 +216,11 @@ test("export CSV : accents, virgules et total identiques à l'appli", async ({ p
 test("stockage : un bandeau prévient quand l'enregistrement échoue", async ({ page }) => {
   await ouvrir(page);
   await page.evaluate(() => {
-    Storage.prototype.setItem = () => { const e = new Error("plein"); e.name = "QuotaExceededError"; throw e; };
+    Storage.prototype.setItem = () => {
+      const e = new Error("plein");
+      e.name = "QuotaExceededError";
+      throw e;
+    };
   });
   await aller(page, "eff");
   await page.locator('[data-n="0"]').fill("31");
