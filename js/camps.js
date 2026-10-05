@@ -139,6 +139,7 @@ drawCnt();
 $("cnt").addEventListener("input", (e) => {
   if (e.target.dataset.n === undefined) return;
   C.n[e.target.dataset.n] = +e.target.value || 0;
+  checkDiets();
   calc();
 });
 

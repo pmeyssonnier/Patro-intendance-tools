@@ -27,6 +27,7 @@ function drawDiets() {
             `<tr><td>${esc(DIETS[k].n)}</td>${SEC.map((x, i) => `<td><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></td>`).join("")}</tr>`
         )
         .join("") || vide;
+    checkDiets();
     return;
   }
   $("dh").innerHTML = $("db").innerHTML = "";
@@ -37,6 +38,50 @@ function drawDiets() {
           `<details class="rg" data-rg="${esc(k)}"${k === rgOpen ? " open" : ""}><summary><span>${esc(DIETS[k].n)} <b class="rgn" data-rn="${esc(k)}"${nbDt(k) ? "" : " hidden"}>(${nbDt(k)})</b></span></summary>${SEC.map((x, i) => `<label class="rgl"><span>${esc(x[0])}<small>${esc(x[1])}</small></span><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></label>`).join("")}</details>`
       )
       .join("") || "<p class='s'>Aucun régime. Ouvre « Modifier » pour en ajouter.</p>";
+  checkDiets();
+}
+
+/* Cohérence avec les effectifs : un régime ne peut pas concerner plus de personnes que l'effectif de la section
+   (erreur, champ en rouge) ; le cumul des régimes peut le dépasser si une personne en cumule plusieurs (info). */
+function checkDiets() {
+  const ks = Object.keys(DIETS),
+    val = (k, i) => (C.dt[k] || [])[i] || 0,
+    err = [],
+    inf = [];
+  document.querySelectorAll("#g-reg input[data-d]").forEach((el) => {
+    const bad = val(el.dataset.d, +el.dataset.s) > (C.n[+el.dataset.s] || 0);
+    el.classList.toggle("bad", bad);
+    el.setAttribute("aria-invalid", bad ? "true" : "false");
+  });
+  document.querySelectorAll("#dlist details.rg").forEach((el) => {
+    const k = el.dataset.rg;
+    el.classList.toggle(
+      "bad",
+      SEC.some((s, i) => val(k, i) > (C.n[i] || 0))
+    );
+  });
+  SEC.forEach((s, i) => {
+    const n = C.n[i] || 0;
+    let sur = false,
+      tot = 0;
+    for (const k of ks) {
+      const v = val(k, i);
+      tot += v;
+      if (v > n) {
+        sur = true;
+        err.push(
+          `${DIETS[k].n}, ${s[0]} : ${v} personne${v > 1 ? "s" : ""} pour un effectif de ${n}.`
+        );
+      }
+    }
+    if (!sur && tot > n)
+      inf.push(
+        `${s[0]} : ${tot} régimes ou allergies pour ${n} personne${n > 1 ? "s" : ""} (normal si certaines cumulent plusieurs régimes).`
+      );
+  });
+  $("dwarn").innerHTML =
+    err.map((t) => `<p class="derr">⚠️ ${esc(t)}</p>`).join("") +
+    inf.map((t) => `<p class="s">ℹ️ ${esc(t)}</p>`).join("");
 }
 
 mqRg.addEventListener("change", drawDiets);
@@ -50,6 +95,7 @@ function saisieRegime(e) {
       n.textContent = `(${nbDt(d.d)})`;
       n.hidden = !nbDt(d.d);
     }
+    checkDiets();
     calc();
   }
 }

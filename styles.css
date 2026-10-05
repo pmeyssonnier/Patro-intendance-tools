@@ -904,3 +904,37 @@ details[open] > summary.dhd::before {
     width: auto;
   }
 }
+/* Régimes : champ dépassant l'effectif de la section, et message d'erreur */
+input.bad {
+  border-color: #c0392b;
+  background: #fdecea;
+  color: #7a1f16;
+}
+.derr {
+  margin: 6px 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) input.bad {
+    background: #3b1f1c;
+    color: #f2b8b5;
+  }
+  :root:not([data-theme="light"]) .derr {
+    color: #f2b8b5;
+  }
+}
+:root[data-theme="dark"] input.bad {
+  background: #3b1f1c;
+  color: #f2b8b5;
+}
+:root[data-theme="dark"] .derr {
+  color: #f2b8b5;
+}
+#dlist details.rg.bad {
+  border-color: #c0392b;
+}
+#dlist details.rg.bad summary::after {
+  content: "⚠️";
+}
