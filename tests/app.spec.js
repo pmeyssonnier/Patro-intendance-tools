@@ -7,6 +7,8 @@ test("la page s'ouvre sans erreur avec le camp d'exemple", async ({ page }) => {
   await expect(page.locator("footer")).toContainText("Outil fait par le PSS pour les patros");
   await expect(page.locator("#cname")).toHaveValue("Mon camp");
   expect(await page.locator("#list tr").count()).toBeGreaterThan(5);
+  // valeurs par défaut complètes : S.cust existe dès le premier lancement
+  expect(await page.evaluate(() => typeof S.cust)).toBe("object");
   expect(erreurs).toEqual([]);
 });
 
