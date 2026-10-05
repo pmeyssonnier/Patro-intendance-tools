@@ -525,15 +525,17 @@ test("régimes : sur téléphone, un seul régime déplié à la fois avec son t
   await expect(page.locator('details.rg[data-rg="veg"]')).toHaveAttribute("open", "");
   await page.locator('input[data-d="veg"][data-s="0"]').fill("2");
   await page.locator('input[data-d="veg"][data-s="3"]').fill("1");
-  await expect(page.locator('[data-rn="veg"]')).toHaveText("3");
+  await expect(page.locator('[data-rn="veg"]')).toHaveText("(3)");
   // en ouvrir un autre referme le premier
   await deplierRegime(page, "sg");
   await expect(page.locator("details.rg[open]")).toHaveCount(1);
   await expect(page.locator('details.rg[data-rg="sg"]')).toHaveAttribute("open", "");
+  // replié, le total reste visible derrière le nom du régime
+  await expect(page.locator('details.rg[data-rg="veg"] summary')).toContainText("Végétarien (3)");
   // les valeurs saisies sont conservées et sans débordement horizontal
   await page.reload();
   await aller(page, "reg");
-  await expect(page.locator('[data-rn="veg"]')).toHaveText("3");
+  await expect(page.locator('[data-rn="veg"]')).toHaveText("(3)");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
     true
   );

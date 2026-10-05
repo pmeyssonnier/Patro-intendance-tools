@@ -34,7 +34,7 @@ function drawDiets() {
     ks
       .map(
         (k) =>
-          `<details class="rg" data-rg="${esc(k)}"${k === rgOpen ? " open" : ""}><summary><span>${esc(DIETS[k].n)}</span><b class="rgn" data-rn="${esc(k)}"${nbDt(k) ? "" : " hidden"}>${nbDt(k)}</b></summary>${SEC.map((x, i) => `<label class="rgl"><span>${esc(x[0])}<small>${esc(x[1])}</small></span><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></label>`).join("")}</details>`
+          `<details class="rg" data-rg="${esc(k)}"${k === rgOpen ? " open" : ""}><summary><span>${esc(DIETS[k].n)} <b class="rgn" data-rn="${esc(k)}"${nbDt(k) ? "" : " hidden"}>(${nbDt(k)})</b></span></summary>${SEC.map((x, i) => `<label class="rgl"><span>${esc(x[0])}<small>${esc(x[1])}</small></span><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></label>`).join("")}</details>`
       )
       .join("") || "<p class='s'>Aucun régime. Ouvre « Modifier » pour en ajouter.</p>";
 }
@@ -47,7 +47,7 @@ function saisieRegime(e) {
     (C.dt[d.d] = C.dt[d.d] || SEC.map(() => 0))[+d.s] = +e.target.value || 0;
     const n = document.querySelector(`[data-rn="${CSS.escape(d.d)}"]`);
     if (n) {
-      n.textContent = nbDt(d.d);
+      n.textContent = `(${nbDt(d.d)})`;
       n.hidden = !nbDt(d.d);
     }
     calc();

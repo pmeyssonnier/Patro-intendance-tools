@@ -818,13 +818,8 @@ body.nav #drawer {
   font-weight: 600;
 }
 #dlist .rgn {
-  min-width: 24px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: var(--ac);
-  color: #fff;
-  font-size: 0.8rem;
-  text-align: center;
+  color: var(--ac);
+  white-space: nowrap;
 }
 #dlist .rgl {
   display: flex;
