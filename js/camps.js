@@ -38,7 +38,7 @@ function fillCamp() {
   $("wa").value = C.wa;
   $("mtitle").value = C.mt;
   $("notes").value = C.notes || "";
-  document.querySelectorAll("[data-n]").forEach((e) => (e.value = C.n[e.dataset.n]));
+  document.querySelectorAll("[data-n]").forEach((e) => (e.value = C.n[e.dataset.n] || 0));
   cdays();
 }
 
@@ -127,17 +127,21 @@ $("mcpb").onclick = () => {
   calc();
 };
 
-$("cnt").innerHTML = SEC.map(
-  (s, i) =>
-    `<div><label>${s[0]} (${s[1]})</label><input type="number" min="0" data-n="${i}" aria-label="Effectif ${s[0]}"></div>`
-).join("");
+/** Champs d'effectif : un par section (noms et âges viennent de la Configuration). */
+function drawCnt() {
+  $("cnt").innerHTML = SEC.map(
+    (s, i) =>
+      `<div><label>${esc(s[0])}${s[1] ? " (" + esc(s[1]) + ")" : ""}</label><input type="number" min="0" data-n="${i}" aria-label="Effectif ${esc(s[0])}" value="${C.n[i] || 0}"></div>`
+  ).join("");
+}
 
-document.querySelectorAll("[data-n]").forEach((e) =>
-  e.addEventListener("input", () => {
-    C.n[e.dataset.n] = +e.value || 0;
-    calc();
-  })
-);
+drawCnt();
+
+$("cnt").addEventListener("input", (e) => {
+  if (e.target.dataset.n === undefined) return;
+  C.n[e.target.dataset.n] = +e.target.value || 0;
+  calc();
+});
 
 $("wa").addEventListener("input", () => {
   C.wa = +$("wa").value || 0;

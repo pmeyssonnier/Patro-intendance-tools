@@ -48,7 +48,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(17);
+  expect(liens.length).toBe(18);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -63,6 +63,7 @@ test("chaque page du menu s'affiche", async ({ page }) => {
     cat: "Catalogue de prix",
     list: "Liste de courses",
     sh: "Partager / imprimer",
+    cfg: "Configuration",
     pj: "Sauvegarde",
   };
   for (const [id, titre] of Object.entries(titres)) {
@@ -316,4 +317,119 @@ test("accessibilité : tous les boutons et champs ont un nom", async ({ page }) 
     });
     expect(sansNom, `page ${id}`).toEqual([]);
   }
+});
+
+test("configuration : nom de la troupe affiché dans le menu, le titre et les documents", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cfg");
+  await page.locator("#tname").fill("Patro Saint-Jean");
+  await expect(page.locator("#ttroop")).toHaveText("Patro Saint-Jean");
+  await expect(page).toHaveTitle("Patro Saint-Jean – Intendance de camp");
+  await page.reload();
+  await expect(page.locator("#ttroop")).toHaveText("Patro Saint-Jean");
+  await aller(page, "sh");
+  await page.locator("#shw").selectOption("list");
+  await page.locator("#sc").click();
+  expect(await page.evaluate(() => troop())).toBe("Patro Saint-Jean");
+  // nom vide : retour au nom par défaut
+  await aller(page, "cfg");
+  await page.locator("#tname").fill("");
+  await expect(page.locator("#ttroop")).toHaveText("Patro Sainte-Suzanne");
+});
+
+test("configuration : sections renommées, triées, ajoutées et supprimées partout", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "eff");
+  await page.locator('[data-n="0"]').fill("11");
+  await page.locator('[data-n="1"]').fill("7");
+  await aller(page, "cfg");
+  await expect(page.locator("#secl .secrow")).toHaveCount(4);
+  // renommer + changer les âges
+  await page.locator('[data-sn="0"]').fill("Louveteaux");
+  await page.locator('[data-sa="0"]').fill("8–11 ans");
+  await aller(page, "eff");
+  await expect(page.locator("#cnt label").first()).toHaveText("Louveteaux (8–11 ans)");
+  // trier : la 1re passe en 2e position, avec ses effectifs
+  await aller(page, "cfg");
+  await page.locator('[data-sm="0"][data-d="1"]').click();
+  await expect(page.locator('[data-sn="1"]')).toHaveValue("Louveteaux");
+  await aller(page, "eff");
+  await expect(page.locator('[data-n="0"]')).toHaveValue("7");
+  await expect(page.locator('[data-n="1"]')).toHaveValue("11");
+  await aller(page, "rec");
+  await expect(page.locator("#rh th").nth(2)).toContainText("Louveteaux");
+  // ajouter : une colonne de plus dans les recettes
+  await aller(page, "cfg");
+  await page.locator("#secadd").click();
+  await expect(page.locator("#secl .secrow")).toHaveCount(5);
+  await aller(page, "rec");
+  expect(await page.locator("#rb tr").first().locator("input[type=number]").count()).toBe(5);
+  // supprimer la nouvelle section, puis la 1re : 3 colonnes, effectifs recalculés
+  await aller(page, "cfg");
+  await page.locator('[data-sx="4"]').click();
+  await page.locator('[data-sx="0"]').click();
+  await expect(page.locator("#secl .secrow")).toHaveCount(3);
+  await aller(page, "eff");
+  await expect(page.locator("#cnt input")).toHaveCount(3);
+  await expect(page.locator('[data-n="0"]')).toHaveValue("11");
+  // tout est enregistré
+  await page.reload();
+  await aller(page, "eff");
+  await expect(page.locator("#cnt input")).toHaveCount(3);
+  await aller(page, "reg");
+  await expect(page.locator("#dh th")).toHaveCount(4);
+  // la dernière section ne peut pas être supprimée
+  await aller(page, "cfg");
+  await page.locator('[data-sx="0"]').click();
+  await page.locator('[data-sx="0"]').click();
+  await expect(page.locator("#secl .secrow")).toHaveCount(1);
+  await expect(page.locator('[data-sx="0"]')).toBeDisabled();
+  expect(erreurs).toEqual([]);
+});
+
+test("configuration : les quantités suivent la section quand on la déplace", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const avant = await page
+    .locator("#rb tr")
+    .first()
+    .locator("input[type=number]")
+    .evaluateAll((l) => l.map((i) => i.value));
+  await aller(page, "cfg");
+  await page.locator('[data-sm="3"][data-d="-1"]').click();
+  await aller(page, "rec");
+  const apres = await page
+    .locator("#rb tr")
+    .first()
+    .locator("input[type=number]")
+    .evaluateAll((l) => l.map((i) => i.value));
+  expect(apres).toEqual([avant[0], avant[1], avant[3], avant[2]]);
+});
+
+test("configuration : un projet exporté garde troupe et sections, un ancien fichier reçoit les 4 sections", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cfg");
+  await page.locator("#tname").fill("Troupe test");
+  await page.locator('[data-sx="3"]').click();
+  const json = await page.evaluate(() => JSON.parse(JSON.stringify(S)));
+  expect(json.troop).toBe("Troupe test");
+  expect(json.sec.length).toBe(3);
+  const net = await page.evaluate((x) => {
+    const y = cleanProject(x);
+    delete x.sec;
+    const z = cleanProject(x);
+    return [
+      y.sec.length,
+      Object.values(y.camps)[0].n.length,
+      z.sec,
+      Object.values(z.camps)[0].n.length,
+    ];
+  }, json);
+  expect(net).toEqual([3, 3, undefined, 4]);
 });

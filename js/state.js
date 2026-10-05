@@ -1,6 +1,11 @@
 /* Intendance PSS – État de l'application : camps (dates, jours, repas), migration des anciennes données, nettoyage au chargement.
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
+// Sections : celles de la Configuration (S.sec), sinon celles par défaut. SEC est modifié sur place.
+if (Array.isArray(S.sec) && S.sec.length) SEC.splice(0, SEC.length, ...S.sec);
+
+S.sec = SEC;
+
 const SL = [
     ["m", "Matin"],
     ["d", "Midi"],
@@ -47,7 +52,7 @@ function mkCamp(name, o) {
       name,
       start: iso(s),
       end: iso(e),
-      n: [0, 0, 0, 0],
+      n: SEC.map(() => 0),
       wa: 10,
       dt: {},
       notes: "",
@@ -172,7 +177,10 @@ if (S.dd && typeof S.dd === "object") DIETS = S.dd;
     if (!r.ing) r.ing = {};
     for (const k of Object.keys(r.ing)) {
       if (!ING[k] || !Array.isArray(r.ing[k])) delete r.ing[k];
-      else while (r.ing[k].length < 4) r.ing[k].push(0);
+      else {
+        while (r.ing[k].length < SEC.length) r.ing[k].push(0);
+        r.ing[k].length = SEC.length;
+      }
     }
     if (r.fx && typeof r.fx === "object") {
       for (const k of Object.keys(r.fx)) {
@@ -195,9 +203,11 @@ if (S.dd && typeof S.dd === "object") DIETS = S.dd;
     if (typeof c.name !== "string") c.name = "Camp";
     if (!pISO(c.start)) c.start = iso(nextDow(5));
     if (!pISO(c.end) || c.end < c.start) c.end = c.start;
-    c.n = [0, 1, 2, 3].map((i) => Math.max(0, +(Array.isArray(c.n) ? c.n : [])[i] || 0));
+    c.n = SEC.map((_, i) => Math.max(0, +(Array.isArray(c.n) ? c.n : [])[i] || 0));
     c.wa = Number.isFinite(+c.wa) ? +c.wa : 10;
     if (!c.dt || typeof c.dt !== "object") c.dt = {};
+    for (const k of Object.keys(c.dt))
+      c.dt[k] = SEC.map((_, i) => Math.max(0, +(Array.isArray(c.dt[k]) ? c.dt[k] : [])[i] || 0));
     if (typeof c.notes !== "string") c.notes = "";
     if (typeof c.mt !== "string") c.mt = "Menu du camp";
     if (!Array.isArray(c.types)) c.types = [];

@@ -14,9 +14,9 @@ function meal(d) {
       out[k] = (out[k] || 0) + R.fx[k];
       continue;
     }
-    const qq = fixed ? [0, 1, 2, 3].map(() => R.fx[k] / N) : q,
+    const qq = fixed ? SEC.map(() => R.fx[k] / N) : q,
       mm = fixed ? 1 : m;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < SEC.length; i++) {
       let rest = C.n[i];
       for (const dk in DIETS) {
         const e = DIETS[dk].ex;

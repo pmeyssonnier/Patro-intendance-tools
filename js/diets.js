@@ -4,12 +4,13 @@
 if (!C.dt) C.dt = {};
 
 function drawDiets() {
-  $("dh").innerHTML = "<tr><th>Régime</th>" + SEC.map((x) => `<th>${x[0]}</th>`).join("") + "</tr>";
+  $("dh").innerHTML =
+    "<tr><th>Régime</th>" + SEC.map((x) => `<th>${esc(x[0])}</th>`).join("") + "</tr>";
   $("db").innerHTML =
     Object.entries(DIETS)
       .map(
         ([k, v]) =>
-          `<tr><td>${esc(v.n)}</td>${SEC.map((x, i) => `<td><input type="number" min="0" value="${(C.dt[k] || [])[i] || 0}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(v.n)} : ${x[0]}"></td>`).join("")}</tr>`
+          `<tr><td>${esc(v.n)}</td>${SEC.map((x, i) => `<td><input type="number" min="0" value="${(C.dt[k] || [])[i] || 0}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(v.n)} : ${esc(x[0])}"></td>`).join("")}</tr>`
       )
       .join("") || "<tr><td>Aucun régime. Ouvre « Modifier » pour en ajouter.</td></tr>";
 }
@@ -17,7 +18,7 @@ function drawDiets() {
 $("db").addEventListener("input", (e) => {
   const d = e.target.dataset;
   if (d.d) {
-    (C.dt[d.d] = C.dt[d.d] || [0, 0, 0, 0])[+d.s] = +e.target.value || 0;
+    (C.dt[d.d] = C.dt[d.d] || SEC.map(() => 0))[+d.s] = +e.target.value || 0;
     calc();
   }
 });

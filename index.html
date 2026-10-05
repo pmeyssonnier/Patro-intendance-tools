@@ -10,10 +10,10 @@
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
 <link rel="stylesheet" href="styles.css?v=1.4.0">
 </head><body><main>
-<div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span></div>
+<div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
 <nav id="drawer" class="np" aria-label="Navigation">
-<div class="dh"><label id="logo" title="Clique pour changer le logo (sur cet appareil)"><img id="logoimg" alt="Logo Patro Sainte-Suzanne" src="assets/logo-pss.jpg"><input type="file" id="logof" accept="image/*" hidden></label><div><div class="dt">Patro Sainte-Suzanne</div><div class="s" id="cinfo">Intendance de camp ⛺</div></div></div>
+<div class="dh"><label id="logo" title="Clique pour changer le logo (sur cet appareil)"><img id="logoimg" alt="Logo Patro Sainte-Suzanne" src="assets/logo-pss.jpg"><input type="file" id="logof" accept="image/*" hidden></label><div><div class="dt" id="ttroop">Patro Sainte-Suzanne</div><div class="s" id="cinfo">Intendance de camp ⛺</div></div></div>
 <div class="dsec">Camp en cours</div><select id="csel" aria-label="Camp en cours"></select>
 <div class="dsec">Préparer</div>
 <button class="ni on" data-g="eff"><span>⛺</span>Camp &amp; effectifs</button>
@@ -25,6 +25,7 @@
 <button class="ni" data-g="list"><span>🛒</span>Liste de courses<b class="s" id="ntot" style="margin-left:auto"></b></button>
 <button class="ni" data-g="sh"><span>📤</span>Partager / imprimer</button>
 <div class="dsec">Projet</div>
+<button class="ni" data-g="cfg"><span>⚙️</span>Configuration</button>
 <button class="ni" data-g="pj"><span>💾</span>Sauvegarde</button>
 <div class="s dfoot">Outil fait par le PSS pour les patros ⛺</div>
 <button id="inst" class="x" style="display:none;margin:12px 6px 0">📲 Installer l'application</button>
@@ -104,6 +105,16 @@
 <p><button id="sw">💬 WhatsApp</button> <button id="sm">✉️ Mail</button> <button id="sn" class="x">📤 Partager…</button> <button id="sc" class="x">📋 Copier</button> <button id="sp" class="x">🖨️ Imprimer</button> <button id="sd" class="x">⬇️ Fichier HTML</button> <button id="sx" class="x">📊 Fichier CSV (Excel)</button> <span class="s" id="shm"></span></p>
 <p class="s">« Fichier HTML » : si l'impression directe ne fonctionne pas sur ton appareil, télécharge le fichier, ouvre-le et imprime-le. « Fichier CSV » s'ouvre directement dans Excel (accents et virgules décimales corrects), pratique pour le budget.</p></section>
 
+</div><div class="pg" id="g-cfg">
+<section class="card np"><h2>Ma troupe</h2>
+<div class="g"><div><label for="tname">Nom de la troupe</label><input id="tname" maxlength="60" placeholder="Patro Sainte-Suzanne" aria-label="Nom de la troupe"></div></div>
+<p class="s">Ce nom apparaît dans le menu, sur les listes et menus imprimés et dans les messages partagés.</p>
+<div class="cfglogo"><img id="logoimg2" alt="Logo" src="assets/logo-pss.jpg"><label class="x filebtn">🖼️ Choisir un logo<input type="file" id="logof2" accept="image/*" aria-label="Choisir un logo" hidden></label> <button id="logor" class="x" hidden>↺ Logo par défaut</button></div>
+<p class="s">Le logo reste sur cet appareil. Il est aussi enregistré dans l'export du projet.</p></section>
+<section class="card np"><h2>Sections</h2>
+<p class="s">Nom et âges de chaque section, dans l'ordre d'affichage (▲ ▼ pour trier). Supprimer une section efface ses effectifs et ses quantités dans les recettes. 12 sections au maximum.</p>
+<div id="secl"></div>
+<p><button id="secadd" class="x">+ Ajouter une section</button></p></section>
 </div><div class="pg" id="g-pj">
 <section class="card np"><h2>Sauvegarde du projet</h2>
 <p class="s">Sauvegarde tout (recettes, menu, effectifs, régimes, prix) dans un fichier <b>.json</b> pour le retrouver ou le passer à un autre animateur.</p>
@@ -134,6 +145,7 @@
 <script src="js/menu.js?v=1.4.0"></script>
 <script src="js/recipes.js?v=1.4.0"></script>
 <script src="js/catalog.js?v=1.4.0"></script>
+<script src="js/config.js?v=1.4.0"></script>
 <script src="js/pwa.js?v=1.4.0"></script>
 <script src="js/main.js?v=1.4.0"></script>
 </body></html>

@@ -94,7 +94,7 @@ $("sm").onclick = () => {
   if (t)
     location.href =
       "mailto:?subject=" +
-      encodeURIComponent("Patro Sainte-Suzanne – " + shk()[0]) +
+      encodeURIComponent(troop() + " – " + shk()[0]) +
       "&body=" +
       encodeURIComponent(t);
 };
@@ -103,7 +103,7 @@ if (!navigator.share) $("sn").style.display = "none";
 
 $("sn").onclick = () => {
   const t = shtxt();
-  if (t) navigator.share({ title: "Patro Sainte-Suzanne – " + shk()[0], text: t }).catch(() => {});
+  if (t) navigator.share({ title: troop() + " – " + shk()[0], text: t }).catch(() => {});
 };
 
 $("sc").onclick = () => {
