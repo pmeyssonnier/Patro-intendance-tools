@@ -809,6 +809,7 @@ body.nav #drawer {
   padding-bottom: 6px;
 }
 #dlist .rg summary {
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -860,6 +861,7 @@ body.nav #drawer {
 }
 /* Menu : chaque jour se replie, avec son résumé « (x plats / x repas) » */
 summary.dhd {
+  margin: 0;
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -882,4 +884,23 @@ details[open] > summary.dhd::before {
   font-weight: 400;
   opacity: 0.85;
   white-space: nowrap;
+}
+/* Menu : « Copier le menu d'un autre camp » — liste pleine largeur sur téléphone, bouton dessous */
+.mcprow {
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 12px;
+}
+.mcprow select {
+  width: 100%;
+}
+.mcprow button {
+  width: 100%;
+}
+@media (min-width: 560px) {
+  .mcprow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .mcprow button {
+    width: auto;
+  }
 }

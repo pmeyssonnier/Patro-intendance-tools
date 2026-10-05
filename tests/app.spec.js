@@ -599,3 +599,17 @@ test("menu : chaque jour se replie et affiche son nombre de plats et de repas", 
   await page.locator("#mfold").click();
   await expect(page.locator(".dcard[open]")).toHaveCount(await page.locator(".dcard").count());
 });
+
+test("menu : la liste « copier le menu d'un autre camp » occupe toute la largeur sur téléphone", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "menu");
+  if (page.viewportSize().width >= 560) return;
+  const l = await page.evaluate(() => {
+    const s = document.getElementById("mcp").getBoundingClientRect(),
+      c = document.getElementById("menu").getBoundingClientRect();
+    return { s: s.width, c: c.width };
+  });
+  expect(l.s).toBeGreaterThan(l.c - 4);
+});
