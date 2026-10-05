@@ -36,7 +36,8 @@ test("le numéro de version est affiché en bas du menu", async ({ page }) => {
   if (await page.locator("#burger").isVisible()) await page.locator("#burger").click();
   const version = require("../package.json").version;
   await expect(page.locator("#appver")).toBeVisible();
-  await expect(page.locator("#appver")).toHaveText("Version " + version);
+  await expect(page.locator("#appver")).toHaveText("(version " + version + ")");
+  await expect(page.locator("footer")).toContainText("(version " + version + ")");
   // c'est le dernier élément du menu
   expect(await page.locator("#drawer").evaluate((d) => d.lastElementChild.id)).toBe("appver");
 });

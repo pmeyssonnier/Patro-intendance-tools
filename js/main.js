@@ -12,7 +12,7 @@ go(
   })()
 );
 
-$("appver").textContent = "Version " + APP_VERSION;
+$("appver").textContent = $("appver2").textContent = "(version " + APP_VERSION + ")";
 
 syncDrawer(false);
 
