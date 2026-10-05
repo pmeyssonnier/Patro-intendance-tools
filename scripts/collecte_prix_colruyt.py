@@ -108,7 +108,16 @@ def norm_unite(u):
 def appeler_apify(query):
     url = f"https://api.apify.com/v2/acts/{ACTOR}/run-sync-get-dataset-items"
     payload = {"searchQuery": query, "storeId": STORE_ID, "maxItems": MAX_ITEMS}  # à vérifier
-    r = requests.post(url, params={"token": APIFY_TOKEN, "timeout": 300}, json=payload, timeout=320)
+    # jeton dans un en-tête (et non dans l'URL) : il n'apparaît pas dans les messages d'erreur
+    r = requests.post(
+        url,
+        params={"timeout": 300},
+        headers={"Authorization": f"Bearer {APIFY_TOKEN}"},
+        json=payload,
+        timeout=320,
+    )
+    if r.status_code == 402:
+        raise RuntimeError("402 Payment Required : crédit Apify épuisé ou acteur payant (voir Billing sur la console Apify)")
     r.raise_for_status()
     return r.json()
 
