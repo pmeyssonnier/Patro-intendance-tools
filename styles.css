@@ -938,3 +938,11 @@ input.bad {
 #dlist details.rg.bad summary::after {
   content: "⚠️";
 }
+.ef {
+  font-weight: 400;
+  color: var(--mu);
+  white-space: nowrap;
+}
+#dh .ef {
+  display: block;
+}

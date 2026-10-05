@@ -12,14 +12,17 @@ const nbDt = (k) => (C.dt[k] || []).reduce((a, v) => a + (+v || 0), 0);
 function drawDiets() {
   const ks = Object.keys(DIETS),
     vide = "<tr><td>Aucun régime. Ouvre « Modifier » pour en ajouter.</td></tr>",
-    val = (k, i) => (C.dt[k] || [])[i] || 0;
+    val = (k, i) => (C.dt[k] || [])[i] || 0,
+    ef = (i) => `<span class="ef" data-ef="${i}">(${C.n[i] || 0})</span>`;
   if (!DIETS[rgOpen]) rgOpen = ks[0] || null;
   $("dtab").hidden = !mqRg.matches;
   $("dlist").hidden = mqRg.matches;
   if (mqRg.matches) {
     $("dlist").innerHTML = "";
     $("dh").innerHTML =
-      "<tr><th>Régime</th>" + SEC.map((x) => `<th>${esc(x[0])}</th>`).join("") + "</tr>";
+      "<tr><th>Régime</th>" +
+      SEC.map((x, i) => `<th>${esc(x[0])} ${ef(i)}</th>`).join("") +
+      "</tr>";
     $("db").innerHTML =
       ks
         .map(
@@ -35,7 +38,7 @@ function drawDiets() {
     ks
       .map(
         (k) =>
-          `<details class="rg" data-rg="${esc(k)}"${k === rgOpen ? " open" : ""}><summary><span>${esc(DIETS[k].n)} <b class="rgn" data-rn="${esc(k)}"${nbDt(k) ? "" : " hidden"}>(${nbDt(k)})</b></span></summary>${SEC.map((x, i) => `<label class="rgl"><span>${esc(x[0])}<small>${esc(x[1])}</small></span><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></label>`).join("")}</details>`
+          `<details class="rg" data-rg="${esc(k)}"${k === rgOpen ? " open" : ""}><summary><span>${esc(DIETS[k].n)} <b class="rgn" data-rn="${esc(k)}"${nbDt(k) ? "" : " hidden"}>(${nbDt(k)})</b></span></summary>${SEC.map((x, i) => `<label class="rgl"><span>${esc(x[0])}<small>${esc(x[1])}</small> ${ef(i)}</span><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></label>`).join("")}</details>`
       )
       .join("") || "<p class='s'>Aucun régime. Ouvre « Modifier » pour en ajouter.</p>";
   checkDiets();
@@ -52,6 +55,9 @@ function checkDiets() {
     const bad = val(el.dataset.d, +el.dataset.s) > (C.n[+el.dataset.s] || 0);
     el.classList.toggle("bad", bad);
     el.setAttribute("aria-invalid", bad ? "true" : "false");
+  });
+  document.querySelectorAll("#g-reg [data-ef]").forEach((el) => {
+    el.textContent = `(${C.n[+el.dataset.ef] || 0})`;
   });
   document.querySelectorAll("#dlist details.rg").forEach((el) => {
     const k = el.dataset.rg;

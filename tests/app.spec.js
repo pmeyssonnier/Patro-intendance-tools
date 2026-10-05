@@ -647,3 +647,17 @@ test("régimes : un régime ne peut pas dépasser l'effectif de la section", asy
   await aller(page, "reg");
   await expect(page.locator("#dwarn .derr")).toHaveCount(0);
 });
+
+test("régimes : l'effectif de la section est affiché entre parenthèses et suit les changements", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "reg");
+  await deplierRegime(page, "veg");
+  const ef = page.locator('#g-reg [data-ef="0"]:visible').first();
+  await expect(ef).toHaveText("(10)");
+  await aller(page, "eff");
+  await page.locator('[data-n="0"]').fill("12");
+  await aller(page, "reg");
+  await expect(page.locator('#g-reg [data-ef="0"]:visible').first()).toHaveText("(12)");
+});
