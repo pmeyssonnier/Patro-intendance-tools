@@ -613,3 +613,51 @@ test("menu : la liste « copier le menu d'un autre camp » occupe toute la large
   });
   expect(l.s).toBeGreaterThan(l.c - 4);
 });
+
+test("régimes : un régime ne peut pas dépasser l'effectif de la section", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "reg");
+  await expect(page.locator("#dwarn")).toHaveText("");
+  // effectif des Benjas : 10 par défaut
+  await deplierRegime(page, "veg");
+  const champ = page.locator('input[data-d="veg"][data-s="0"]');
+  await champ.fill("12");
+  await expect(champ).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator("#dwarn .derr")).toContainText(
+    "Végétarien, Benjas : 12 personnes pour un effectif de 10"
+  );
+  // 10 pour 10 : accepté
+  await champ.fill("10");
+  await expect(champ).toHaveAttribute("aria-invalid", "false");
+  await expect(page.locator("#dwarn .derr")).toHaveCount(0);
+  // le cumul de plusieurs régimes au-dessus de l'effectif reste une simple information
+  await deplierRegime(page, "sl");
+  await page.locator('input[data-d="sl"][data-s="0"]').fill("3");
+  await expect(page.locator("#dwarn .derr")).toHaveCount(0);
+  await expect(page.locator("#dwarn")).toContainText("13 régimes ou allergies pour 10 personnes");
+  // baisser l'effectif en dessous d'un régime déclenche l'erreur, le relever la retire
+  await aller(page, "eff");
+  await page.locator('[data-n="0"]').fill("8");
+  await aller(page, "reg");
+  await expect(page.locator("#dwarn .derr")).toContainText(
+    "Végétarien, Benjas : 10 personnes pour un effectif de 8"
+  );
+  await aller(page, "eff");
+  await page.locator('[data-n="0"]').fill("10");
+  await aller(page, "reg");
+  await expect(page.locator("#dwarn .derr")).toHaveCount(0);
+});
+
+test("régimes : l'effectif de la section est affiché entre parenthèses et suit les changements", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "reg");
+  await deplierRegime(page, "veg");
+  const ef = page.locator('#g-reg [data-ef="0"]:visible').first();
+  await expect(ef).toHaveText("(10)");
+  await aller(page, "eff");
+  await page.locator('[data-n="0"]').fill("12");
+  await aller(page, "reg");
+  await expect(page.locator('#g-reg [data-ef="0"]:visible').first()).toHaveText("(12)");
+});

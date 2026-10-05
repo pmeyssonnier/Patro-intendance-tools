@@ -12,14 +12,17 @@ const nbDt = (k) => (C.dt[k] || []).reduce((a, v) => a + (+v || 0), 0);
 function drawDiets() {
   const ks = Object.keys(DIETS),
     vide = "<tr><td>Aucun régime. Ouvre « Modifier » pour en ajouter.</td></tr>",
-    val = (k, i) => (C.dt[k] || [])[i] || 0;
+    val = (k, i) => (C.dt[k] || [])[i] || 0,
+    ef = (i) => `<span class="ef" data-ef="${i}">(${C.n[i] || 0})</span>`;
   if (!DIETS[rgOpen]) rgOpen = ks[0] || null;
   $("dtab").hidden = !mqRg.matches;
   $("dlist").hidden = mqRg.matches;
   if (mqRg.matches) {
     $("dlist").innerHTML = "";
     $("dh").innerHTML =
-      "<tr><th>Régime</th>" + SEC.map((x) => `<th>${esc(x[0])}</th>`).join("") + "</tr>";
+      "<tr><th>Régime</th>" +
+      SEC.map((x, i) => `<th>${esc(x[0])} ${ef(i)}</th>`).join("") +
+      "</tr>";
     $("db").innerHTML =
       ks
         .map(
@@ -27,6 +30,7 @@ function drawDiets() {
             `<tr><td>${esc(DIETS[k].n)}</td>${SEC.map((x, i) => `<td><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></td>`).join("")}</tr>`
         )
         .join("") || vide;
+    checkDiets();
     return;
   }
   $("dh").innerHTML = $("db").innerHTML = "";
@@ -34,9 +38,56 @@ function drawDiets() {
     ks
       .map(
         (k) =>
-          `<details class="rg" data-rg="${esc(k)}"${k === rgOpen ? " open" : ""}><summary><span>${esc(DIETS[k].n)} <b class="rgn" data-rn="${esc(k)}"${nbDt(k) ? "" : " hidden"}>(${nbDt(k)})</b></span></summary>${SEC.map((x, i) => `<label class="rgl"><span>${esc(x[0])}<small>${esc(x[1])}</small></span><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></label>`).join("")}</details>`
+          `<details class="rg" data-rg="${esc(k)}"${k === rgOpen ? " open" : ""}><summary><span>${esc(DIETS[k].n)} <b class="rgn" data-rn="${esc(k)}"${nbDt(k) ? "" : " hidden"}>(${nbDt(k)})</b></span></summary>${SEC.map((x, i) => `<label class="rgl"><span>${esc(x[0])}<small>${esc(x[1])}</small> ${ef(i)}</span><input type="number" min="0" value="${val(k, i)}" data-d="${esc(k)}" data-s="${i}" aria-label="${esc(DIETS[k].n)} : ${esc(x[0])}"></label>`).join("")}</details>`
       )
       .join("") || "<p class='s'>Aucun régime. Ouvre « Modifier » pour en ajouter.</p>";
+  checkDiets();
+}
+
+/* Cohérence avec les effectifs : un régime ne peut pas concerner plus de personnes que l'effectif de la section
+   (erreur, champ en rouge) ; le cumul des régimes peut le dépasser si une personne en cumule plusieurs (info). */
+function checkDiets() {
+  const ks = Object.keys(DIETS),
+    val = (k, i) => (C.dt[k] || [])[i] || 0,
+    err = [],
+    inf = [];
+  document.querySelectorAll("#g-reg input[data-d]").forEach((el) => {
+    const bad = val(el.dataset.d, +el.dataset.s) > (C.n[+el.dataset.s] || 0);
+    el.classList.toggle("bad", bad);
+    el.setAttribute("aria-invalid", bad ? "true" : "false");
+  });
+  document.querySelectorAll("#g-reg [data-ef]").forEach((el) => {
+    el.textContent = `(${C.n[+el.dataset.ef] || 0})`;
+  });
+  document.querySelectorAll("#dlist details.rg").forEach((el) => {
+    const k = el.dataset.rg;
+    el.classList.toggle(
+      "bad",
+      SEC.some((s, i) => val(k, i) > (C.n[i] || 0))
+    );
+  });
+  SEC.forEach((s, i) => {
+    const n = C.n[i] || 0;
+    let sur = false,
+      tot = 0;
+    for (const k of ks) {
+      const v = val(k, i);
+      tot += v;
+      if (v > n) {
+        sur = true;
+        err.push(
+          `${DIETS[k].n}, ${s[0]} : ${v} personne${v > 1 ? "s" : ""} pour un effectif de ${n}.`
+        );
+      }
+    }
+    if (!sur && tot > n)
+      inf.push(
+        `${s[0]} : ${tot} régimes ou allergies pour ${n} personne${n > 1 ? "s" : ""} (normal si certaines cumulent plusieurs régimes).`
+      );
+  });
+  $("dwarn").innerHTML =
+    err.map((t) => `<p class="derr">⚠️ ${esc(t)}</p>`).join("") +
+    inf.map((t) => `<p class="s">ℹ️ ${esc(t)}</p>`).join("");
 }
 
 mqRg.addEventListener("change", drawDiets);
@@ -50,6 +101,7 @@ function saisieRegime(e) {
       n.textContent = `(${nbDt(d.d)})`;
       n.hidden = !nbDt(d.d);
     }
+    checkDiets();
     calc();
   }
 }
