@@ -113,16 +113,37 @@ def appeler_apify(query):
     return r.json()
 
 
+def prix_depuis_conditionnement(prix, cond):
+    """Repli : prix unitaire calculé à partir du prix et du conditionnement (« 500g », « 1L », « 6x33cl »)."""
+    m = re.search(r"(?:(\d+)\s*[x×]\s*)?(\d+(?:[.,]\d+)?)\s*(kg|g|l|cl|ml)\b", str(cond or ""), re.I)
+    if prix is None or not m:
+        return None, None
+    n = (int(m.group(1)) if m.group(1) else 1) * float(m.group(2).replace(",", "."))
+    u = m.group(3).lower()
+    if u in ("kg", "g"):
+        return prix / (n * (1 if u == "kg" else 0.001)), "kg"
+    return prix / (n * {"l": 1, "cl": 0.01, "ml": 0.001}[u]), "l"
+
+
 def normaliser(item):
     f = aplatir(item)
+    prix = to_float(pick(f, "price", "basicPrice"))
+    up = pick(f, "unitPrice", "measurementUnitPrice", "pricePerUnit")  # ex. « 0.90/kg »
+    prix_unitaire, unite = to_float(up), norm_unite(up)
+    if prix_unitaire is None or unite is None:  # repli sur le conditionnement (« 500g »)
+        prix_unitaire, unite = prix_depuis_conditionnement(prix, pick(f, "unit", "size", "name"))
+    produit_id = pick(f, "productId", "id")
+    if produit_id is None:  # l'acteur ne donne que l'URL : .../producten/14502
+        m = re.search(r"/(\d+)/?$", str(pick(f, "url") or ""))
+        produit_id = m.group(1) if m else None
     return {
-        "produit_id": pick(f, "productId", "id"),
+        "produit_id": produit_id,
         "nom": pick(f, "name", "longName", "title"),
         "marque": pick(f, "brand"),
-        "prix": to_float(pick(f, "price", "basicPrice")),
-        "prix_unitaire": to_float(pick(f, "unitPrice", "measurementUnitPrice", "pricePerUnit")),
-        "unite": norm_unite(pick(f, "unitPriceUnit", "measurementUnit", "unit")),
-        "promo": pick(f, "promotion", "promo"),
+        "prix": prix,
+        "prix_unitaire": round(prix_unitaire, 2) if prix_unitaire is not None else None,
+        "unite": unite,
+        "promo": pick(f, "promotionPrice", "promotion", "promo"),
     }
 
 # %% DEBUG : champs réellement renvoyés par l'acteur (adapter les noms candidats ci-dessus si besoin)
