@@ -5,7 +5,7 @@ Outil fait par le PSS pour les patros : il aide à préparer l'intendance d'un c
 
 👉 **Utiliser l'outil : https://pmeyssonnier.github.io/Patro-intendance-tools/**
 
-Aucune installation : c'est une petite page web (`index.html`, avec `styles.css`, `app.js` et le logo dans `assets/`) qui fonctionne
+Aucune installation : c'est une petite page web (`index.html`, avec `styles.css`, les scripts de `js/` et le logo dans `assets/`) qui fonctionne
 sur ordinateur, tablette et téléphone. Les données restent sur ton appareil
 (stockage du navigateur) ; rien n'est envoyé sur un serveur.
 
@@ -56,15 +56,32 @@ Aucune dépendance ni étape de compilation :
 | --- | --- |
 | `index.html` | structure de la page (pages, formulaires, conteneurs) |
 | `styles.css` | tout le CSS |
-| `app.js` | toute la logique (script classique, chargé en fin de page) |
+| `js/data-defaults.js` | données par défaut : sections, ingrédients, recettes d'exemple, régimes, couleurs |
+| `js/utils.js` | petits outils partagés : accès au DOM, échappement HTML, formats, contraste des couleurs |
+| `js/storage.js` | validation des données, enregistrement, avertissement, export / import / réinitialisation |
+| `js/state.js` | camps, dates, jours et repas, migration et nettoyage au chargement |
+| `js/calculations.js` | calcul des quantités d'un plat |
+| `js/shopping-list.js` | liste de courses et budget |
+| `js/documents.js` | menu, liste et recettes imprimables, textes à partager, exports CSV |
+| `js/share-print.js` | impression, fichier HTML téléchargeable, WhatsApp, mail, copie |
+| `js/navigation.js` | menu latéral, changement de page, logo |
+| `js/camps.js` | choix du camp, dates, effectifs, copie de menu |
+| `js/diets.js` | régimes, allergies, règles de remplacement |
+| `js/menu.js` | menu du camp, glisser-déposer, repas supplémentaires, couleurs |
+| `js/recipes.js` | recettes et ingrédients |
+| `js/catalog.js` | catalogue de prix et import |
+| `js/pwa.js` | installation et hors connexion |
+| `js/main.js` | démarrage |
 | `assets/logo-pss.jpg` | logo par défaut |
 | `manifest.webmanifest`, `sw.js`, `icons/` | installation et usage hors connexion |
 
-Les fichiers doivent rester ensemble dans le même dossier. Pour modifier les styles ou le script, édite `styles.css` ou `app.js` directement. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement `index.html` dans un navigateur.
+Ce sont des **scripts classiques**, pas des modules : les fichiers `js/` partagent les mêmes variables et **l'ordre de chargement** (`index.html`) compte, chacun dépendant de ceux qui le précèdent. Un nouveau fichier doit aussi être ajouté à la liste de `sw.js` pour fonctionner hors connexion.
+
+Les fichiers doivent rester ensemble dans le même dossier. Pour modifier les styles ou le code, édite `styles.css` ou le fichier de `js/` concerné. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement `index.html` dans un navigateur.
 
 ### Mise en forme du code
 
-`app.js`, `styles.css` et les tests sont formatés automatiquement avec [Prettier](https://prettier.io) (réglages dans `.prettierrc.json`). Après une modification : `npm run format` (ou `npm run format:check` pour seulement vérifier). `index.html` n'est pas reformaté automatiquement, pour ne pas décaler l'affichage.
+`js/`, `styles.css` et les tests sont formatés automatiquement avec [Prettier](https://prettier.io) (réglages dans `.prettierrc.json`). Après une modification : `npm run format` (ou `npm run format:check` pour seulement vérifier). `index.html` n'est pas reformaté automatiquement, pour ne pas décaler l'affichage.
 
 ### Tests
 
