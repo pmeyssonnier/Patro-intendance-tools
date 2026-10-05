@@ -568,6 +568,11 @@ test("catalogue : un JSON de prix s'applique après aperçu, par identifiant", a
         prix_unitaire: 1.89,
         produit: { marque: "Boni", nom: "Spaghetti 500g" },
       },
+      riz: {
+        unite: "kg",
+        prix_unitaire: 0.89,
+        produit: { marque: "EVERYDAY", nom: "EVERYDAY riz long grain 2kg" }, // marque déjà dans le nom
+      },
       lait: { unite: "kg", prix_unitaire: 1.05 }, // unité incompatible : ignoré
       inconnu: { unite: "kg", prix_unitaire: 2 }, // identifiant absent : ignoré
     },
@@ -578,12 +583,14 @@ test("catalogue : un JSON de prix s'applique après aperçu, par identifiant", a
     buffer: Buffer.from(JSON.stringify(json)),
   });
   await expect(page.locator("#csv")).toHaveValue(/→ 1\.89 €\/kg/);
-  await expect(page.locator("#impmsg")).toContainText("1 prix prêts (2 ignorés)");
+  await expect(page.locator("#impmsg")).toContainText("2 prix prêts (2 ignorés)");
   await expect(page.locator('input[data-cp="pates"]')).not.toHaveValue("1.89"); // pas encore appliqué
   await page.locator("#imp").click();
-  await expect(page.locator("#impmsg")).toContainText("1 prix chargés (Colruyt, 05/10/2026)");
+  await expect(page.locator("#impmsg")).toContainText("2 prix chargés (Colruyt, 05/10/2026)");
   await expect(page.locator('input[data-cp="pates"]')).toHaveValue("1.89");
   await expect(page.locator("#ct")).toContainText("Boni Spaghetti 500g");
+  await expect(page.locator("#ct")).toContainText("↳ EVERYDAY riz long grain 2kg");
+  await expect(page.locator("#ct")).not.toContainText("EVERYDAY EVERYDAY");
 });
 
 test("catalogue : le CSV de départ relie les 31 ingrédients de base", async ({ page }) => {
@@ -622,6 +629,30 @@ test("catalogue : le filtre cherche dans le nom de l'ingrédient et du produit",
   await expect(page.locator("#ct")).toContainText("Aucun ingrédient ne correspond");
   await page.locator("#cfilt").fill("");
   await expect(lignes).toHaveCount(total);
+});
+
+test("catalogue : l'export du catalogue se relit tel quel", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
+  await page.locator("#imp").click();
+  await page.locator('input[data-cp="riz"]').fill("2.5");
+  await page.locator('input[data-cp="riz"]').press("Tab");
+  const f = await telecharger(page, "#cexp");
+  expect(f.nom).toMatch(/^catalogue-prix-\d{4}-\d{2}-\d{2}\.json$/);
+  const j = JSON.parse(f.texte);
+  expect(j.ingredients.pates).toMatchObject({ unite: "kg", prix_unitaire: 2.78 });
+  expect(j.ingredients.pates.produit.nom).toBe("Spaghetti Boni 500g");
+  expect(j.ingredients.riz.prix_unitaire).toBe(2.5);
+  expect(j.ingredients.lait.unite).toBe("l");
+  // le fichier exporté se recharge dans le catalogue sans rien ignorer
+  await page.locator("#file").setInputFiles({
+    name: f.nom,
+    mimeType: "application/json",
+    buffer: Buffer.from(f.octets),
+  });
+  await expect(page.locator("#impmsg")).toContainText(/\d+ prix prêts\./);
+  await expect(page.locator("#impmsg")).not.toContainText("ignorés");
 });
 
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
