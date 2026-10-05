@@ -576,6 +576,8 @@ test("menu : chaque jour se replie et affiche son nombre de plats et de repas", 
   await expect(jour).toHaveAttribute("open", "");
   const resume = jour.locator(".dc");
   await expect(resume).toHaveText(/^\(\d+ plats? \/ \d+ repas\)$/);
+  // 1 plat pour 3 repas prévus : le menu reste à compléter
+  await expect(resume).toHaveText("(1 plat / 3 repas)");
   const avant = await resume.textContent();
   // ajouter un plat met le résumé à jour
   await jour.locator('select[data-add][data-slot="m"]').selectOption({ index: 1 });
@@ -596,4 +598,18 @@ test("menu : chaque jour se replie et affiche son nombre de plats et de repas", 
   await expect(page.locator("#mfold")).toHaveText("Tout déplier");
   await page.locator("#mfold").click();
   await expect(page.locator(".dcard[open]")).toHaveCount(await page.locator(".dcard").count());
+});
+
+test("menu : la liste « copier le menu d'un autre camp » occupe toute la largeur sur téléphone", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "menu");
+  if (page.viewportSize().width >= 560) return;
+  const l = await page.evaluate(() => {
+    const s = document.getElementById("mcp").getBoundingClientRect(),
+      c = document.getElementById("menu").getBoundingClientRect();
+    return { s: s.width, c: c.width };
+  });
+  expect(l.s).toBeGreaterThan(l.c - 4);
 });
