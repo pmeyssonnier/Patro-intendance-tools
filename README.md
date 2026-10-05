@@ -62,7 +62,9 @@ npx playwright install chromium
 npm test
 ```
 
-Pour utiliser un Chromium déjà installé : `CHROMIUM_PATH=/chemin/vers/chromium npm test`. Le site est publié par GitHub Pages à partir de la branche `main`.
+Pour utiliser un Chromium déjà installé : `CHROMIUM_PATH=/chemin/vers/chromium npm test`.
+
+Sur GitHub, ces tests se lancent automatiquement à chaque pull request et à chaque envoi sur `main` (onglet « Actions », fichier `.github/workflows/tests.yml`) ; en cas d'échec, les captures sont conservées 7 jours. Le site est publié par GitHub Pages à partir de la branche `main`.
 
 ## Licence
 
