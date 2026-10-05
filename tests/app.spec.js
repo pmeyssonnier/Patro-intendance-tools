@@ -635,7 +635,18 @@ test("menu : chaque jour se replie et affiche son nombre de plats et de repas", 
   await jour.locator('select[data-add][data-slot="m"]').selectOption({ index: 1 });
   await expect(page.locator(".dcard").first().locator(".dc")).not.toHaveText(avant);
   // replier : les repas disparaissent, le résumé reste, l'état survit à un nouvel affichage
+  // l'appli retient l'état replié dans l'événement « toggle », qui arrive juste après le clic :
+  // on l'attend, sinon un nouvel affichage immédiat ré-ouvre le jour (course entre clic et toggle)
+  await page.evaluate(() => {
+    window.__toggle = new Promise((r) =>
+      document.getElementById("menu").addEventListener("toggle", () => setTimeout(r), {
+        capture: true,
+        once: true,
+      })
+    );
+  });
   await page.locator(".dcard").first().locator("summary").click();
+  await page.evaluate(() => window.__toggle);
   await expect(page.locator(".dcard").first().locator(".zone").first()).toBeHidden();
   await expect(page.locator(".dcard").first().locator(".dc")).toBeVisible();
   await page
