@@ -858,3 +858,28 @@ body.nav #drawer {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Menu : chaque jour se replie, avec son résumé « (x plats / x repas) » */
+summary.dhd {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+summary.dhd::-webkit-details-marker {
+  display: none;
+}
+summary.dhd::before {
+  content: "▸";
+  flex: none;
+}
+details[open] > summary.dhd::before {
+  content: "▾";
+}
+.dhd .dc {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 400;
+  opacity: 0.85;
+  white-space: nowrap;
+}
