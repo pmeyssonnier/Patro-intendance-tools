@@ -1,0 +1,37 @@
+{
+  "source": "EXEMPLE (valeurs fictives)",
+  "magasin": "",
+  "date_maj": "2026-10-05T00:00:00",
+  "ingredients": {
+    "pates": {
+      "requete": "spaghetti",
+      "unite": "kg",
+      "prix_unitaire": 1.89,
+      "produit": {
+        "produit_id": "",
+        "nom": "Spaghetti 500g",
+        "marque": "Boni",
+        "prix": 0.95,
+        "prix_unitaire": 1.89,
+        "unite": "kg",
+        "promo": null
+      },
+      "alternatives": []
+    },
+    "lait": {
+      "requete": "lait demi-écrémé",
+      "unite": "l",
+      "prix_unitaire": 1.05,
+      "produit": {
+        "produit_id": "",
+        "nom": "Lait demi-écrémé 1L",
+        "marque": "Boni",
+        "prix": 1.05,
+        "prix_unitaire": 1.05,
+        "unite": "l",
+        "promo": null
+      },
+      "alternatives": []
+    }
+  }
+}
