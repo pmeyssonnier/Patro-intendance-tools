@@ -586,6 +586,17 @@ test("catalogue : un JSON de prix s'applique après aperçu, par identifiant", a
   await expect(page.locator("#ct")).toContainText("Boni Spaghetti 500g");
 });
 
+test("catalogue : le CSV de départ relie les 31 ingrédients de base", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#file").setInputFiles("exemples/prix_depart.csv");
+  await expect(page.locator("#csv")).toHaveValue(/Spaghetti Boni 1kg;1,40/);
+  await page.locator("#imp").click();
+  await expect(page.locator("#impmsg")).toContainText("31 ingrédients reliés");
+  await expect(page.locator('input[data-cp="pates"]')).toHaveValue("1.4");
+  await expect(page.locator('input[data-cp="hache_h"]')).toHaveValue("11");
+});
+
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");
@@ -624,7 +635,18 @@ test("menu : chaque jour se replie et affiche son nombre de plats et de repas", 
   await jour.locator('select[data-add][data-slot="m"]').selectOption({ index: 1 });
   await expect(page.locator(".dcard").first().locator(".dc")).not.toHaveText(avant);
   // replier : les repas disparaissent, le résumé reste, l'état survit à un nouvel affichage
+  // l'appli retient l'état replié dans l'événement « toggle », qui arrive juste après le clic :
+  // on l'attend, sinon un nouvel affichage immédiat ré-ouvre le jour (course entre clic et toggle)
+  await page.evaluate(() => {
+    window.__toggle = new Promise((r) =>
+      document.getElementById("menu").addEventListener("toggle", () => setTimeout(r), {
+        capture: true,
+        once: true,
+      })
+    );
+  });
   await page.locator(".dcard").first().locator("summary").click();
+  await page.evaluate(() => window.__toggle);
   await expect(page.locator(".dcard").first().locator(".zone").first()).toBeHidden();
   await expect(page.locator(".dcard").first().locator(".dc")).toBeVisible();
   await page
