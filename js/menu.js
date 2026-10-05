@@ -10,9 +10,8 @@ const jFermes = new Set();
 
 const resumeJour = (i) => {
   const ps = dtypes(i).map(({ k }) => slotArr(i, k).length),
-    p = ps.reduce((a, n) => a + n, 0),
-    r = ps.filter((n) => n).length;
-  return `(${p} plat${p > 1 ? "s" : ""} / ${r} repas)`;
+    p = ps.reduce((a, n) => a + n, 0);
+  return `(${p} plat${p > 1 ? "s" : ""} / ${ps.length} repas)`;
 };
 
 const ALLD = () => [...Array(31).keys()];

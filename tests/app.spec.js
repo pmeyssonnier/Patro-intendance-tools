@@ -576,6 +576,8 @@ test("menu : chaque jour se replie et affiche son nombre de plats et de repas", 
   await expect(jour).toHaveAttribute("open", "");
   const resume = jour.locator(".dc");
   await expect(resume).toHaveText(/^\(\d+ plats? \/ \d+ repas\)$/);
+  // 1 plat pour 3 repas prévus : le menu reste à compléter
+  await expect(resume).toHaveText("(1 plat / 3 repas)");
   const avant = await resume.textContent();
   // ajouter un plat met le résumé à jour
   await jour.locator('select[data-add][data-slot="m"]').selectOption({ index: 1 });
