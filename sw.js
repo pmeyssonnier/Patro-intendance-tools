@@ -49,14 +49,15 @@ self.addEventListener("fetch", (e) => {
   const r = e.request;
   if (r.method !== "GET" || new URL(r.url).origin !== location.origin) return;
   e.respondWith(
-    fetch(r)
+    // no-cache : on redemande toujours au serveur, sans se contenter de la copie gardée par le navigateur
+    fetch(r, { cache: "no-cache" })
       .then((res) => {
         const copy = res.clone();
         caches.open(V).then((c) => c.put(r, copy));
         return res;
       })
       .catch(() =>
-        caches.match(r).then((m) => {
+        caches.match(r, { ignoreSearch: true }).then((m) => {
           if (m) return m;
           // index.html seulement pour une navigation : un script ou une image manquant ne doit pas recevoir du HTML
           return r.mode === "navigate" ? caches.match("index.html") : Response.error();

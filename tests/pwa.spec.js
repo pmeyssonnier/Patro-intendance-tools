@@ -66,7 +66,7 @@ function fichiersNecessaires() {
     ...[...html.matchAll(/<img[^>]+src="([^"]+)"/g)].map((m) => m[1]),
     ...manifeste.icons.map((i) => i.src),
   ];
-  return [...new Set(liste.filter((f) => !/^(https?:|data:)/.test(f)))];
+  return [...new Set(liste.filter((f) => !/^(https?:|data:)/.test(f)).map((f) => f.split("?")[0]))];
 }
 
 test("hors connexion : tous les fichiers nécessaires sont en cache", async ({ page }) => {
