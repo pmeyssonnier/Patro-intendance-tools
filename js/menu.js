@@ -5,6 +5,16 @@ let addDay = -1,
   addT = "",
   delSl = null;
 
+/* Jours repliés (par défaut tous dépliés) ; l'état se garde d'un affichage à l'autre. */
+const jFermes = new Set();
+
+const resumeJour = (i) => {
+  const ps = dtypes(i).map(({ k }) => slotArr(i, k).length),
+    p = ps.reduce((a, n) => a + n, 0),
+    r = ps.filter((n) => n).length;
+  return `(${p} plat${p > 1 ? "s" : ""} / ${r} repas)`;
+};
+
 const ALLD = () => [...Array(31).keys()];
 
 const delPanel = (i, k, lab) => {
@@ -24,7 +34,9 @@ function drawMenu() {
   $("menu").innerHTML = days()
     .map((d, i) => {
       const gone = C.types.filter((t) => hid(i, t.k));
-      return `<div class="dcard"><div class="dhd">${esc(dlab(d))}</div>${dtypes(i)
+      return `<details class="dcard" data-dj="${i}"${jFermes.has(i) ? "" : " open"}><summary class="dhd"><span class="dn">${esc(dlab(d))}</span><span class="dc">${resumeJour(i)}</span></summary>${dtypes(
+        i
+      )
         .map(
           ({ k, n: lab }) =>
             `<div class="zone" data-day="${i}" data-slot="${esc(k)}" style="${cvars(C.col[k])}"><div class="zl"><span>${esc(lab)}</span><button class="zx" data-ds="1" data-day="${i}" data-slot="${esc(k)}" title="Retirer ce repas de ce jour" aria-label="Retirer ${esc(lab)} de ce jour">✕</button></div><div class="zc">${slotArr(
@@ -47,14 +59,34 @@ function drawMenu() {
         )
         .join(
           ""
-        )}<div class="zadd"><select data-as="1" data-day="${i}" aria-label="Ajouter un repas le ${esc(dlab(d))}"><option value="">+ Ajouter un repas…</option>${gone.map((t) => `<option value="${esc(t.k)}">${esc(t.n)}</option>`).join("")}<option value="__new">➕ Nouveau repas…</option></select>${addDay === i && addT ? addPanel() : ""}</div></div>`;
+        )}<div class="zadd"><select data-as="1" data-day="${i}" aria-label="Ajouter un repas le ${esc(dlab(d))}"><option value="">+ Ajouter un repas…</option>${gone.map((t) => `<option value="${esc(t.k)}">${esc(t.n)}</option>`).join("")}<option value="__new">➕ Nouveau repas…</option></select>${addDay === i && addT ? addPanel() : ""}</div></details>`;
     })
     .join("");
+  $("mfold").textContent = jFermes.size < days().length ? "Tout replier" : "Tout déplier";
   if (addDay >= 0) {
     const f = $("menu").querySelector("[data-nn]");
     if (f) f.focus();
   }
 }
+
+// « toggle » ne remonte pas : on l'écoute en capture
+$("menu").addEventListener(
+  "toggle",
+  (e) => {
+    const i = e.target.dataset.dj;
+    if (i === undefined) return;
+    if (e.target.open) jFermes.delete(+i);
+    else jFermes.add(+i);
+    $("mfold").textContent = jFermes.size < days().length ? "Tout replier" : "Tout déplier";
+  },
+  true
+);
+
+$("mfold").onclick = () => {
+  if (jFermes.size < days().length) days().forEach((d, i) => jFermes.add(i));
+  else jFermes.clear();
+  drawMenu();
+};
 
 const marr = (i, k) => {
   C.menu[i] = C.menu[i] || {};

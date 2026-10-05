@@ -84,7 +84,7 @@ test("camp : les dates donnent les jours du menu", async ({ page }) => {
   await page.locator("#cend").fill("2026-03-22");
   await page.locator("#cend").dispatchEvent("change");
   await aller(page, "menu");
-  await expect(page.locator(".dhd")).toHaveText([
+  await expect(page.locator(".dhd .dn")).toHaveText([
     "Vendredi 20/03",
     "Samedi 21/03",
     "Dimanche 22/03",
@@ -565,4 +565,35 @@ test("recettes : en-têtes lisibles sur ordinateur, réduits sur téléphone", a
     .evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
   if (page.viewportSize().width >= 900) expect(taille).toBeGreaterThan(12);
   else expect(taille).toBeLessThan(11);
+});
+
+test("menu : chaque jour se replie et affiche son nombre de plats et de repas", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "menu");
+  const jour = page.locator(".dcard").first();
+  await expect(jour).toHaveAttribute("open", "");
+  const resume = jour.locator(".dc");
+  await expect(resume).toHaveText(/^\(\d+ plats? \/ \d+ repas\)$/);
+  const avant = await resume.textContent();
+  // ajouter un plat met le résumé à jour
+  await jour.locator('select[data-add][data-slot="m"]').selectOption({ index: 1 });
+  await expect(page.locator(".dcard").first().locator(".dc")).not.toHaveText(avant);
+  // replier : les repas disparaissent, le résumé reste, l'état survit à un nouvel affichage
+  await page.locator(".dcard").first().locator("summary").click();
+  await expect(page.locator(".dcard").first().locator(".zone").first()).toBeHidden();
+  await expect(page.locator(".dcard").first().locator(".dc")).toBeVisible();
+  await page
+    .locator(".dcard")
+    .nth(1)
+    .locator('select[data-add][data-slot="m"]')
+    .selectOption({ index: 1 });
+  await expect(page.locator(".dcard").first()).not.toHaveAttribute("open", "");
+  // tout replier / tout déplier
+  await page.locator("#mfold").click();
+  await expect(page.locator(".dcard[open]")).toHaveCount(0);
+  await expect(page.locator("#mfold")).toHaveText("Tout déplier");
+  await page.locator("#mfold").click();
+  await expect(page.locator(".dcard[open]")).toHaveCount(await page.locator(".dcard").count());
 });
