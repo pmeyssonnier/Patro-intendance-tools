@@ -1,11 +1,26 @@
 /* Service worker : permet l'installation et l'usage hors connexion.
    Stratégie « réseau d'abord » : la dernière version est toujours chargée si on est en ligne. */
-const V = "pss-v2";
+const V = "pss-v3";
 const FILES = [
   "./",
   "index.html",
   "styles.css",
-  "app.js",
+  "js/data-defaults.js",
+  "js/utils.js",
+  "js/storage.js",
+  "js/state.js",
+  "js/calculations.js",
+  "js/shopping-list.js",
+  "js/documents.js",
+  "js/share-print.js",
+  "js/navigation.js",
+  "js/camps.js",
+  "js/diets.js",
+  "js/menu.js",
+  "js/recipes.js",
+  "js/catalog.js",
+  "js/pwa.js",
+  "js/main.js",
   "assets/logo-pss.jpg",
   "manifest.webmanifest",
   "icons/icon-192.png",
