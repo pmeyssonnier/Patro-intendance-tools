@@ -959,3 +959,12 @@ th.num,
   margin-left: auto;
   text-align: right;
 }
+/* Catalogue de prix : seule la colonne des prix est alignée à droite */
+#ct td:nth-child(3) {
+  text-align: right;
+}
+#ct td:nth-child(3) input {
+  display: block;
+  margin-left: auto;
+  text-align: right;
+}

@@ -684,3 +684,18 @@ test("liste de courses : quantité, prix et coût sont alignés à droite", asyn
   );
   expect(new Set(bords).size).toBe(1);
 });
+
+test("catalogue : seule la colonne des prix est alignée à droite", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const al = await page.evaluate(() => ({
+    th: [...document.querySelectorAll("#g-cat thead th")].map((e) => getComputedStyle(e).textAlign),
+    td: [...document.querySelectorAll("#ct tr:first-child td")].map(
+      (e) => getComputedStyle(e).textAlign
+    ),
+  }));
+  expect(al.th[2]).toBe("right");
+  expect(al.td[2]).toBe("right");
+  expect(al.th[0]).not.toBe("right");
+  expect(al.td[1]).not.toBe("right");
+});
