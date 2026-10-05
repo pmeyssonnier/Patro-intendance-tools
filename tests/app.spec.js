@@ -39,6 +39,20 @@ test("le numéro de version est affiché en bas du menu", async ({ page }) => {
   expect(await page.locator("#drawer").evaluate((d) => d.lastElementChild.id)).toBe("appver");
 });
 
+test("les scripts et le style portent le numéro de version (évite les fichiers périmés en cache)", async () => {
+  const version = require("../package.json").version;
+  const html = require("fs").readFileSync(
+    require("path").join(__dirname, "..", "index.html"),
+    "utf8"
+  );
+  const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
+    (m) => m[1]
+  );
+  expect(liens.length).toBe(17);
+  for (const l of liens)
+    expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
+});
+
 test("chaque page du menu s'affiche", async ({ page }) => {
   await ouvrir(page);
   const titres = {
