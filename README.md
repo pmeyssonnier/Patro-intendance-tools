@@ -77,6 +77,8 @@ Aucune dépendance ni étape de compilation :
 
 Ce sont des **scripts classiques**, pas des modules : les fichiers `js/` partagent les mêmes variables et **l'ordre de chargement** (`index.html`) compte, chacun dépendant de ceux qui le précèdent. Un nouveau fichier doit aussi être ajouté à la liste de `sw.js` pour fonctionner hors connexion.
 
+Le numéro de version affiché en bas du menu vient de `APP_VERSION` dans `js/data-defaults.js` : à mettre à jour à chaque release, avec `"version"` dans `package.json` (un test vérifie qu'ils sont identiques).
+
 Les fichiers doivent rester ensemble dans le même dossier. Pour modifier les styles ou le code, édite `styles.css` ou le fichier de `js/` concerné. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement `index.html` dans un navigateur.
 
 ### Mise en forme du code

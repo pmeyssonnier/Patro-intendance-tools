@@ -12,6 +12,8 @@ go(
   })()
 );
 
+$("appver").textContent = "Version " + APP_VERSION;
+
 syncDrawer(false);
 
 fillCamp();
