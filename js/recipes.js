@@ -11,7 +11,9 @@ function drawRec() {
   $("rdesc").value = R ? R.desc : "";
   $("rh").innerHTML =
     "<tr><th>Ingrédient</th>" +
-    SEC.map((s) => `<th>${s[0]}<div class="s">${s[1]}</div></th>`).join("") +
+    SEC.map((s) => `<th>${s[0].replace(/-/g, "-<wbr>")}<div class="s">${s[1]}</div></th>`).join(
+      ""
+    ) +
     "<th></th></tr>";
   $("rb").innerHTML = R
     ? Object.entries(R.ing)

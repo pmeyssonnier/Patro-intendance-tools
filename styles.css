@@ -303,6 +303,49 @@ td {
   border-bottom: 1px solid var(--bd);
   white-space: nowrap;
 }
+/* Tables de saisie (recettes, catalogue, liste de courses) : toutes les colonnes tiennent dans l'écran */
+table.fit {
+  font-size: 0.82rem;
+}
+.fit th,
+.fit td {
+  padding: 4px 3px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.fit th {
+  font-size: 0.72rem;
+  overflow-wrap: normal;
+}
+.fit.rec th {
+  font-size: 0.6rem;
+}
+.fit.rec th .s {
+  font-size: 0.56rem;
+}
+.fit.rec th:first-child,
+.fit.rec td:first-child {
+  min-width: 96px;
+}
+.fit .nw,
+#list td:last-child {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.fit td input[type="number"] {
+  width: 100%;
+  max-width: 64px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 4px 2px;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.fit input[type="number"]::-webkit-inner-spin-button,
+.fit input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 td input {
   width: 72px;
   padding: 4px 6px;
