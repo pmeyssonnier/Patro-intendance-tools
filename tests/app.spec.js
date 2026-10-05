@@ -436,3 +436,74 @@ test("configuration : un projet exporté garde troupe et sections, un ancien fic
   }, json);
   expect(net).toEqual([3, 3, undefined, 4]);
 });
+
+test("recettes : la taille des champs reste stable quand le nombre de sections change", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const largeur = async () => {
+    await aller(page, "rec");
+    return page
+      .locator("#rb tr")
+      .first()
+      .locator("input[type=number]")
+      .first()
+      .evaluate((i) => i.getBoundingClientRect().width);
+  };
+  const avant = await largeur();
+  await aller(page, "cfg");
+  for (let i = 0; i < 4; i++) await page.locator("#secadd").click();
+  const apres = await largeur();
+  expect(avant).toBeGreaterThanOrEqual(60);
+  expect(Math.abs(apres - avant)).toBeLessThan(1);
+});
+
+test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "eff");
+  await page.setViewportSize({ width: 390, height: 800 });
+  const bas = await page
+    .locator("#cnt input")
+    .evaluateAll((l) => l.map((i) => Math.round(i.getBoundingClientRect().bottom)));
+  expect(bas[0]).toBe(bas[1]);
+  expect(bas[2]).toBe(bas[3]);
+});
+
+test("tableaux longs : la ligne de titre reste visible quand on défile", async ({ page }) => {
+  await ouvrir(page);
+  await page.setViewportSize({ width: 390, height: 380 });
+  // recettes : le cadre du tableau défile, le titre reste en haut du cadre
+  await aller(page, "rec");
+  const rec = await page.evaluate(() => {
+    const w = document.getElementById("rb").closest(".w");
+    w.scrollTop = 80;
+    return [
+      w.scrollHeight > w.clientHeight,
+      Math.round(w.querySelector("th").getBoundingClientRect().top - w.getBoundingClientRect().top),
+    ];
+  });
+  expect(rec[0], "recettes : défile").toBe(true);
+  expect(rec[1], "recettes : titre collé en haut").toBeLessThan(3);
+  // catalogue et liste de courses : la page défile, le titre se colle sous la barre du haut
+  for (const [g, id] of [
+    ["cat", "ct"],
+    ["list", "list"],
+  ]) {
+    await aller(page, g);
+    const r = await page.evaluate((id) => {
+      const t = document.getElementById(id).closest("table");
+      window.scrollTo(0, t.getBoundingClientRect().top + window.scrollY + 120);
+      return [
+        Math.round(t.querySelector("th").getBoundingClientRect().top),
+        document.querySelector(".top").offsetHeight,
+      ];
+    }, id);
+    expect(Math.abs(r[0] - r[1]), g + " : titre sous la barre du haut").toBeLessThan(3);
+  }
+});
+
+test("menu : le camp n'est pas répété en haut", async ({ page }) => {
+  await ouvrir(page);
+  await expect(page.locator("#cinfo")).toHaveCount(0);
+  await expect(page.locator("#csel")).toBeVisible();
+});

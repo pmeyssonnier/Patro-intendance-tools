@@ -13,7 +13,7 @@
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
 <nav id="drawer" class="np" aria-label="Navigation">
-<div class="dh"><label id="logo" title="Clique pour changer le logo (sur cet appareil)"><img id="logoimg" alt="Logo Patro Sainte-Suzanne" src="assets/logo-pss.jpg"><input type="file" id="logof" accept="image/*" hidden></label><div><div class="dt" id="ttroop">Patro Sainte-Suzanne</div><div class="s" id="cinfo">Intendance de camp ⛺</div></div></div>
+<div class="dh"><label id="logo" title="Clique pour changer le logo (sur cet appareil)"><img id="logoimg" alt="Logo Patro Sainte-Suzanne" src="assets/logo-pss.jpg"><input type="file" id="logof" accept="image/*" hidden></label><div><div class="dt" id="ttroop">Patro Sainte-Suzanne</div></div></div>
 <div class="dsec">Camp en cours</div><select id="csel" aria-label="Camp en cours"></select>
 <div class="dsec">Préparer</div>
 <button class="ni on" data-g="eff"><span>⛺</span>Camp &amp; effectifs</button>
@@ -75,7 +75,7 @@
 <div class="row" id="rform" style="display:none;grid-template-columns:1fr auto auto"><input id="rname" aria-label="Nom de la nouvelle recette" placeholder="Nom de la recette"><button id="rok">Créer</button><button id="rno" class="x">Annuler</button></div>
 <label>Description / déroulé</label><textarea id="rdesc" aria-label="Description de la recette" rows="4"></textarea>
 <p class="s">Quantité <b>par personne</b> et par section (g, ml ou pièces). Pour une quantité <b>unique</b> (ex. 5 pains, 5 L de lait), clique sur « → quantité unique » sous l'ingrédient. Elle est répartie au prorata des régimes (désactivable).</p>
-<div class="w"><table class="fit rec"><thead id="rh"></thead><tbody id="rb"></tbody></table></div>
+<div class="w sv"><table class="fit rec"><thead id="rh"></thead><tbody id="rb"></tbody></table></div>
 <p><select id="radd" aria-label="Ajouter un ingrédient à la recette" style="max-width:260px;display:inline-block"></select> <button id="inew" class="x">+ Nouvel ingrédient</button></p>
 <div class="g" id="iform" style="display:none"><div><label>Nom</label><input id="iname" aria-label="Nom du nouvel ingrédient" placeholder="ex. Poivrons"></div>
 <div><label>Unité</label><select id="iunit" aria-label="Unité du nouvel ingrédient"><option value="g">Poids : g (prix au kg)</option><option value="ml">Liquide : ml (prix au L)</option><option value="pc">Pièce (prix à la pièce)</option></select></div>
@@ -89,12 +89,12 @@
 <textarea id="csv" aria-label="Liste de produits et prix, un par ligne" rows="4" placeholder="Spaghetti Boni 500g;1,39&#10;Riz long grain Boni 1kg;1,95"></textarea>
 <p><input type="file" id="file" aria-label="Fichier de prix (CSV ou texte)" accept=".csv,.txt" style="max-width:260px"> <button id="imp">Importer</button> <button id="csvx" class="x">Télécharger un exemple</button> <span class="s" id="impmsg"></span></p>
 <h2 style="margin-top:14px">Prix des ingrédients</h2>
-<div class="w" style="max-height:380px;overflow-y:auto"><table class="fit"><thead><tr><th>Ingrédient</th><th>Unité</th><th>Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
+<div class="w st"><table class="fit"><thead><tr><th>Ingrédient</th><th>Unité</th><th>Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
 <p><button id="hrs" class="x">Restaurer les ingrédients de base</button></p></section></div>
 
 <div class="pg" id="g-list">
 <section class="card"><h2>Liste de courses</h2>
-<div class="w"><table class="fit"><thead><tr><th>Produit</th><th class="nw">Quantité</th><th>Prix</th><th class="nw">Coût</th></tr></thead><tbody id="list"></tbody></table></div>
+<div class="w st"><table class="fit"><thead><tr><th>Produit</th><th class="nw">Quantité</th><th>Prix</th><th class="nw">Coût</th></tr></thead><tbody id="list"></tbody></table></div>
 <div class="t"><span>Total : <b id="tot"></b></span><span>Par personne : <b id="pp"></b></span><span class="s" id="np2"></span></div>
 <p class="np"><button id="plist">🖨️ Imprimer la liste</button> <button id="lcsv" class="x">📊 Exporter en CSV</button></p></section>
 <section class="card"><h2>Coût par repas</h2><div class="w"><table><tbody id="pm"></tbody></table></div></section></div>
