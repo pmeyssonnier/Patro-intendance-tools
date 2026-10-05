@@ -1,16 +1,29 @@
 /* Intendance PSS – Catalogue de prix : saisie et import de produits (CSV / texte).
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
+/** Minuscules et sans accents, pour que « cereales » trouve « Céréales ». */
+const plain = (t) =>
+  String(t ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 function drawCat() {
+  const q = plain($("cfilt").value.trim());
+  const keys = Object.keys(ING).filter(
+    (k) => !S.hid.includes(k) && (!q || plain(ING[k][0] + " " + (S.pn[k] || "")).includes(q))
+  );
   $("ct").innerHTML =
-    Object.keys(ING)
-      .filter((k) => !S.hid.includes(k))
+    keys
       .map(
         (k) =>
           `<tr><td>${esc(ING[k][0])}${S.pn[k] ? `<div class="s">↳ ${esc(S.pn[k])}</div>` : ""}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
       )
-      .join("") || "<tr><td>Aucun ingrédient.</td></tr>";
+      .join("") ||
+    `<tr><td>${q ? "Aucun ingrédient ne correspond au filtre." : "Aucun ingrédient."}</td></tr>`;
 }
+
+$("cfilt").addEventListener("input", drawCat);
 
 $("ct").addEventListener("change", (e) => {
   const k = e.target.dataset.cp;

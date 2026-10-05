@@ -597,6 +597,33 @@ test("catalogue : le CSV de départ relie les 31 ingrédients de base", async ({
   await expect(page.locator('input[data-cp="hache_h"]')).toHaveValue("11");
 });
 
+test("catalogue : le filtre cherche dans le nom de l'ingrédient et du produit", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const lignes = page.locator("#ct tr");
+  const total = await lignes.count();
+  await page.locator("#cfilt").fill("cereales"); // sans accent
+  await expect(lignes).toHaveCount(1);
+  await expect(lignes.first()).toContainText("Céréales");
+  // le nom d'un produit importé est cherché aussi
+  await page.locator("#cfilt").fill("");
+  await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
+  await page.locator("#imp").click();
+  await page.locator("#cfilt").fill("boni");
+  await expect(lignes).toHaveCount(1);
+  await expect(lignes.first()).toContainText("Pâtes");
+  // un prix saisi sous un filtre ne le vide pas, et sans résultat un message s'affiche
+  await lignes.first().locator("input").fill("2");
+  await lignes.first().locator("input").press("Tab");
+  await expect(page.locator("#cfilt")).toHaveValue("boni");
+  await page.locator("#cfilt").fill("zzzz");
+  await expect(page.locator("#ct")).toContainText("Aucun ingrédient ne correspond");
+  await page.locator("#cfilt").fill("");
+  await expect(lignes).toHaveCount(total);
+});
+
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");
