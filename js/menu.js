@@ -132,7 +132,7 @@ $("menu").addEventListener("keydown", (e) => {
     arr = marr(day, slot);
   let nd = day,
     ns = slot,
-    nj = j;
+    nj;
   if (e.key === "ArrowUp" || e.key === "ArrowDown") {
     nj = j + (e.key === "ArrowUp" ? -1 : 1);
     if (nj < 0 || nj >= arr.length) return;

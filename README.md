@@ -85,6 +85,10 @@ Les fichiers doivent rester ensemble dans le même dossier. Pour modifier les st
 
 `js/`, `styles.css` et les tests sont formatés automatiquement avec [Prettier](https://prettier.io) (réglages dans `.prettierrc.json`). Après une modification : `npm run format` (ou `npm run format:check` pour seulement vérifier). `index.html` n'est pas reformaté automatiquement, pour ne pas décaler l'affichage.
 
+### Contrôle du code (ESLint)
+
+`npm run lint` repère les fautes de frappe et les oublis avant même d'ouvrir la page : variable ou fonction inconnue (`no-undef`), variable locale inutilisée, `==` au lieu de `===` (sauf `x == null`, voulu). Comme les fichiers de `js/` partagent leurs variables, `eslint.config.js` lit lui-même ce que chaque fichier déclare au premier niveau : il n'y a aucune liste à tenir à jour. Ce contrôle ne vérifie pas l'ordre de chargement des fichiers (voir plus haut) : les tests s'en chargent.
+
 ### Tests
 
 Des tests de bout en bout (Playwright) ouvrent la page dans un vrai navigateur, sur ordinateur et au format téléphone : navigation, camps et dates, menu (ajout, repas supplémentaires, déplacement au clavier), quantité unique et régimes, export/import, sécurité de l'import, export CSV, avertissement de stockage, accessibilité et **mode hors connexion** (l'appli est alors servie en HTTP par un petit serveur local, pour tester le service worker : fichiers en cache, rechargement sans réseau).
@@ -97,7 +101,7 @@ npm test
 
 Pour utiliser un Chromium déjà installé : `CHROMIUM_PATH=/chemin/vers/chromium npm test`.
 
-Sur GitHub, ces tests se lancent automatiquement à chaque pull request et à chaque envoi sur `main` (onglet « Actions », fichier `.github/workflows/tests.yml`) ; en cas d'échec, les captures sont conservées 7 jours. Le site est publié par GitHub Pages à partir de la branche `main`.
+Sur GitHub, le contrôle du code (ESLint, Prettier) puis ces tests se lancent automatiquement à chaque pull request et à chaque envoi sur `main` (onglet « Actions », fichier `.github/workflows/tests.yml`) ; en cas d'échec, les captures sont conservées 7 jours. Le site est publié par GitHub Pages à partir de la branche `main`.
 
 ## Licence
 
