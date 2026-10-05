@@ -4,7 +4,9 @@ const { ouvrir, aller, telecharger, importer, montant } = require("./helpers");
 test("la page s'ouvre sans erreur avec le camp d'exemple", async ({ page }) => {
   const erreurs = await ouvrir(page);
   await expect(page).toHaveTitle(/Intendance de camp/);
-  await expect(page.locator("footer")).toContainText("Outil fait par le Patro Sainte-Suzanne pour les patros");
+  await expect(page.locator("footer")).toContainText(
+    "Outil fait par le Patro Sainte-Suzanne pour les patros"
+  );
   await expect(page.locator("#cname")).toHaveValue("Mon camp");
   expect(await page.locator("#list tr").count()).toBeGreaterThan(5);
   // valeurs par défaut complètes : S.cust existe dès le premier lancement
