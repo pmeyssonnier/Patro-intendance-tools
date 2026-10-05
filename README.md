@@ -5,7 +5,7 @@ Outil fait par le PSS pour les patros : il aide à préparer l'intendance d'un c
 
 👉 **Utiliser l'outil : https://pmeyssonnier.github.io/Patro-intendance-tools/**
 
-Aucune installation : c'est une page web unique (`index.html`) qui fonctionne
+Aucune installation : c'est une petite page web (`index.html`, avec `styles.css`, `app.js` et le logo dans `assets/`) qui fonctionne
 sur ordinateur, tablette et téléphone. Les données restent sur ton appareil
 (stockage du navigateur) ; rien n'est envoyé sur un serveur.
 
@@ -50,7 +50,17 @@ Tous les boutons et champs ont un nom pour les lecteurs d'écran, le menu ☰ et
 
 ## Pour les développeurs
 
-Tout le code (HTML, CSS, JavaScript) est dans `index.html`, sans dépendance ni étape de compilation. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement le fichier dans un navigateur.
+Aucune dépendance ni étape de compilation :
+
+| Fichier | Rôle |
+| --- | --- |
+| `index.html` | structure de la page (pages, formulaires, conteneurs) |
+| `styles.css` | tout le CSS |
+| `app.js` | toute la logique (script classique, chargé en fin de page) |
+| `assets/logo-pss.jpg` | logo par défaut |
+| `manifest.webmanifest`, `sw.js`, `icons/` | installation et usage hors connexion |
+
+Les fichiers doivent rester ensemble dans le même dossier. Pour modifier les styles ou le script, édite `styles.css` ou `app.js` directement. L'installation repose sur `manifest.webmanifest`, `sw.js` (hors connexion) et le dossier `icons/`. Pour essayer en local, ouvre simplement `index.html` dans un navigateur.
 
 ### Tests
 

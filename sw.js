@@ -1,7 +1,7 @@
 /* Service worker : permet l'installation et l'usage hors connexion.
    Stratégie « réseau d'abord » : la dernière version est toujours chargée si on est en ligne. */
-const V = "pss-v1";
-const FILES = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
+const V = "pss-v2";
+const FILES = ["./", "index.html", "styles.css", "app.js", "assets/logo-pss.jpg", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });
