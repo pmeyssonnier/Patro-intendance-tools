@@ -798,3 +798,63 @@ body.nav #drawer {
     overflow: visible;
   }
 }
+/* Régimes sur téléphone : un bloc par régime, un seul déplié à la fois */
+#dlist details.rg {
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 0 10px;
+  margin-top: 8px;
+}
+#dlist details.rg[open] {
+  padding-bottom: 6px;
+}
+#dlist .rg summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+  font-weight: 600;
+}
+#dlist .rgn {
+  color: var(--ac);
+  white-space: nowrap;
+}
+#dlist .rgl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  padding: 5px 0;
+  border-top: 1px solid var(--bd);
+  font-size: 0.9rem;
+}
+#dlist .rgl small {
+  margin-left: 6px;
+  color: var(--mu);
+  font-size: 0.75rem;
+}
+#dlist .rgl input {
+  width: 76px;
+  flex: none;
+  text-align: center;
+}
+/* Ordinateur : en-têtes des recettes plus lisibles (sur téléphone, taille réduite et stable) */
+@media (min-width: 900px) {
+  .fit.rec th {
+    font-size: 0.85rem;
+  }
+  .fit.rec th .s {
+    font-size: 0.72rem;
+  }
+}
+#fname {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

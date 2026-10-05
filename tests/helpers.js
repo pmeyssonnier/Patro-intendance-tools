@@ -22,6 +22,13 @@ async function aller(page, id) {
   await page.locator(`#g-${id}.on`).waitFor();
 }
 
+/** Sur téléphone, les régimes sont des blocs dépliables (un seul ouvert) : déplie celui demandé. Sans effet sur ordinateur. */
+async function deplierRegime(page, cle) {
+  const bloc = page.locator(`details.rg[data-rg="${cle}"]`);
+  if ((await bloc.count()) && !(await bloc.evaluate((d) => d.open)))
+    await bloc.locator("summary").click();
+}
+
 /** Clique sur un bouton qui télécharge un fichier et renvoie { nom, texte, octets, chemin }. */
 async function telecharger(page, selecteur) {
   const [dl] = await Promise.all([page.waitForEvent("download"), page.locator(selecteur).click()]);
@@ -38,4 +45,4 @@ async function importer(page, fichier) {
 /** Montant affiché en euros (« 198,21 € ») → nombre. */
 const montant = (txt) => parseFloat(txt.replace(/[^\d,]/g, "").replace(",", "."));
 
-module.exports = { ouvrir, aller, telecharger, importer, montant, URL };
+module.exports = { ouvrir, aller, telecharger, importer, montant, URL, deplierRegime };
