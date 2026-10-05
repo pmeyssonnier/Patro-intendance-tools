@@ -1,6 +1,6 @@
 # Patro Sainte-Suzanne – Intendance de camp ⛺
 
-Outil fait par le PSS pour les patros : il aide à préparer l'intendance d'un camp
+Outil fait par le Patro Sainte-Suzanne pour les patros : il aide à préparer l'intendance d'un camp
 (menus, recettes, régimes et allergies, liste de courses et budget).
 
 👉 **Utiliser l'outil : https://pmeyssonnier.github.io/Patro-intendance-tools/**
