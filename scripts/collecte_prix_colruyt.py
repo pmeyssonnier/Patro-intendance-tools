@@ -247,8 +247,9 @@ def appliquer_catalogue(cat):
 
 if UTILISER_CATALOGUE:
     envoye = files.upload()  # choisir « catalogue-prix-….json »
-    with open(next(iter(envoye)), encoding="utf-8") as f:
-        appliquer_catalogue(json.load(f))
+    # on lit le contenu envoyé, pas le fichier du même nom : Colab renomme un fichier déjà présent
+    # (« … (1) (2).json ») mais renvoie le nom d'origine, ce qui ferait relire un ancien fichier
+    appliquer_catalogue(json.loads(next(iter(envoye.values())).decode("utf-8")))
 
 # %% DEBUG : champs réellement renvoyés par l'acteur (adapter les noms candidats ci-dessus si besoin)
 test = appeler_apify("spaghetti")
