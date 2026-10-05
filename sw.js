@@ -1,6 +1,6 @@
 /* Service worker : permet l'installation et l'usage hors connexion.
    Stratégie « réseau d'abord » : la dernière version est toujours chargée si on est en ligne. */
-const V = "pss-v4";
+const V = "pss-v5";
 const FILES = [
   "./",
   "index.html",
@@ -19,6 +19,7 @@ const FILES = [
   "js/menu.js",
   "js/recipes.js",
   "js/catalog.js",
+  "js/config.js",
   "js/pwa.js",
   "js/main.js",
   "assets/logo-pss.jpg",

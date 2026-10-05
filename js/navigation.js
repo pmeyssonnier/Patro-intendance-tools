@@ -9,6 +9,7 @@ const PG = {
   cat: "Catalogue de prix",
   list: "Liste de courses",
   sh: "Partager / imprimer",
+  cfg: "Configuration",
   pj: "Sauvegarde",
 };
 
@@ -69,10 +70,12 @@ $("drawer").addEventListener("click", (e) => {
   if (b) go(b.dataset.g);
 });
 
-if (S.logo) $("logoimg").src = S.logo;
+$("gear").onclick = () => go("cfg");
 
-$("logof").onchange = (e) => {
+/** Lit l'image choisie, la réduit (160 px) et en fait le logo ; le même code sert au menu et à la Configuration. */
+const choisirLogo = (e) => {
   const f = e.target.files[0];
+  e.target.value = "";
   if (!f) return;
   const r = new FileReader();
   r.onload = () => {
@@ -84,10 +87,14 @@ $("logof").onchange = (e) => {
       c.height = im.height * k;
       c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
       S.logo = c.toDataURL("image/png");
-      $("logoimg").src = S.logo;
+      drawBrand();
       save();
     };
     im.src = r.result;
   };
   r.readAsDataURL(f);
 };
+
+$("logof").onchange = choisirLogo;
+
+$("logof2").onchange = choisirLogo;

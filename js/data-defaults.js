@@ -4,12 +4,18 @@
 // Numéro de version affiché dans le menu : à mettre à jour à chaque release (avec "version" dans package.json).
 const APP_VERSION = "1.4.0";
 
-const SEC = [
+// Nom de la troupe par défaut (modifiable dans Configuration).
+const TROOP0 = "Patro Sainte-Suzanne";
+
+// Sections par défaut [nom, âges]. La liste utilisée par l'appli est SEC (copie de S.sec, modifiable dans Configuration).
+const SEC0 = [
   ["Benjas", "5–10 ans"],
   ["Chevaliers-Étincelles", "10–13 ans"],
   ["Conquérants-Alpines", "13–16 ans"],
   ["Animateurs", "16 ans et +"],
 ];
+
+const SEC = SEC0.map((s) => [...s]);
 
 const ING = {
   pates: ["Pâtes", "g", 1.4, "spaghetti|pâtes|penne|pasta"],

@@ -22,6 +22,10 @@ drawCamps();
 
 drawSw();
 
+drawSecEd();
+
+drawBrand();
+
 drawDiets();
 
 drawDietEd();

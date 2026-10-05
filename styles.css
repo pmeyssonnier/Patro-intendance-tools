@@ -694,3 +694,50 @@ body.nav #drawer {
     padding: 0;
   }
 }
+
+#gear {
+  margin-left: auto;
+}
+.secrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto auto auto;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.secrow button {
+  padding: 7px 9px;
+}
+.cfglogo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.cfglogo img {
+  height: 56px;
+  max-width: 120px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 10px;
+  padding: 3px;
+}
+.filebtn {
+  display: inline-block;
+  width: auto;
+  cursor: pointer;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 1rem;
+  color: var(--mu);
+}
+@media (max-width: 560px) {
+  .secrow {
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--bd);
+  }
+  .secrow input:first-child {
+    grid-column: 1 / -1;
+  }
+}

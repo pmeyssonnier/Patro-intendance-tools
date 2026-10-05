@@ -14,15 +14,27 @@ const str = (v, max, d) => (typeof v === "string" ? v.slice(0, max) : d || ""),
   };
 
 const ent = (o) => (obj(o) ? Object.entries(o).slice(0, 500) : []),
-  q4 = (a) => [0, 1, 2, 3].map((i) => num((Array.isArray(a) ? a : [])[i], 0, 1e6));
+  qn = (a, N) => Array.from({ length: N }, (_, i) => num((Array.isArray(a) ? a : [])[i], 0, 1e6));
 
-function cleanCamp(c) {
+const MAXSEC = 12;
+
+/** Sections [nom, âges] d'un fichier : 1 à 12, noms non vides ; null si la liste est absente ou inutilisable. */
+function cleanSec(a) {
+  if (!Array.isArray(a)) return null;
+  const l = a
+    .filter((s) => Array.isArray(s) && typeof s[0] === "string")
+    .slice(0, MAXSEC)
+    .map((s, i) => [s[0].trim().slice(0, 40) || "Section " + (i + 1), str(s[1], 30).trim()]);
+  return l.length ? l : null;
+}
+
+function cleanCamp(c, N) {
   if (!obj(c)) return null;
   const o = {
     name: str(c.name, 80, "Camp"),
     start: dateReelle(c.start) ? c.start : "",
     end: dateReelle(c.end) ? c.end : "",
-    n: q4(c.n).map((v) => Math.min(v, 1e4)),
+    n: qn(c.n, N).map((v) => Math.min(v, 1e4)),
     wa: num(c.wa, 0, 500, 10),
     dt: {},
     notes: str(c.notes, 5000),
@@ -33,7 +45,7 @@ function cleanCamp(c) {
     col: {},
   };
   for (const [k, v] of ent(c.dt))
-    if (okid(k) && Array.isArray(v)) o.dt[k] = q4(v).map((x) => Math.min(x, 1e4));
+    if (okid(k) && Array.isArray(v)) o.dt[k] = qn(v, N).map((x) => Math.min(x, 1e4));
   for (const t of (Array.isArray(c.types) ? c.types : []).slice(0, 30))
     if (obj(t) && okid(t.k) && typeof t.n === "string")
       o.types.push({ k: t.k, n: t.n.slice(0, 30) });
@@ -65,10 +77,14 @@ function cleanProject(x) {
       ? x.hid.filter((k) => typeof k === "string" && okid(k)).slice(0, 200)
       : [],
   };
+  const sec = cleanSec(x.sec),
+    N = sec ? sec.length : SEC0.length;
+  if (sec) o.sec = sec;
+  if (typeof x.troop === "string") o.troop = str(x.troop, 60).trim();
   for (const [n, r] of ent(x.rec)) {
     if (!n || n.length > 100 || n === "__proto__" || !obj(r)) continue;
     const R = { desc: str(r.desc, 5000), ing: {} };
-    for (const [k, a] of ent(r.ing)) if (okid(k) && Array.isArray(a)) R.ing[k] = q4(a);
+    for (const [k, a] of ent(r.ing)) if (okid(k) && Array.isArray(a)) R.ing[k] = qn(a, N);
     if (obj(r.fx)) {
       R.fx = {};
       for (const [k, v] of ent(r.fx)) if (okid(k) && k in R.ing) R.fx[k] = num(v, 0, 1e7);
@@ -124,19 +140,19 @@ function cleanProject(x) {
     o.camps = {};
     for (const [k, c] of ent(x.camps)) {
       if (!okid(k)) continue;
-      const cc = cleanCamp(c);
+      const cc = cleanCamp(c, N);
       if (cc) o.camps[k] = cc;
     }
     if (!Object.keys(o.camps).length) throw new Error("aucun camp valide dans ce fichier.");
     o.ccur = typeof x.ccur === "string" && o.camps[x.ccur] ? x.ccur : Object.keys(o.camps)[0];
   } else {
-    o.n = q4(x.n).map((v) => Math.min(v, 1e4));
+    o.n = qn(x.n, N).map((v) => Math.min(v, 1e4));
     o.wa = num(x.wa, 0, 500, 10);
     o.notes = str(x.notes, 5000);
     o.mt = str(x.mt, 80, "Menu du camp");
     o.dt = {};
     for (const [k, v] of ent(x.dt))
-      if (okid(k) && Array.isArray(v)) o.dt[k] = q4(v).map((z) => Math.min(z, 1e4));
+      if (okid(k) && Array.isArray(v)) o.dt[k] = qn(v, N).map((z) => Math.min(z, 1e4));
     o.meals = x.meals
       .filter((m) => Array.isArray(m) && typeof m[0] === "string" && typeof m[1] === "string")
       .slice(0, 500)

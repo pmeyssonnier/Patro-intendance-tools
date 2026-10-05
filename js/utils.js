@@ -23,6 +23,7 @@ const eur = (v) => v.toLocaleString("fr-BE", { style: "currency", currency: "EUR
 const price = (k) => S.prices[k] ?? ING[k][2],
   per = (k) => (ING[k][1] === "pc" ? 1 : 1000),
   ul = (k) => (ING[k][1] === "ml" ? "L" : ING[k][1] === "pc" ? "pc" : "kg"),
+  troop = () => (S.troop || "").trim() || TROOP0,
   nn = () => C.n.reduce((a, b) => a + b, 0);
 
 const fxu = (k) => (ING[k][1] === "pc" ? 1 : 1000),

@@ -1,6 +1,6 @@
 # Patro Sainte-Suzanne – Intendance de camp ⛺
 
-Outil fait par le PSS pour les patros : il aide à préparer l'intendance d'un camp
+Outil fait par le Patro Sainte-Suzanne pour les patros : il aide à préparer l'intendance d'un camp
 (menus, recettes, régimes et allergies, liste de courses et budget).
 
 👉 **Utiliser l'outil : https://pmeyssonnier.github.io/Patro-intendance-tools/**
@@ -12,11 +12,12 @@ sur ordinateur, tablette et téléphone. Les données restent sur ton appareil
 ## Prise en main
 
 1. Ouvre le menu ☰ (en haut à gauche) : chaque page s'y trouve, une à la fois.
-2. **Camp & effectifs** : donne un nom au camp, ses dates de début et de fin, et le nombre de personnes par section.
-3. **Régimes & allergies** : indique combien de personnes sont concernées, par section.
-4. **Menu** : compose les repas (Matin, Midi, Soir) de chaque jour ; glisse ⠿ pour déplacer un plat.
-5. **Liste de courses** : consulte les quantités et le budget, puis imprime ou partage la liste.
-6. **Sauvegarde** : exporte le projet (`.json`) pour ne rien perdre.
+2. **Configuration** (⚙️, en haut à droite ou dans le menu) : indique le nom de ta troupe, son logo et tes sections (noms et âges). Les sections du PSS sont proposées par défaut.
+3. **Camp & effectifs** : donne un nom au camp, ses dates de début et de fin, et le nombre de personnes par section.
+4. **Régimes & allergies** : indique combien de personnes sont concernées, par section.
+5. **Menu** : compose les repas (Matin, Midi, Soir) de chaque jour ; glisse ⠿ pour déplacer un plat.
+6. **Liste de courses** : consulte les quantités et le budget, puis imprime ou partage la liste.
+7. **Sauvegarde** : exporte le projet (`.json`) pour ne rien perdre.
 
 ## Installer l'application sur le téléphone
 
@@ -28,7 +29,8 @@ L'outil s'installe comme une application, avec son icône sur l'écran d'accueil
 
 ## Pages et fonctions
 
-- **Camp & effectifs** : un projet par camp (nom, dates, effectifs par section – Benjas, Chevaliers-Étincelles, Conquérants-Alpines, Animateurs –, marge de pertes, régimes/allergies et menu). On peut créer, dupliquer, supprimer et changer de camp (sélecteur dans le menu ☰). Recettes, ingrédients et prix sont partagés entre les camps.
+- **Camp & effectifs** : un projet par camp (nom, dates, effectifs par section (par défaut Benjas, Chevaliers-Étincelles, Conquérants-Alpines, Animateurs), marge de pertes, régimes/allergies et menu). On peut créer, dupliquer, supprimer et changer de camp (sélecteur dans le menu ☰). Recettes, ingrédients et prix sont partagés entre les camps.
+- **Configuration** (⚙️) : nom de la troupe (affiché dans le menu et sur les documents), logo et sections. Chaque section a un nom et une tranche d'âge modifiables ; on peut les trier (▲ ▼), en ajouter (12 au maximum) et en supprimer (au moins une reste). Les effectifs, les régimes et les quantités des recettes suivent les sections quand on les déplace ; supprimer une section efface ses chiffres.
 - **Régimes & allergies** : végétarien, halal, sans lactose, sans gluten, etc. L'appli retire l'ingrédient concerné et ajoute le substitut à acheter. Les régimes sont modifiables : on peut en créer, les renommer, en supprimer et définir les règles de remplacement.
 - **Menu** : un tableau par jour (« Vendredi 22/03 »), d'après les dates du camp, avec Matin, Midi et Soir. On peut ajouter d'autres repas (Goûter, Collation…) et les retirer, à **un seul jour ou à tous les jours** au choix ; ils sont renommables, réordonnables et ont chacun une couleur. Les plats se glissent d'un repas ou d'un jour à l'autre, à la souris, au doigt ou au clavier (flèches haut/bas pour l'ordre, gauche/droite pour changer de repas). Menu imprimable (avec ou sans descriptions et adaptations) et copie du menu d'un autre camp.
 - **Recettes** : quantités par personne et par section, ou **quantité unique** pour un ingrédient (ex. 5 pains, 5 L de lait : bouton « → quantité unique » sous l'ingrédient ; cette quantité n'est ni multipliée par l'effectif, ni augmentée de la marge, et elle est répartie au prorata des personnes au régime concernées — par exemple 3 personnes sans gluten sur 30 reçoivent 10 % du pain en pain sans gluten ; case « adapter aux régimes » désactivable) ; ingrédients personnalisés.
@@ -71,6 +73,7 @@ Aucune dépendance ni étape de compilation :
 | `js/menu.js` | menu du camp, glisser-déposer, repas supplémentaires, couleurs |
 | `js/recipes.js` | recettes et ingrédients |
 | `js/catalog.js` | catalogue de prix et import |
+| `js/config.js` | configuration : nom de la troupe, logo, sections |
 | `js/pwa.js` | installation et hors connexion |
 | `js/main.js` | démarrage |
 | `assets/logo-pss.jpg` | logo par défaut |

@@ -26,7 +26,7 @@ function menuHTML() {
       rows += `<tr class="sl" style="${cvars(C.col[k])}"><td class="sn">${esc(lab)}</td><td>${dishes}</td>${ds}</tr>`;
     });
   });
-  return `<div class="mp pvx"><h2>${esc(C.mt || "Menu")}</h2><div class="s">${esc(C.name)} · ${fdate(C.start)} → ${fdate(C.end)} · ${nn()} personnes · Patro Sainte-Suzanne</div><table class="mt"><thead><tr><th>Repas</th><th>Au menu</th>${dsc ? "<th>Description</th>" : ""}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="mp pvx"><h2>${esc(C.mt || "Menu")}</h2><div class="s">${esc(C.name)} · ${fdate(C.start)} → ${fdate(C.end)} · ${nn()} personnes · ${esc(troop())}</div><table class="mt"><thead><tr><th>Repas</th><th>Au menu</th>${dsc ? "<th>Description</th>" : ""}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function listHTML() {
@@ -36,7 +36,7 @@ function listHTML() {
       return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${qty(k, LAST.tot[k])}</td><td>${price(k) ? eur(price(k)) + "/" + ul(k) : "–"}</td><td>${eur(c)}</td></tr>`;
     })
     .join("");
-  return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">Patro Sainte-Suzanne · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows || '<tr><td colspan="5">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn() ? " · par personne : " + eur(LAST.sum / nn()) : ""}</p></div>`;
+  return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">${esc(troop())} · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows || '<tr><td colspan="5">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn() ? " · par personne : " + eur(LAST.sum / nn()) : ""}</p></div>`;
 }
 
 function recHTML(names) {
@@ -50,7 +50,7 @@ function recHTML(names) {
         )
           .map(
             ([k, q]) =>
-              `<tr><td>${esc(ING[k][0])} (${ING[k][1]})</td>${R.fx && k in R.fx ? `<td colspan="4"><b>${qty(k, R.fx[k])}</b> au total</td>` : q.map((v) => `<td>${v}</td>`).join("")}</tr>`
+              `<tr><td>${esc(ING[k][0])} (${ING[k][1]})</td>${R.fx && k in R.fx ? `<td colspan="${SEC.length}"><b>${qty(k, R.fx[k])}</b> au total</td>` : q.map((v) => `<td>${v}</td>`).join("")}</tr>`
           )
           .join("")}</tbody></table>`;
       })
@@ -60,7 +60,9 @@ function recHTML(names) {
 }
 
 const txtList = () =>
-  "🛒 Liste de courses – Patro Sainte-Suzanne (" +
+  "🛒 Liste de courses – " +
+  troop() +
+  " (" +
   nn() +
   " pers.)\n\n" +
   (LAST.keys.map((k) => "☐ " + ING[k][0] + " : " + qty(k, LAST.tot[k])).join("\n") || "(vide)") +

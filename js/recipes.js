@@ -11,15 +11,15 @@ function drawRec() {
   $("rdesc").value = R ? R.desc : "";
   $("rh").innerHTML =
     "<tr><th>Ingrédient</th>" +
-    SEC.map((s) => `<th>${s[0].replace(/-/g, "-<wbr>")}<div class="s">${s[1]}</div></th>`).join(
-      ""
-    ) +
+    SEC.map(
+      (s) => `<th>${esc(s[0]).replace(/-/g, "-<wbr>")}<div class="s">${esc(s[1])}</div></th>`
+    ).join("") +
     "<th></th></tr>";
   $("rb").innerHTML = R
     ? Object.entries(R.ing)
         .map(([k, q]) => {
           const fx = R.fx && k in R.fx;
-          return `<tr><td>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${esc(k)}">${fx ? "→ par personne" : "→ quantité unique"}</button></div></td>${fx ? `<td colspan="4"><input type="number" min="0" step="any" value="${+(R.fx[k] / fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span><label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa && R.fa[k] === 0 ? "" : " checked"} style="width:auto"> adapter aux régimes</label></td>` : q.map((v, i) => `<td><input type="number" min="0" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${SEC[i][0]}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>`;
+          return `<tr><td>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${esc(k)}">${fx ? "→ par personne" : "→ quantité unique"}</button></div></td>${fx ? `<td colspan="${SEC.length}"><input type="number" min="0" step="any" value="${+(R.fx[k] / fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span><label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa && R.fa[k] === 0 ? "" : " checked"} style="width:auto"> adapter aux régimes</label></td>` : q.map((v, i) => `<td><input type="number" min="0" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${esc(SEC[i][0])}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>`;
         })
         .join("")
     : "";
@@ -89,7 +89,7 @@ $("rb").addEventListener("click", (e) => {
 $("radd").onchange = () => {
   const k = $("radd").value;
   if (k && S.rec[S.cur]) {
-    S.rec[S.cur].ing[k] = [0, 0, 0, 0];
+    S.rec[S.cur].ing[k] = SEC.map(() => 0);
     drawRec();
     save();
   }
@@ -225,7 +225,7 @@ $("iok").onclick = () => {
   dg.forEach((d) => {
     if (DIETS[d]) DIETS[d].ex[k] = null;
   });
-  if (S.rec[S.cur]) S.rec[S.cur].ing[k] = [0, 0, 0, 0];
+  if (S.rec[S.cur]) S.rec[S.cur].ing[k] = SEC.map(() => 0);
   $("iform").style.display = "none";
   drawRec();
   drawDietEd();
