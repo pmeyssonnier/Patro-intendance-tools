@@ -37,13 +37,72 @@ $("csvx").onclick = () =>
     "text/csv"
   );
 
+let pendingJson = null; // prix JSON lus, appliqués au clic sur « Importer »
+
+/** Lit un JSON de prix (format Colruyt) : renvoie { lignes: [[id, prix, nom]], ignores, date, source } ou null. */
+function parsePrixJson(txt) {
+  let j;
+  try {
+    j = JSON.parse(txt.replace(/^\uFEFF/, ""));
+  } catch (e) {
+    return null;
+  }
+  if (!j || typeof j.ingredients !== "object" || j.ingredients === null) return null;
+  const unit = { g: "kg", ml: "l", pc: "piece" };
+  const lignes = [];
+  let ignores = 0;
+  for (const k in j.ingredients) {
+    const x = j.ingredients[k],
+      p = x && +x.prix_unitaire;
+    if (!ING[k] || !(p > 0) || String(x.unite).toLowerCase() !== unit[ING[k][1]]) {
+      ignores++;
+      continue;
+    }
+    const pr = x.produit || {};
+    lignes.push([k, +p.toFixed(2), [pr.marque, pr.nom].filter(Boolean).join(" ")]);
+  }
+  return {
+    lignes,
+    ignores,
+    date: String(j.date_maj || "").slice(0, 10),
+    source: j.source || "JSON",
+  };
+}
+
+$("csv").addEventListener("input", () => {
+  pendingJson = null;
+});
+
 $("file").onchange = (e) => {
   const f = e.target.files[0];
   $("fname").textContent = f ? f.name : "Aucun fichier choisi";
   if (f) {
     const r = new FileReader();
     r.onload = () => {
-      $("csv").value = r.result;
+      pendingJson = null;
+      const pj = /\.json$/i.test(f.name) ? parsePrixJson(r.result) : null;
+      if (/\.json$/i.test(f.name) && !pj) {
+        $("csv").value = "";
+        $("impmsg").textContent =
+          "Fichier JSON de prix non reconnu (clé « ingredients » attendue).";
+        return;
+      }
+      if (!pj) {
+        $("csv").value = r.result;
+        return;
+      }
+      pendingJson = pj;
+      $("csv").value = pj.lignes
+        .map(
+          (l) =>
+            `${ING[l[0]][0]} : ${price(l[0]).toFixed(2)} → ${l[1].toFixed(2)} €/${ING[l[0]][1] === "pc" ? "pièce" : ul(l[0])}`
+        )
+        .join("\n");
+      const d = pj.date.split("-").reverse().join("/");
+      $("impmsg").textContent =
+        `${pj.source}${d ? ", " + d : ""} : ${pj.lignes.length} prix prêts` +
+        (pj.ignores ? ` (${pj.ignores} ignorés)` : "") +
+        ". Vérifie l'aperçu puis clique sur « Importer ».";
     };
     r.readAsText(f);
   }
@@ -74,6 +133,21 @@ function perUnit(name, p) {
 }
 
 $("imp").onclick = () => {
+  if (pendingJson) {
+    const pj = pendingJson;
+    pendingJson = null;
+    pj.lignes.forEach(([k, p, n]) => {
+      S.prices[k] = p;
+      if (n) S.pn[k] = n;
+      else delete S.pn[k];
+    });
+    const d = pj.date.split("-").reverse().join("/");
+    $("impmsg").textContent =
+      `${pj.lignes.length} prix chargés (${pj.source}${d ? ", " + d : ""}).` +
+      (pj.ignores ? ` ${pj.ignores} ignorés.` : "");
+    calc();
+    return;
+  }
   const items = [];
   $("csv")
     .value.split(/\r?\n/)
