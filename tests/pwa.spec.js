@@ -92,7 +92,7 @@ test("hors connexion : la page se recharge et fonctionne", async ({ page }) => {
   await expect(page).toHaveTitle(/Intendance de camp/);
   await expect(page.locator("#cname")).toHaveValue("Mon camp");
   expect(await page.locator("#list tr").count()).toBeGreaterThan(5);
-  await expect(page.locator("#appver")).toHaveText(/^Version \d/);
+  await expect(page.locator("#appver")).toHaveText(/^\(version \d/);
   expect(erreurs).toEqual([]);
 });
 
