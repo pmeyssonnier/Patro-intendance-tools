@@ -91,12 +91,12 @@
 <textarea id="csv" aria-label="Liste de produits et prix, un par ligne" rows="4" placeholder="Spaghetti Boni 500g;1,39&#10;Riz long grain Boni 1kg;1,95"></textarea>
 <p><label class="x filebtn">📂 Choisir un fichier<input type="file" id="file" aria-label="Fichier de prix (CSV ou texte)" accept=".csv,.txt" hidden></label> <span class="s" id="fname" role="status">Aucun fichier choisi</span><br><button id="imp" style="margin-top:8px">Importer</button> <button id="csvx" class="x">Télécharger un exemple</button> <span class="s" id="impmsg"></span></p>
 <h2 style="margin-top:14px">Prix des ingrédients</h2>
-<div class="w st"><table class="fit"><thead><tr><th>Ingrédient</th><th>Unité</th><th>Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
+<div class="w st"><table class="fit"><thead><tr><th>Ingrédient</th><th>Unité</th><th class="num">Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
 <p><button id="hrs" class="x">Restaurer les ingrédients de base</button></p></section></div>
 
 <div class="pg" id="g-list">
 <section class="card"><h2>Liste de courses</h2>
-<div class="w st"><table class="fit"><thead><tr><th>Produit</th><th class="nw">Quantité</th><th>Prix</th><th class="nw">Coût</th></tr></thead><tbody id="list"></tbody></table></div>
+<div class="w st"><table class="fit"><thead><tr><th>Produit</th><th class="nw num">Quantité</th><th class="num">Prix</th><th class="nw num">Coût</th></tr></thead><tbody id="list"></tbody></table></div>
 <div class="t"><span>Total : <b id="tot"></b></span><span>Par personne : <b id="pp"></b></span><span class="s" id="np2"></span></div>
 <p class="np"><button id="plist">🖨️ Imprimer la liste</button> <button id="lcsv" class="x">📊 Exporter en CSV</button></p></section>
 <section class="card"><h2>Coût par repas</h2><div class="w"><table><tbody id="pm"></tbody></table></div></section></div>

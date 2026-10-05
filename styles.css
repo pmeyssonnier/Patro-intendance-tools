@@ -946,3 +946,25 @@ input.bad {
 #dh .ef {
   display: block;
 }
+/* Liste de courses : quantités, prix et coûts alignés à droite */
+th.num,
+#list td:nth-child(n + 2) {
+  text-align: right;
+}
+#list td:nth-child(2) {
+  white-space: nowrap;
+}
+#list td:nth-child(3) input {
+  display: block;
+  margin-left: auto;
+  text-align: right;
+}
+/* Catalogue de prix : seule la colonne des prix est alignée à droite */
+#ct td:nth-child(3) {
+  text-align: right;
+}
+#ct td:nth-child(3) input {
+  display: block;
+  margin-left: auto;
+  text-align: right;
+}

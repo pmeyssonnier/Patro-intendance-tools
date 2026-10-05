@@ -661,3 +661,41 @@ test("régimes : l'effectif de la section est affiché entre parenthèses et sui
   await aller(page, "reg");
   await expect(page.locator('#g-reg [data-ef="0"]:visible').first()).toHaveText("(12)");
 });
+
+test("liste de courses : quantité, prix et coût sont alignés à droite", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "list");
+  const al = await page.evaluate(() => {
+    const th = [...document.querySelectorAll("#g-list thead th")].map(
+        (e) => getComputedStyle(e).textAlign
+      ),
+      td = [...document.querySelectorAll("#list tr:first-child td")].map(
+        (e) => getComputedStyle(e).textAlign
+      );
+    return { th, td };
+  });
+  expect(al.th.slice(1)).toEqual(["right", "right", "right"]);
+  expect(al.td.slice(1)).toEqual(["right", "right", "right"]);
+  // les colonnes de chiffres s'alignent sur le même bord droit d'une ligne à l'autre
+  const bords = await page.evaluate(() =>
+    [...document.querySelectorAll("#list tr")]
+      .slice(0, 4)
+      .map((r) => Math.round(r.lastElementChild.getBoundingClientRect().right))
+  );
+  expect(new Set(bords).size).toBe(1);
+});
+
+test("catalogue : seule la colonne des prix est alignée à droite", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const al = await page.evaluate(() => ({
+    th: [...document.querySelectorAll("#g-cat thead th")].map((e) => getComputedStyle(e).textAlign),
+    td: [...document.querySelectorAll("#ct tr:first-child td")].map(
+      (e) => getComputedStyle(e).textAlign
+    ),
+  }));
+  expect(al.th[2]).toBe("right");
+  expect(al.td[2]).toBe("right");
+  expect(al.th[0]).not.toBe("right");
+  expect(al.td[1]).not.toBe("right");
+});
