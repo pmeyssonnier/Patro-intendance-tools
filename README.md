@@ -34,10 +34,25 @@ L'outil s'installe comme une application, avec son icône sur l'écran d'accueil
 - **Régimes & allergies** : végétarien, halal, sans lactose, sans gluten, etc. L'appli retire l'ingrédient concerné et ajoute le substitut à acheter. Les régimes sont modifiables : on peut en créer, les renommer, en supprimer et définir les règles de remplacement.
 - **Menu** : un tableau par jour (« Vendredi 22/03 »), d'après les dates du camp, avec Matin, Midi et Soir. On peut ajouter d'autres repas (Goûter, Collation…) et les retirer, à **un seul jour ou à tous les jours** au choix ; ils sont renommables, réordonnables et ont chacun une couleur. Les plats se glissent d'un repas ou d'un jour à l'autre, à la souris, au doigt ou au clavier (flèches haut/bas pour l'ordre, gauche/droite pour changer de repas). Menu imprimable (avec ou sans descriptions et adaptations) et copie du menu d'un autre camp.
 - **Recettes** : quantités par personne et par section, ou **quantité unique** pour un ingrédient (ex. 5 pains, 5 L de lait : bouton « → quantité unique » sous l'ingrédient ; cette quantité n'est ni multipliée par l'effectif, ni augmentée de la marge, et elle est répartie au prorata des personnes au régime concernées — par exemple 3 personnes sans gluten sur 30 reçoivent 10 % du pain en pain sans gluten ; case « adapter aux régimes » désactivable) ; ingrédients personnalisés.
-- **Catalogue de prix** : saisie à la main ou import d'une liste de produits (CSV/texte, `nom ; prix`) ; l'appli lit le poids dans le nom du produit et retient le moins cher pour chaque ingrédient.
+- **Catalogue de prix** : saisie à la main ou import d'une liste de produits (CSV/texte, `nom ; prix`) ; l'appli lit le poids dans le nom du produit et retient le moins cher pour chaque ingrédient. Elle accepte aussi un fichier de prix `.json` (voir « Mettre à jour les prix Colruyt »).
 - **Liste de courses** : quantités, coût total, par personne et par repas.
 - **Partager / imprimer** : liste, menu et recettes par WhatsApp, mail, partage du téléphone, copie, impression ou fichier HTML (utile si l'impression directe ne marche pas sur l'appareil). **Export CSV** de la liste de courses (avec coûts et total), du menu et des recettes : le fichier s'ouvre directement dans Excel en français, pratique pour le budget et le trésorier.
 - **Sauvegarde** : export / import du projet en `.json` (le fichier est vérifié avant d'être accepté ; en cas de problème, rien n'est modifié et un message l'explique). Une « zone sensible » permet de vider les recettes, ingrédients et menus (les camps sont conservés) ou de tout réinitialiser (camps compris, retour aux données d'exemple).
+
+## Mettre à jour les prix Colruyt
+
+Colruyt n'a pas d'API publique et son site bloque les accès depuis un navigateur : les prix sont donc collectés **hors de l'appli**, dans un fichier `prix_colruyt.json` que tu charges toi-même dans le catalogue. L'appli ne contacte jamais Colruyt et fonctionne comme avant sans ce fichier.
+
+1. **Collecte** : ouvre `scripts/collecte_prix_colruyt.py` dans [Google Colab](https://colab.research.google.com) et copie-y les cellules (celles séparées par `# %%`). Il faut un compte Apify ; enregistre son jeton dans les secrets de Colab (icône clé) sous le nom `APIFY_TOKEN`. Aucun jeton GitHub n'est nécessaire.
+2. **Vérification** : lance d'abord la cellule DEBUG, qui affiche les champs réellement renvoyés par le service ; si besoin, adapte les noms de champs dans `normaliser()`. Lance ensuite la cellule de collecte : elle liste les ingrédients sans résultat (les articles halal ou sans gluten en ont souvent), puis la dernière cellule télécharge `prix_colruyt.json`.
+3. **Chargement** : dans l'appli, page *Catalogue de prix* → « Choisir un fichier » → sélectionne le `.json`. Un aperçu (ancien prix → nouveau prix) s'affiche ; clique sur « Importer » pour l'appliquer. Un exemple à tester se trouve dans `exemples/prix_colruyt_exemple.json`.
+
+À savoir :
+
+- Les prix sont reliés aux ingrédients **par identifiant** (`pates`, `riz`, `lait`…), et seulement quand l'unité correspond (€/kg pour un ingrédient en g, €/L pour un ingrédient en ml). Les ingrédients ajoutés à la main ne sont pas reconnus, et ceux qui sont absents du fichier gardent leur prix.
+- Les prix chargés **remplacent** les prix déjà saisis pour les ingrédients présents dans le fichier. Le nom du produit retenu s'affiche en « ↳ » sous l'ingrédient.
+- **Ajouter un ingrédient à la collecte** : ajoute une ligne `{"id": …, "q": …, "unite": …}` dans `INGREDIENTS` (l'`id` doit être identique à celui de l'appli). Pour forcer un produit précis, ajoute `"epingle": "<identifiant produit Colruyt>"`.
+- Le service de collecte (acteur Apify `studio-amba~colruyt-scraper`) est tiers et payant, et ses champs n'ont pas été vérifiés. La collecte automatisée de prix peut aller à l'encontre des conditions d'utilisation de Colruyt : à toi de voir si cet usage te convient.
 
 ## Accessibilité
 
