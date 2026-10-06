@@ -798,6 +798,50 @@ test("recettes : le passage à « par personne » suit le nombre de sections", a
   await expect(premiere().locator("input[data-s]")).toHaveCount(2);
 });
 
+test("catalogue : un JSON sans identifiant connu est relié par le nom de l'ingrédient", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  // un ingrédient ajouté à la main (identifiant propre à l'appareil)
+  await aller(page, "rec");
+  await page.locator("#inew").click();
+  await page.locator("#iname").fill("Poivrons");
+  await page.locator("#iunit").selectOption("pc");
+  await page.locator("#iok").click();
+  await aller(page, "cat");
+  const json = {
+    source: "Colruyt",
+    date_maj: "2026-10-06T00:00:00",
+    ingredients: {
+      x1: { nom: "Pains", unite: "kg", prix_unitaire: 1.12, produit: { nom: "pain blanc 800g" } },
+      x2: { requete: "Pate à tartiner", unite: "kg", prix_unitaire: 2.64 },
+      x3: { nom: "poivron rouge", unite: "piece", prix_unitaire: 0.56 },
+      x4: { nom: "sauce tomate", unite: "kg", prix_unitaire: 3 }, // aucun ingrédient correspondant
+      x5: { nom: "pains", unite: "piece", prix_unitaire: 1 }, // mauvaise unité
+    },
+  };
+  await page.locator("#file").setInputFiles({
+    name: "p.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(json)),
+  });
+  const apercu = page.locator("#csv");
+  await expect(apercu).toHaveValue(/Pain : .* → 1\.12 €\/kg \(relié par le nom : « Pains »\)/);
+  await expect(apercu).toHaveValue(
+    /Pâte à tartiner : .* → 2\.64 €\/kg \(relié par le nom : « Pate à tartiner »\)/
+  );
+  await expect(apercu).toHaveValue(
+    /Poivrons : .* → 0\.56 €\/pièce \(relié par le nom : « poivron rouge »\)/
+  );
+  await expect(page.locator("#impmsg")).toContainText("3 prix prêts (2 ignorés)");
+  await page.locator("#imp").click();
+  await expect(page.locator('input[data-cp="pain"]')).toHaveValue("1.12");
+  await expect(page.locator('input[data-cp="choc"]')).toHaveValue("2.64");
+  await expect(page.locator("#ct tr", { hasText: "Poivrons" }).locator("input")).toHaveValue(
+    "0.56"
+  );
+});
+
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");

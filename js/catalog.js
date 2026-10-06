@@ -80,7 +80,45 @@ $("csvx").onclick = () =>
 
 let pendingJson = null; // prix JSON lus, appliqués au clic sur « Importer »
 
-/** Lit un JSON de prix (format Colruyt) : renvoie { lignes: [[id, prix, nom]], ignores, date, source } ou null. */
+/** Mots significatifs d'un nom, sans accents ni majuscules ni pluriel : « Pâtes à tartiner » et « pate a tartiner » donnent {pate, tartiner}. */
+const motsNom = (t) =>
+  new Set(
+    plain(t)
+      .split(/[^a-z0-9]+/)
+      .filter((m) => m.length > 2 && !["des", "les", "aux", "une", "pour"].includes(m))
+      .map((m) => (m.length > 3 ? m.replace(/[sx]$/, "") : m))
+  );
+
+/** Ingrédient du catalogue qui correspond à un nom (« poivron rouge » → « Poivrons »), ou null si aucun ou si plusieurs se valent. */
+function ingParNom(nom, exclus, unite) {
+  const B = motsNom(nom);
+  if (!B.size) return null;
+  let best = null,
+    score = 0,
+    ex = false;
+  for (const k of Object.keys(ING)) {
+    if (
+      S.hid.includes(k) ||
+      exclus.has(k) ||
+      unite !== { g: "kg", ml: "l", pc: "piece" }[ING[k][1]]
+    )
+      continue;
+    const A = motsNom(ING[k][0]),
+      inter = [...A].filter((m) => B.has(m)).length;
+    // tous les mots de l'un doivent figurer dans l'autre ; le plus proche l'emporte
+    if (!A.size || (inter < A.size && inter < B.size)) continue;
+    const sc = inter / Math.max(A.size, B.size);
+    if (sc > score) {
+      best = k;
+      score = sc;
+      ex = false;
+    } else if (sc === score) ex = true;
+  }
+  return ex ? null : best;
+}
+
+/** Lit un JSON de prix (format Colruyt) : renvoie { lignes: [[id, prix, nom, via]], ignores, date, source } ou null.
+    Un ingrédient est relié par son identifiant ; à défaut, par son nom (« nom » ou « requete » du JSON). */
 function parsePrixJson(txt) {
   let j;
   try {
@@ -90,22 +128,37 @@ function parsePrixJson(txt) {
   }
   if (!j || typeof j.ingredients !== "object" || j.ingredients === null) return null;
   const unit = { g: "kg", ml: "l", pc: "piece" };
-  const lignes = [];
+  const lignes = [],
+    pris = new Set(Object.keys(j.ingredients).filter((k) => ING[k]));
   let ignores = 0;
-  for (const k in j.ingredients) {
-    const x = j.ingredients[k],
-      p = x && +x.prix_unitaire;
-    if (!ING[k] || !(p > 0) || String(x.unite).toLowerCase() !== unit[ING[k][1]]) {
-      ignores++;
-      continue;
-    }
+  const produit = (x) => {
     const pr = x.produit || {};
     // Colruyt met déjà la marque au début du nom (« EVERYDAY spaghetti 500g ») : ne pas la doubler
     const nom = String(pr.nom || ""),
       marque = String(pr.marque || "");
-    const complet =
-      marque && !nom.toLowerCase().startsWith(marque.toLowerCase()) ? marque + " " + nom : nom;
-    lignes.push([k, +p.toFixed(2), complet.trim()]);
+    return (
+      marque && !nom.toLowerCase().startsWith(marque.toLowerCase()) ? marque + " " + nom : nom
+    ).trim();
+  };
+  for (const cle in j.ingredients) {
+    const x = j.ingredients[cle] || {},
+      p = +x.prix_unitaire,
+      u = String(x.unite).toLowerCase();
+    let k = ING[cle] ? cle : null,
+      via = "";
+    if (!k && p > 0) {
+      const nom = x.nom || x.requete;
+      k = nom ? ingParNom(nom, pris, u) : null;
+      if (k) {
+        pris.add(k);
+        via = String(nom);
+      }
+    }
+    if (!k || !(p > 0) || u !== unit[ING[k][1]]) {
+      ignores++;
+      continue;
+    }
+    lignes.push([k, +p.toFixed(2), produit(x), via]);
   }
   return {
     lignes,
@@ -141,7 +194,8 @@ $("file").onchange = (e) => {
       $("csv").value = pj.lignes
         .map(
           (l) =>
-            `${ING[l[0]][0]} : ${price(l[0]).toFixed(2)} → ${l[1].toFixed(2)} €/${ING[l[0]][1] === "pc" ? "pièce" : ul(l[0])}`
+            `${ING[l[0]][0]} : ${price(l[0]).toFixed(2)} → ${l[1].toFixed(2)} €/${ING[l[0]][1] === "pc" ? "pièce" : ul(l[0])}` +
+            (l[3] ? ` (relié par le nom : « ${l[3]} »)` : "")
         )
         .join("\n");
       const d = pj.date.split("-").reverse().join("/");
