@@ -993,6 +993,12 @@ th.num,
   background: #eef5ef;
 }
 
+/* Liste de courses groupée par rayon */
+#list tr.grp td {
+  background: #eef5ef;
+  padding-top: 8px;
+}
+
 /* Import d'une recette : une carte par ligne d'ingrédient */
 .rimpl {
   border-top: 1px solid #d9e2da;

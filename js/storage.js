@@ -74,6 +74,7 @@ function cleanProject(x) {
     pn: {},
     cust: {},
     ov: {},
+    cat: {},
     hid: Array.isArray(x.hid)
       ? x.hid.filter((k) => typeof k === "string" && okid(k)).slice(0, 200)
       : [],
@@ -129,6 +130,9 @@ function cleanProject(x) {
       ["g", "ml", "pc"].includes(v.u)
     )
       o.ov[k] = { n: v.n.trim().slice(0, 100), u: v.u };
+  // rayons choisis (identifiant -> clé de CATS) et regroupement de la liste par rayon
+  for (const [k, v] of ent(x.cat)) if (okid(k) && CATS.some((c) => c[0] === v)) o.cat[k] = v;
+  if (x.gl === false) o.gl = false;
   if (obj(x.dd)) {
     o.dd = {};
     for (const [k, v] of ent(x.dd)) {

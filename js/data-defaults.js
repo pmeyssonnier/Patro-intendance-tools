@@ -2,7 +2,7 @@
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
 // Numéro de version affiché dans le menu : à mettre à jour à chaque release (avec "version" dans package.json).
-const APP_VERSION = "1.8.2";
+const APP_VERSION = "1.9.0";
 
 // Nom de la troupe par défaut (modifiable dans Configuration).
 const TROOP0 = "Patro Sainte-Suzanne";
@@ -61,6 +61,54 @@ const ING = {
     1,
   ],
   pain_sg: ["Pain sans gluten", "g", 8, "pain.*sans gluten|sans gluten.*pain", 1],
+};
+
+// Rayons de la liste de courses, dans l'ordre du magasin : [clé, nom]. « aut » (Autre) est la catégorie par défaut.
+const CATS = [
+  ["fl", "Fruits & légumes"],
+  ["bou", "Boucherie & poisson"],
+  ["fri", "Frigo (charcuterie, plats préparés)"],
+  ["lai", "Frais (produits laitiers, œufs)"],
+  ["boul", "Boulangerie"],
+  ["epi", "Épicerie & conserves"],
+  ["sur", "Surgelés"],
+  ["boi", "Boissons"],
+  ["aut", "Autre"],
+];
+
+// Rayon par défaut des ingrédients de base (modifiable dans le catalogue : S.cat).
+const CAT0 = {
+  pates: "epi",
+  riz: "epi",
+  hache: "bou",
+  tom: "epi",
+  oig: "fl",
+  fro: "lai",
+  poulet: "bou",
+  leg: "fl",
+  coco: "epi",
+  pdt: "fl",
+  sauc: "fri",
+  car: "fl",
+  pain: "boul",
+  jam: "fri",
+  beu: "lai",
+  conf: "epi",
+  cer: "epi",
+  lait: "lai",
+  choc: "epi",
+  suc: "epi",
+  subveg: "fri",
+  hache_h: "bou",
+  poulet_h: "bou",
+  sauc_h: "fri",
+  jam_h: "fri",
+  lait_sl: "lai",
+  fro_sl: "lai",
+  margar: "lai",
+  dinde: "bou",
+  pates_sg: "epi",
+  pain_sg: "boul",
 };
 
 let DIETS = {
@@ -160,4 +208,5 @@ const DEF = {
   hid: [],
   cust: {},
   ov: {},
+  cat: {},
 };

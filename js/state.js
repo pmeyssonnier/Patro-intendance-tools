@@ -176,6 +176,17 @@ for (const k in S.cust) {
 
 if (!S.ov || typeof S.ov !== "object") S.ov = {};
 
+if (!S.cat || typeof S.cat !== "object") S.cat = {};
+
+/** Rayon d'un ingrédient (clé de CATS) : celui choisi, sinon le rayon par défaut des ingrédients de base, sinon « Autre ». */
+const catOf = (k) => S.cat[k] || CAT0[k] || "aut";
+
+/** Options d'un choix de rayon, avec le rayon sel sélectionné. */
+const optionsCat = (sel) =>
+  CATS.map(
+    ([c, n]) => `<option value="${c}"${c === sel ? " selected" : ""}>${esc(n)}</option>`
+  ).join("");
+
 for (const k in S.ov)
   if (ING0[k] && S.ov[k] && S.ov[k].n) {
     ING[k][0] = S.ov[k].n;
@@ -204,6 +215,8 @@ if (S.dd && typeof S.dd === "object") DIETS = S.dd;
       for (const k of Object.keys(r.fa)) if (!(r.fx && k in r.fx)) delete r.fa[k];
     } else delete r.fa;
   }
+  for (const k of Object.keys(S.cat))
+    if (!ING[k] || !CATS.some((c) => c[0] === S.cat[k])) delete S.cat[k];
   for (const d in DIETS) {
     const ex = DIETS[d].ex || (DIETS[d].ex = {});
     for (const k of Object.keys(ex)) {

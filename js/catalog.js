@@ -81,7 +81,7 @@ function appliquerRegime(k, dg) {
 }
 
 /** Valide et applique un nouveau nom / une nouvelle unité. Renvoie un message d'erreur, ou "" si c'est fait. */
-function editIng(k, nom, unite, dg) {
+function editIng(k, nom, unite, dg, cat) {
   nom = nom.trim().replace(/\s+/g, " ");
   if (!nom) return "Le nom ne peut pas être vide.";
   if (nom.length > 100) return "Nom trop long (100 caractères au plus).";
@@ -109,6 +109,10 @@ function editIng(k, nom, unite, dg) {
     delete S.pn[k];
   }
   if (dg !== undefined && dg !== "perso" && dg !== regimeActuel(k)) appliquerRegime(k, dg);
+  if (CATS.some((c) => c[0] === cat)) {
+    if (cat === (CAT0[k] || "aut")) delete S.cat[k];
+    else S.cat[k] = cat;
+  }
   return "";
 }
 
@@ -132,7 +136,7 @@ function drawCat() {
       .map(
         (k) =>
           (catEdit === k
-            ? `<tr class="ced"><td colspan="4"><div class="g"><div><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div style="align-self:end"><button data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></td></tr>`
+            ? `<tr class="ced"><td colspan="4"><div class="g"><div><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div><label>Rayon</label><select data-ec="${esc(k)}" aria-label="Rayon de l'ingrédient">${optionsCat(catOf(k))}</select></div><div style="align-self:end"><button data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></td></tr>`
             : "") +
           `<tr><td>${esc(ING[k][0])}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
       )
@@ -180,7 +184,8 @@ $("ct").addEventListener("click", (e) => {
       nom = d.ers ? ING0[k][0] : ligne.querySelector("[data-en]").value,
       unite = d.ers ? ING0[k][1] : ligne.querySelector("[data-eu]").value,
       dg = d.ers ? undefined : ligne.querySelector("[data-eg]").value,
-      err = editIng(k, nom, unite, dg);
+      cat = d.ers ? undefined : ligne.querySelector("[data-ec]").value,
+      err = editIng(k, nom, unite, dg, cat);
     if (err) ligne.querySelector("[data-ei]").textContent = "⚠ " + err;
     else refreshIng();
     return;
@@ -216,6 +221,7 @@ $("cexp").onclick = () => {
     .forEach((k) => {
       ingredients[k] = {
         nom: ING[k][0],
+        categorie: catOf(k),
         unite: unit[ING[k][1]],
         prix_unitaire: price(k),
         produit: {
@@ -329,11 +335,23 @@ function parsePrixJson(txt) {
         unPc = { kg: "g", l: "ml", piece: "pc" }[u];
       const existe = ["kg", "l", "piece"].some((v) => ingParNom(nom, new Set(), v));
       if (!k && p > 0 && nom && unPc && nom.length <= 100 && !existe) {
-        inconnus.push({ nom, unite: unPc, prix: +p.toFixed(2), produit: produit(x) });
+        inconnus.push({
+          nom,
+          unite: unPc,
+          prix: +p.toFixed(2),
+          produit: produit(x),
+          categorie: String(x.categorie || ""),
+        });
       } else ignores++;
       continue;
     }
-    lignes.push([k, +p.toFixed(2), produit(x), via]);
+    lignes.push([
+      k,
+      +p.toFixed(2),
+      produit(x),
+      via,
+      CATS.some((c) => c[0] === x.categorie) ? x.categorie : "",
+    ]);
   }
   return {
     lignes,
@@ -378,7 +396,7 @@ function ajouterInconnus() {
   const idx = [...$("pnew").querySelectorAll("[data-pn]:checked")].map((c) => +c.dataset.pn);
   idx.forEach((i) => {
     const u = pendingInconnus[i],
-      k = createIng(u.nom, u.unite, "");
+      k = createIng(u.nom, u.unite, "", u.categorie);
     S.prices[k] = u.prix;
     if (u.produit) S.pn[k] = u.produit;
   });
@@ -501,7 +519,9 @@ $("imp").onclick = () => {
   if (pendingJson) {
     const pj = pendingJson;
     pendingJson = null;
-    pj.lignes.forEach(([k, p, n]) => {
+    pj.lignes.forEach(([k, p, n, , cat]) => {
+      // le rayon du fichier ne sert que pour un ingrédient qui n'en a pas encore (ni choisi, ni par défaut)
+      if (cat && !S.cat[k] && !CAT0[k]) S.cat[k] = cat;
       S.prices[k] = p;
       if (n) S.pn[k] = n;
       else delete S.pn[k];
@@ -552,6 +572,7 @@ $("cins").onclick = () => {
   $("cinn").value = "";
   $("cinp").value = "";
   $("cing").innerHTML = optionsRegime("");
+  $("cinc").value = "aut";
   $("cinn").focus();
 };
 
@@ -565,7 +586,7 @@ $("cinok").onclick = () => {
   if (!nom) return ($("cinm").textContent = "Donne un nom à l'ingrédient.");
   const dbl = Object.keys(ING).find((x) => cle(ING[x][0]) === cle(nom));
   if (dbl) return ($("cinm").textContent = `Un ingrédient s'appelle déjà « ${ING[dbl][0]} ».`);
-  const k = createIng(nom, $("cinu").value, $("cing").value),
+  const k = createIng(nom, $("cinu").value, $("cing").value, $("cinc").value),
     p = +$("cinp").value;
   if (p > 0) S.prices[k] = p;
   $("cinf").style.display = "none";
@@ -573,3 +594,6 @@ $("cinok").onclick = () => {
   setTimeout(() => ($("cinm").textContent = ""), 2500);
   refreshIng();
 };
+
+$("cinc").innerHTML = optionsCat("aut");
+$("icat").innerHTML = optionsCat("aut");
