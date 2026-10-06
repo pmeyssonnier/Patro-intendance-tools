@@ -716,6 +716,9 @@ test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la qua
   await expect(ligne().locator("[data-rq]")).toHaveCount(0);
   await ligne().locator("[data-tg]").click(); // → quantité unique
   const N = await page.evaluate(() => nn());
+  // par défaut : champ quantité vide et « 1 personne » (= quantité par personne), pas de valeur d'exemple
+  await expect(ligne().locator("[data-rq]")).toHaveValue("");
+  await expect(ligne().locator("[data-rn]")).toHaveValue("1");
   await ligne().locator("[data-rq]").fill("1");
   await ligne().locator("[data-rn]").fill("5");
   await expect(ligne().locator("[data-rp]")).toContainText(
@@ -723,6 +726,10 @@ test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la qua
   );
   await ligne().locator("[data-ra]").click();
   await expect(ligne().locator("[data-fx]")).toHaveValue(String(N / 5));
+  // les valeurs saisies restent affichées après « Appliquer », avec le même calcul
+  await expect(ligne().locator("[data-rq]")).toHaveValue("1");
+  await expect(ligne().locator("[data-rn]")).toHaveValue("5");
+  await expect(ligne().locator("[data-rp]")).toContainText("= " + N / 5 + " pc pour " + N);
   // « → par personne » répartit : 1/5 = 0,2 dans chaque section
   await ligne().locator("[data-tg]").click();
   const champs = ligne().locator("input[data-s]");
@@ -735,6 +742,27 @@ test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la qua
   await ligne().locator("[data-ra]").click();
   await ligne().locator("[data-tg]").click();
   await expect(ligne().locator("input[data-s]").first()).toHaveValue("0.125");
+});
+
+test("recettes : « 500 g pour 5 personnes » donne 100 g par personne et le total en kg", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const premiere = () => page.locator("#rb tr").first();
+  await premiere().locator("[data-tg]").click(); // → quantité unique
+  const N = await page.evaluate(() => nn());
+  await premiere().locator("[data-rq]").fill("500");
+  await premiere().locator("[data-rn]").fill("5");
+  const attendu =
+    "= " + ((100 * N) / 1000).toFixed(2) + " kg pour " + N + " personnes (100 g par personne)";
+  await expect(premiere().locator("[data-rp]")).toContainText(attendu);
+  await premiere().locator("[data-ra]").click();
+  await expect(premiere().locator("[data-fx]")).toHaveValue(String((100 * N) / 1000));
+  // après « Appliquer », le formulaire garde 500 / 5 et l'aperçu reste identique
+  await expect(premiere().locator("[data-rq]")).toHaveValue("500");
+  await expect(premiere().locator("[data-rn]")).toHaveValue("5");
+  await expect(premiere().locator("[data-rp]")).toContainText(attendu);
 });
 
 test("recettes : passer de « quantité unique » à « par personne » garde le total, sans arrondi à l'entier", async ({

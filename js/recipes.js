@@ -1,10 +1,15 @@
 /* Intendance PSS – Recettes et ingrédients : édition, quantités (par personne ou uniques), ingrédients personnalisés, suppression.
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
+/** Dernières valeurs « X pour N personnes » saisies, par recette et ingrédient (elles restent affichées après « Appliquer »). */
+const RATIO = {};
+const ratioKey = (k) => S.cur + "|" + k;
+
 /** « X pour N personnes » en mode quantité unique : le total (X ÷ N × effectif) remplace la quantité unique. */
 function ratioForm(k) {
-  const u = ING[k][1];
-  return `<div class="rtf"><span class="s">ou</span> <input type="text" inputmode="decimal" value="1" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="5" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personnes</span> <button class="x" data-ra="${esc(k)}">Appliquer</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, 1, 5)}</div></div>`;
+  const u = ING[k][1],
+    r = RATIO[ratioKey(k)] || { q: "", n: "1" };
+  return `<div class="rtf"><span class="s">ou</span> <input type="text" inputmode="decimal" value="${esc(r.q)}" placeholder="500" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="${esc(r.n)}" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personne(s)</span> <button class="x" data-ra="${esc(k)}">Appliquer</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, nbr(r.q), nbr(r.n))}</div></div>`;
 }
 
 /** Nombre saisi dans un champ texte, virgule ou point (« 0,5 »). */
@@ -14,7 +19,8 @@ const nbr = (v) => parseFloat(String(v).replace(",", "."));
 const ratioTotal = (q, n) => Math.round((q / n) * nn() * 1000) / 1000;
 
 function ratioPreview(k, q, n) {
-  if (!(q >= 0) || !(n > 0)) return "";
+  if (!(q >= 0) || !(n > 0))
+    return "Ex. : 500 g pour 5 personnes, ou 100 g pour 1 personne (par personne).";
   const N = nn();
   return N
     ? `= ${qty(k, ratioTotal(q, n))} pour ${N} personnes (${Math.round((q / n) * 1e6) / 1e6} ${ING[k][1]} par personne)`
@@ -85,12 +91,11 @@ $("rb").addEventListener("input", (e) => {
   const d = e.target.dataset,
     box = e.target.closest(".rtf");
   if (!box || (d.rq === undefined && d.rn === undefined)) return;
-  const k = d.rq ?? d.rn;
-  box.querySelector("[data-rp]").textContent = ratioPreview(
-    k,
-    nbr(box.querySelector("[data-rq]").value),
-    nbr(box.querySelector("[data-rn]").value)
-  );
+  const k = d.rq ?? d.rn,
+    qv = box.querySelector("[data-rq]").value,
+    nv = box.querySelector("[data-rn]").value;
+  RATIO[ratioKey(k)] = { q: qv, n: nv };
+  box.querySelector("[data-rp]").textContent = ratioPreview(k, nbr(qv), nbr(nv));
 });
 
 $("rb").addEventListener("click", (e) => {
@@ -115,6 +120,10 @@ $("rb").addEventListener("click", (e) => {
       n = nbr(box.querySelector("[data-rn]").value);
     if (!(q >= 0) || !(n > 0)) return;
     if (!nn() || !R.fx || !(t.ra in R.fx)) return;
+    RATIO[ratioKey(t.ra)] = {
+      q: box.querySelector("[data-rq]").value,
+      n: box.querySelector("[data-rn]").value,
+    };
     R.fx[t.ra] = ratioTotal(q, n);
     drawRec();
     calc();
