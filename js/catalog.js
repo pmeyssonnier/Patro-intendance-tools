@@ -199,6 +199,7 @@ $("csvx").onclick = () =>
   );
 
 let pendingJson = null; // prix JSON lus, appliqués au clic sur « Importer »
+let pendingInconnus = []; // produits du JSON absents du catalogue, ajoutés avec le bouton sous leur liste
 
 /** Mots significatifs d'un nom, sans accents ni majuscules ni pluriel : « Pâtes à tartiner » et « pate a tartiner » donnent {pate, tartiner}. */
 const motsNom = (t) =>
@@ -302,34 +303,73 @@ function parsePrixJson(txt) {
 /** Produits du JSON absents du catalogue : cases à cocher pour les ajouter à l'import. */
 function drawInconnus() {
   const z = $("pnew"),
-    liste = pendingJson ? pendingJson.inconnus : [];
+    liste = pendingInconnus;
   z.hidden = !liste.length;
   z.innerHTML = liste.length
-    ? `<p class="s"><b>${liste.length} produit${liste.length > 1 ? "s" : ""} absent${liste.length > 1 ? "s" : ""} de ton catalogue.</b> Coche ceux à ajouter (ils ne sont pas ajoutés aux recettes) : <button class="x" id="pall">Tout cocher / décocher</button></p>` +
+    ? `<p class="s"><b>${liste.length} produit${liste.length > 1 ? "s" : ""} absent${liste.length > 1 ? "s" : ""} de ton catalogue.</b> Décoche ceux dont tu n'as pas besoin (ils ne sont pas ajoutés aux recettes) : <button class="x" id="pall">Tout cocher / décocher</button></p>` +
       liste
         .map(
           (u, i) =>
-            `<label><input type="checkbox" data-pn="${i}"> ${esc(u.nom)} — ${u.prix.toFixed(2)} €/${u.unite === "pc" ? "pièce" : u.unite === "g" ? "kg" : "L"}</label>`
+            `<label><input type="checkbox" data-pn="${i}" checked> ${esc(u.nom)} — ${u.prix.toFixed(2)} €/${u.unite === "pc" ? "pièce" : u.unite === "g" ? "kg" : "L"}</label>`
         )
-        .join("<br>")
+        .join("<br>") +
+      `<p><button id="padd"></button></p>`
     : "";
+  majBoutonAjout();
+}
+
+/** Libellé du bouton sous la liste : « Ajouter ces 7 produits » (ceux qui sont cochés). */
+function majBoutonAjout() {
+  const b = $("padd");
+  if (!b) return;
+  const n = $("pnew").querySelectorAll("[data-pn]:checked").length;
+  b.disabled = !n;
+  b.textContent = n
+    ? `➕ Ajouter ${n > 1 ? "ces " + n + " produits" : "ce produit"}`
+    : "Aucun produit coché";
+}
+
+/** Crée au catalogue les produits cochés de la liste (avec leur prix), sans les mettre dans une recette ; renvoie le nombre ajouté. */
+function ajouterInconnus() {
+  const idx = [...$("pnew").querySelectorAll("[data-pn]:checked")].map((c) => +c.dataset.pn);
+  idx.forEach((i) => {
+    const u = pendingInconnus[i],
+      k = createIng(u.nom, u.unite, "");
+    S.prices[k] = u.prix;
+    if (u.produit) S.pn[k] = u.produit;
+  });
+  pendingInconnus = pendingInconnus.filter((_, i) => !idx.includes(i));
+  return idx.length;
 }
 
 $("pnew").addEventListener("click", (e) => {
+  if (e.target.id === "padd") {
+    const n = ajouterInconnus();
+    drawInconnus();
+    $("impmsg").textContent =
+      `${n} ingrédient${n > 1 ? "s" : ""} ajouté${n > 1 ? "s" : ""} au catalogue.`;
+    refreshIng();
+    return;
+  }
   if (e.target.id !== "pall") return;
   const cases = [...$("pnew").querySelectorAll("[data-pn]")],
     tout = cases.some((c) => !c.checked);
   cases.forEach((c) => (c.checked = tout));
+  majBoutonAjout();
 });
+
+$("pnew").addEventListener("change", majBoutonAjout);
 
 $("csv").addEventListener("input", () => {
   pendingJson = null;
+  pendingInconnus = [];
   drawInconnus();
 });
 
 /** Charge le contenu d'un fichier de prix (CSV, texte ou JSON) dans l'aperçu ; le JSON n'est appliqué qu'au clic sur « Importer ». */
 function chargerPrix(nom, texte) {
   pendingJson = null;
+  pendingInconnus = [];
   drawInconnus();
   const json = /\.json$/i.test(nom);
   const pj = json ? parsePrixJson(texte) : null;
@@ -343,6 +383,7 @@ function chargerPrix(nom, texte) {
     return;
   }
   pendingJson = pj;
+  pendingInconnus = pj.inconnus;
   drawInconnus();
   $("csv").value = pj.lignes
     .map(
@@ -355,7 +396,9 @@ function chargerPrix(nom, texte) {
   $("impmsg").textContent =
     `${pj.source}${d ? ", " + d : ""} : ${pj.lignes.length} prix prêts` +
     (pj.ignores ? ` (${pj.ignores} ignorés)` : "") +
-    (pj.inconnus.length ? `, ${pj.inconnus.length} absents du catalogue (à cocher)` : "") +
+    (pj.inconnus.length
+      ? `, ${pj.inconnus.length} absents du catalogue (liste sous l’aperçu)`
+      : "") +
     ". Vérifie l'aperçu puis clique sur « Importer ».";
 }
 
@@ -419,24 +462,14 @@ $("imp").onclick = () => {
       if (n) S.pn[k] = n;
       else delete S.pn[k];
     });
-    const ajoutes = [...$("pnew").querySelectorAll("[data-pn]:checked")].map((c) => {
-      const u = pj.inconnus[+c.dataset.pn],
-        k = createIng(u.nom, u.unite, "");
-      S.prices[k] = u.prix;
-      if (u.produit) S.pn[k] = u.produit;
-      return k;
-    });
-    pj.inconnus = [];
-    drawInconnus();
     const d = pj.date.split("-").reverse().join("/");
     $("impmsg").textContent =
       `${pj.lignes.length} prix chargés (${pj.source}${d ? ", " + d : ""}).` +
-      (ajoutes.length
-        ? ` ${ajoutes.length} ingrédient${ajoutes.length > 1 ? "s" : ""} ajouté${ajoutes.length > 1 ? "s" : ""}.`
-        : "") +
-      (pj.ignores ? ` ${pj.ignores} ignorés.` : "");
-    if (ajoutes.length) refreshIng();
-    else calc();
+      (pj.ignores ? ` ${pj.ignores} ignorés.` : "") +
+      (pendingInconnus.length
+        ? ` ${pendingInconnus.length} produits absents restent à ajouter avec le bouton sous la liste.`
+        : "");
+    calc();
     return;
   }
   const items = [];

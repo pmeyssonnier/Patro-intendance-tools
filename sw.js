@@ -19,6 +19,7 @@ const FILES = [
   "js/menu.js",
   "js/recipes.js",
   "js/catalog.js",
+  "js/recipe-import.js",
   "js/config.js",
   "js/pwa.js",
   "js/main.js",
