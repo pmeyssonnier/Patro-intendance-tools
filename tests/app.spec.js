@@ -833,7 +833,9 @@ test("catalogue : un JSON sans identifiant connu est relié par le nom de l'ingr
   await expect(apercu).toHaveValue(
     /Poivrons : .* → 0\.56 €\/pièce \(relié par le nom : « poivron rouge »\)/
   );
-  await expect(page.locator("#impmsg")).toContainText("3 prix prêts (2 ignorés)");
+  await expect(page.locator("#impmsg")).toContainText(
+    "3 prix prêts (1 ignorés), 1 absents du catalogue"
+  );
   await page.locator("#imp").click();
   await expect(page.locator('input[data-cp="pain"]')).toHaveValue("1.12");
   await expect(page.locator('input[data-cp="choc"]')).toHaveValue("2.64");
@@ -1170,4 +1172,36 @@ test("catalogue : sans fichier publié, « Récupérer les derniers prix » l'ex
   await simulerPrixPublies(page, 404, "");
   await page.locator("#pfetch").click();
   await expect(page.locator("#impmsg")).toContainText("Aucun fichier de prix publié");
+});
+
+test("catalogue : l'import JSON propose d'ajouter les produits absents, sans les mettre en recette", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await simulerPrixPublies(page, 200, {
+    source: "Colruyt",
+    date_maj: "2026-10-03",
+    ingredients: {
+      pain: { unite: "kg", prix_unitaire: 4.5 },
+      x1: { nom: "Spéculoos", unite: "kg", prix_unitaire: 3.2, produit: { nom: "Lotus 400g" } },
+      x2: { nom: "Sirop de grenadine", unite: "l", prix_unitaire: 2.1 },
+      x3: { unite: "kg", prix_unitaire: 1 },
+    },
+  });
+  const avant = await page.evaluate(() => Object.keys(ING).length);
+  await page.locator("#pfetch").click();
+  await expect(page.locator("#pnew")).toContainText("2 produits absents de ton catalogue");
+  // rien n'est ajouté tant qu'une case n'est pas cochée
+  await page.locator('#pnew [data-pn="0"]').check();
+  await page.locator("#imp").click();
+  await expect(page.locator("#impmsg")).toContainText("1 ingrédient ajouté");
+  expect(await page.evaluate(() => Object.keys(ING).length)).toBe(avant + 1);
+  const ajoute = await page.evaluate(() => {
+    const k = Object.keys(S.cust).find((c) => ING[c][0] === "Spéculoos");
+    return [ING[k][1], price(k), S.pn[k], Object.values(S.rec).some((r) => k in r.ing)];
+  });
+  expect(ajoute).toEqual(["g", 3.2, "Lotus 400g", false]);
+  await expect(page.locator("#ct")).toContainText("Spéculoos");
+  await expect(page.locator("#pnew")).toBeHidden();
 });
