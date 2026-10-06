@@ -224,6 +224,18 @@ def sans_marque_doublee(nom):
     return re.sub(r"^([A-ZÀ-Ý0-9'.&-]+(?: [A-ZÀ-Ý0-9'.&-]+)*?) \1(?= )", r"\1", nom or "")
 
 
+def en_stock(v):
+    """True/False d'après le champ de stock (booléen, « true »/« false », « inStock »…), None s'il est absent ou illisible."""
+    if isinstance(v, bool):
+        return v
+    t = sans_accents(str(v)).strip().lower() if v is not None else ""
+    if t in ("true", "1", "oui", "yes", "instock", "in stock", "available", "disponible"):
+        return True
+    if t in ("false", "0", "non", "no", "outofstock", "out of stock", "unavailable", "indisponible", "rupture"):
+        return False
+    return None
+
+
 def normaliser(item):
     f = aplatir(item)
     prix = to_float(pick(f, "price", "basicPrice"))
@@ -244,6 +256,7 @@ def normaliser(item):
         "prix_unitaire": round(prix_unitaire, 2) if prix_unitaire is not None else None,
         "unite": unite,
         "promo": pick(f, "promotionPrice", "promotion", "promo"),
+        "en_stock": en_stock(pick(f, "inStock", "available", "availability")),
     }
 
 # %% Catalogue exporté de l'appli (facultatif : ingrédients ajoutés à la main dans les recettes)
@@ -405,8 +418,17 @@ for ing in INGREDIENTS:
         [c for c in en_unite if ing.get("epingle") or pertinent(c["nom"], ing["id"])],
         key=lambda c: c["prix_unitaire"],
     )
+    # on écarte les produits en rupture de stock (stock inconnu = on garde)
+    rupture = [c for c in ok if c.get("en_stock") is False]
+    ok = [c for c in ok if c.get("en_stock") is not False]
+    if rupture:
+        print(f"ℹ️ {ing['id']} : {len(rupture)} produit(s) en rupture écarté(s)")
     if not ok:
-        motif = "aucun produit pertinent" if en_unite else f"aucun candidat en €/{ing['unite']}"
+        motif = (
+            "tous les produits pertinents sont en rupture de stock"
+            if rupture
+            else "aucun produit pertinent" if en_unite else f"aucun candidat en €/{ing['unite']}"
+        )
         print(f"⚠️ {ing['id']} : {motif} (le prix de l'appli est conservé)")
         sans_resultat.append(ing["id"])
         continue
