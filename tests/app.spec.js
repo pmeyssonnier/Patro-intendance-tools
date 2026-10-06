@@ -2079,3 +2079,16 @@ test("promotions : enregistrées dans le projet, nettoyées à la suppression d'
   });
   expect(await page.evaluate((c) => c in S.promo, k)).toBe(false);
 });
+
+test("catalogue : la liste des rayons est deux fois plus grande (pleine largeur, hauteur doublée)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const t = await page.evaluate(() => {
+    const e = document.querySelector("#crayon").getBoundingClientRect();
+    return [e.width, e.height, document.querySelector("#cfilt").getBoundingClientRect().width];
+  });
+  expect(t[1]).toBeGreaterThanOrEqual(72); // 37 px avant
+  expect(Math.abs(t[0] - t[2])).toBeLessThan(2); // aussi large que le filtre : environ le double de l'ancienne largeur
+});

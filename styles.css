@@ -1016,6 +1016,12 @@ th.num,
   background: var(--grp);
 }
 
+/* liste des rayons du catalogue : deux fois plus grande (largeur de la ligne, hauteur et texte agrandis) */
+#crayon {
+  width: 100%;
+  min-height: 74px;
+  font-size: 1.5rem;
+}
 .promo {
   color: var(--ac);
 }
