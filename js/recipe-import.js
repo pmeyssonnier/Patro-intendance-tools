@@ -316,6 +316,18 @@ $("rimp").onclick = () => {
   $("rimm").textContent = "";
 };
 
+/** Referme la zone d'import sans rien créer, et la vide. */
+function fermerImport() {
+  RI = null;
+  drawImport();
+  $("rimt").value = "";
+  $("rimu").value = "";
+  $("rimm").textContent = "";
+  $("rimpf").style.display = "none";
+}
+
+$("rimfer").onclick = fermerImport;
+
 $("rimlire").onclick = () => {
   const r = chercherRecette($("rimt").value) || recetteDepuisListe($("rimt").value);
   if (!r || !Array.isArray(r.recipeIngredient) || !r.recipeIngredient.length) {
@@ -390,11 +402,8 @@ $("rimv").addEventListener("change", (e) => {
 });
 
 $("rimv").addEventListener("click", (e) => {
-  if (e.target.id === "rimann") {
-    RI = null;
-    drawImport();
-    $("rimpf").style.display = "none";
-  } else if (e.target.id === "rimok" && RI) {
+  if (e.target.id === "rimann") fermerImport();
+  else if (e.target.id === "rimok" && RI) {
     const err = creerRecetteImportee();
     if (err) {
       $("rimm").textContent = "⚠ " + err;

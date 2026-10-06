@@ -1851,3 +1851,28 @@ test("thème sombre : titres de rayon et ligne d'édition restent lisibles (fond
     .evaluate((e) => getComputedStyle(e).backgroundColor);
   expect(lum(clair)).toBeGreaterThan(0.8);
 });
+
+test("import de recette : « Annuler » à côté de « Lire la recette » referme la zone sans rien créer", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const avant = await page.evaluate(() => Object.keys(S.rec).length);
+  await page.locator("#rimp").click();
+  await expect(page.locator("#rimpf")).toBeVisible();
+  await page.locator("#rimt").fill("2 pains\n400 g gyros de volaille");
+  await page.locator("#rimu").fill("https://exemple.be/recette");
+  await page.locator("#rimlire").click();
+  await expect(page.locator("#rimv")).toContainText("Créer la recette");
+  await page.locator("#rimfer").click();
+  await expect(page.locator("#rimpf")).toBeHidden();
+  await expect(page.locator("#rimt")).toHaveValue("");
+  await expect(page.locator("#rimu")).toHaveValue("");
+  await expect(page.locator("#rimv")).toBeEmpty();
+  expect(await page.evaluate(() => Object.keys(S.rec).length)).toBe(avant);
+  // sans avoir lu de recette, le bouton referme aussi la zone
+  await page.locator("#rimp").click();
+  await expect(page.locator("#rimpf")).toBeVisible();
+  await page.locator("#rimfer").click();
+  await expect(page.locator("#rimpf")).toBeHidden();
+});
