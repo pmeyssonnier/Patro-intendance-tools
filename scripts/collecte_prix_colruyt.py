@@ -9,6 +9,7 @@
 # !pip -q install requests pandas   # dans Colab, décommenter (ou lancer cette ligne seule dans une cellule)
 
 import base64
+import collections
 import datetime
 import json
 import os
@@ -211,11 +212,30 @@ RAYONS = [
 ]
 
 
+# Rayon imposé pour une catégorie Colruyt précise (texte exact, accents et majuscules sans importance), prioritaire sur RAYONS.
+# Clés de rayon : fl, bou, fri, lai, boul, epi, sur, boi, aut. Ex. : {"Charcuterie Colruyt": "fri"}. La cellule
+# « Catégories Colruyt rencontrées » (après la collecte) propose les lignes à compléter.
+RAYONS_PERSO = {}
+
+
+def texte_categorie(categorie):
+    """Texte d'une catégorie Colruyt (le champ peut être une liste)."""
+    return " / ".join(map(str, categorie)) if isinstance(categorie, list) else str(categorie or "")
+
+
+def cle_categorie(categorie):
+    """Catégorie Colruyt sans accents ni majuscules, pour la comparer."""
+    return sans_accents(texte_categorie(categorie)).lower().strip()
+
+
 def rayon_appli(categorie):
     """Rayon de l'appli pour une catégorie Colruyt (« Epicerie » -> « epi »), ou None si on ne la reconnaît pas."""
-    if not categorie:
+    t = cle_categorie(categorie)
+    if not t:
         return None
-    t = sans_accents(" ".join(categorie) if isinstance(categorie, list) else str(categorie)).lower()
+    perso = {cle_categorie(k): v for k, v in RAYONS_PERSO.items()}
+    if t in perso:
+        return perso[t]
     return next((cle for cle, motif in RAYONS if re.search(motif, t)), None)
 
 
@@ -244,6 +264,15 @@ def promo_pour(c):
         "prix": round(pp, 2),
         "texte": f"{pp:.2f} € au lieu de {p:.2f} €".replace(".", ","),
     }
+
+
+def lien_produit(c):
+    """Adresse de la fiche produit sur colruyt.be (celle de l'acteur si elle est valide, sinon construite avec l'identifiant), ou None."""
+    u = str(c.get("url") or "")
+    if re.fullmatch(r"https://www\.colruyt\.be/[A-Za-z0-9/._~%?=&#:-]{1,150}", u):
+        return u
+    pid = str(c.get("produit_id") or "")
+    return f"https://www.colruyt.be/fr/produits/{pid}" if pid.isdigit() else None
 
 
 def en_stock(v):
@@ -277,6 +306,7 @@ def normaliser(item):
         "prix": prix,
         "prix_unitaire": round(prix_unitaire, 2) if prix_unitaire is not None else None,
         "unite": unite,
+        "url": pick(f, "url"),
         "promo": pick(f, "promotionPrice", "promotion", "promo"),
         "promo_prix": promo_numerique(pick(f, "promotionPrice", "promotion", "promo")),
         "en_stock": en_stock(pick(f, "inStock", "available", "availability")),
@@ -415,9 +445,12 @@ if test:
 
 # %% Collecte
 resultats, lignes, sans_resultat = {}, [], []
+categories_vues = collections.Counter()  # catégorie Colruyt -> nombre de produits rencontrés (voir la cellule suivante)
 for ing in INGREDIENTS:
     try:
         cands = [normaliser(x) for x in appeler_apify(ing["q"])]
+        for c in cands:
+            categories_vues[texte_categorie(c.get("categorie_colruyt"))] += 1
     except Exception as e:
         print(f"❌ {ing['id']} : {e}")
         sans_resultat.append(ing["id"])
@@ -463,6 +496,7 @@ for ing in INGREDIENTS:
         "unite": ing["unite"],
         "prix_unitaire": choix["prix_unitaire"],
         **({"promo": promo_pour(choix)} if promo_pour(choix) else {}),
+        **({"lien": lien_produit(choix)} if lien_produit(choix) else {}),
         "produit": choix,
         "alternatives": ok[1:4],
     }
@@ -477,6 +511,31 @@ export = {
     "date_maj": datetime.datetime.now().isoformat(timespec="seconds"),
     "ingredients": resultats,
 }
+
+# %% Catégories Colruyt rencontrées (à lancer après la collecte : sert à compléter la correspondance avec les rayons de l'appli)
+def tableau_categories():
+    """Une ligne par catégorie Colruyt vue pendant la collecte, avec le rayon proposé (ou « ? » si on ne la reconnaît pas)."""
+    noms_rayons = {"fl": "Fruits & légumes", "bou": "Boucherie & poisson", "fri": "Frigo", "lai": "Frais",
+                   "boul": "Boulangerie", "epi": "Épicerie & conserves", "sur": "Surgelés", "boi": "Boissons", "aut": "Autre"}
+    lignes = []
+    for cat, n in sorted(categories_vues.items(), key=lambda x: (-x[1], str(x[0]))):
+        r = rayon_appli(cat)
+        lignes.append({"Catégorie Colruyt": cat or "(aucune)", "Produits": n, "Clé": r or "?", "Rayon proposé": noms_rayons.get(r, "—" if not cat else "⚠ non reconnue")})
+    return lignes
+
+
+tab = tableau_categories()
+display(pd.DataFrame(tab)) if "display" in globals() else print(pd.DataFrame(tab))
+inconnues = [t for t in tab if t["Clé"] == "?" and t["Catégorie Colruyt"] != "(aucune)"]
+if inconnues:
+    print("\n⚠️ Catégories non reconnues : complète RAYONS_PERSO (cellule « Utilitaires ») avec la clé du bon rayon,")
+    print("   puis relance la collecte. Clés : fl, bou, fri, lai, boul, epi, sur, boi, aut.\n")
+    print("RAYONS_PERSO = {")
+    for t in inconnues:
+        print(f'    "{t["Catégorie Colruyt"]}": "???",  # {t["Produits"]} produit(s)')
+    print("}")
+else:
+    print("\n✅ Toutes les catégories rencontrées sont reconnues.")
 
 # %% Téléchargement du fichier (à charger ensuite dans l'appli : Catalogue de prix > Choisir un fichier)
 with open(SORTIE, "w", encoding="utf-8") as f:

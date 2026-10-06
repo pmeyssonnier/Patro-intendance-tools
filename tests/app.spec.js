@@ -285,7 +285,7 @@ test("export CSV : accents, virgules et total identiques à l'appli", async ({ p
   expect([...csv.octets.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]); // BOM UTF-8 pour Excel
   const lignes = csv.texte.replace(/^\uFEFF/, "").split("\r\n");
   expect(lignes[0]).toBe(
-    "Produit;Quantité;Unité;Prix unitaire (€);Prix par;Coût (€);Remarque;Rayon"
+    "Produit;Quantité;Unité;Prix unitaire (€);Prix par;Coût (€);Remarque;Rayon;Lien produit"
   );
   const total = lignes.find((l) => l.startsWith("TOTAL;"));
   expect(parseFloat(total.split(";")[5].replace(",", "."))).toBeCloseTo(totalAffiche, 2);
@@ -618,6 +618,7 @@ test("catalogue : le filtre cherche dans le nom de l'ingrédient et du produit",
   await expect(lignes.first()).toContainText("Céréales");
   // le nom d'un produit importé est cherché aussi
   await page.locator("#cfilt").fill("");
+  await page.locator("#iopen").click();
   await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
   await page.locator("#imp").click();
   await page.locator("#cfilt").fill("boni");
@@ -636,6 +637,7 @@ test("catalogue : le filtre cherche dans le nom de l'ingrédient et du produit",
 test("catalogue : l'export du catalogue se relit tel quel", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");
+  await page.locator("#iopen").click();
   await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
   await page.locator("#imp").click();
   await page.locator('input[data-cp="riz"]').fill("2.5");
@@ -660,6 +662,7 @@ test("catalogue : l'export du catalogue se relit tel quel", async ({ page }) => 
 test("partager : le catalogue de prix se partage, s'imprime et s'exporte", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");
+  await page.locator("#iopen").click();
   await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
   await page.locator("#imp").click();
   await aller(page, "sh");
@@ -671,9 +674,11 @@ test("partager : le catalogue de prix se partage, s'imprime et s'exporte", async
   const csv = await telecharger(page, "#sx");
   expect(csv.nom).toMatch(/^catalogue-de-prix-.*\.csv$/);
   const lignes = csv.texte.replace(/^\uFEFF/, "").split("\r\n");
-  expect(lignes[0]).toBe("Ingrédient;Produit retenu;Unité du prix;Prix (€);Remarque;Rayon");
-  expect(lignes).toContain("Pâtes;Spaghetti Boni 500g;kg;2,78;;Épicerie & conserves"); // note technique de l'import retirée
-  expect(lignes).toContain("Lait;;L;1,10;;Frais (produits laitiers, œufs)");
+  expect(lignes[0]).toBe(
+    "Ingrédient;Produit retenu;Unité du prix;Prix (€);Remarque;Rayon;Lien produit"
+  );
+  expect(lignes).toContain("Pâtes;Spaghetti Boni 500g;kg;2,78;;Épicerie & conserves;"); // note technique de l'import retirée
+  expect(lignes).toContain("Lait;;L;1,10;;Frais (produits laitiers, œufs);");
   // fichier HTML
   const html = await telecharger(page, "#sd");
   expect(html.texte).toContain("Catalogue de prix – prix des ingrédients");
@@ -1241,6 +1246,7 @@ test("catalogue : « Télécharger un exemple » disparaît dès que des produit
 }) => {
   await ouvrir(page);
   await aller(page, "cat");
+  await page.locator("#iopen").click();
   await expect(page.locator("#csvx")).toBeVisible();
   await page.evaluate(() => {
     S.pn.pain = "Pain blanc 800g";
@@ -1252,6 +1258,37 @@ test("catalogue : « Télécharger un exemple » disparaît dès que des produit
     drawCat();
   });
   await expect(page.locator("#csvx")).toBeVisible();
+});
+
+test("catalogue : l'import s'ouvre dans une fenêtre, Importer l'applique et la ferme, Annuler la ferme", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await expect(page.locator("#impdlg")).toBeHidden();
+  await page.locator("#iopen").click();
+  await expect(page.locator("#impdlg")).toBeVisible();
+  await page.locator("#impno").click();
+  await expect(page.locator("#impdlg")).toBeHidden();
+  await page.locator("#iopen").click();
+  await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
+  await page.locator("#imp").click();
+  await expect(page.locator("#impdlg")).toBeHidden();
+  await expect(page.locator("#impres")).not.toHaveText("");
+  await page.locator("#iopen").click();
+  await expect(page.locator("#csv")).toHaveValue("");
+});
+
+test("catalogue : « Choisir un fichier » ouvre la fenêtre d'import", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#file").setInputFiles({
+    name: "prix.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("Spaghetti Boni 500g;1,39"),
+  });
+  await expect(page.locator("#impdlg")).toBeVisible();
+  await expect(page.locator("#fname")).toContainText("prix.csv");
 });
 
 const BAGEL = `<script type="application/ld+json">{
@@ -2098,4 +2135,79 @@ test("catalogue : la liste des rayons est deux fois plus large, sans changer de 
   expect(Math.abs(t[0] - t[3])).toBeLessThan(2); // aussi large que le filtre : environ le double de l'ancienne largeur
   expect(t[1]).toBeLessThan(45); // hauteur d'origine (37 px)
   expect(t[2]).toBe("16px"); // texte d'origine
+});
+
+test("liens produit : la fiche Colruyt est cliquable dans le catalogue et la liste, sans autre site", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await importerPrix(page, {
+    pain: {
+      unite: "kg",
+      prix_unitaire: 1.12,
+      produit: { nom: "EVERYDAY pain blanc 800g" },
+      lien: "https://www.colruyt.be/fr/produits/14502",
+    },
+    riz: {
+      unite: "kg",
+      prix_unitaire: 0.89,
+      produit: { nom: "Riz long grain" },
+      lien: "https://evil.example/riz",
+    },
+    lait: { unite: "l", prix_unitaire: 0.85, lien: "javascript:alert(1)" },
+  });
+  // seule l'adresse en https://www.colruyt.be/… est gardée
+  expect(await page.evaluate(() => S.url)).toEqual({
+    pain: "https://www.colruyt.be/fr/produits/14502",
+  });
+  const lien = page.locator('#ct a[href="https://www.colruyt.be/fr/produits/14502"]');
+  await expect(lien).toHaveCount(1);
+  await expect(lien).toContainText("EVERYDAY pain blanc 800g");
+  expect(await lien.getAttribute("target")).toBe("_blank");
+  expect(await lien.getAttribute("rel")).toBe("noopener noreferrer");
+  await expect(page.locator("#ct a[href]")).toHaveCount(1);
+  // liste de courses
+  await aller(page, "list");
+  await expect(
+    page.locator('#list a[href="https://www.colruyt.be/fr/produits/14502"]')
+  ).toHaveCount(1);
+  // documents : CSV avec la colonne « Lien produit », HTML du catalogue avec le lien
+  expect(await page.evaluate(() => csvPrices())).toContain(
+    ";https://www.colruyt.be/fr/produits/14502"
+  );
+  expect(await page.evaluate(() => pricesHTML())).toContain(
+    '<a href="https://www.colruyt.be/fr/produits/14502">'
+  );
+  // un prix saisi à la main : le lien disparaît
+  await page.locator('#list input[data-p="pain"]').fill("1.5");
+  await page.locator('#list input[data-p="pain"]').press("Tab");
+  expect(await page.evaluate(() => "pain" in S.url)).toBe(false);
+});
+
+test("liens produit : enregistrés dans le projet, adresses étrangères refusées à l'import", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await importerPrix(page, {
+    pain: { unite: "kg", prix_unitaire: 1.12, lien: "https://www.colruyt.be/fr/produits/14502" },
+  });
+  await aller(page, "pj");
+  const fichier = await telecharger(page, "#exp");
+  expect(JSON.parse(fichier.texte).url).toEqual({
+    pain: "https://www.colruyt.be/fr/produits/14502",
+  });
+  await importer(page, fichier.chemin);
+  expect(await page.evaluate(() => S.url)).toEqual({
+    pain: "https://www.colruyt.be/fr/produits/14502",
+  });
+  const abime = JSON.parse(fichier.texte);
+  abime.url = {
+    pain: "https://www.colruyt.be.evil.example/x",
+    riz: "http://www.colruyt.be/fr/produits/1",
+    lait: "javascript:alert(1)",
+    sucre: "https://www.colruyt.be/fr/produits/<script>",
+  };
+  expect(await page.evaluate((x) => cleanProject(x).url, abime)).toEqual({});
 });

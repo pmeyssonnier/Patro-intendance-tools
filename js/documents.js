@@ -58,7 +58,7 @@ function pricesHTML() {
   const rows = catKeys()
     .map(
       (k) =>
-        `<tr><td>${esc(ING[k][0])}</td><td>${esc(prodName(k))}</td><td>${price(k) ? eur(price(k)) + "/" + priceUnit(k) : "–"}</td></tr>`
+        `<tr><td>${esc(ING[k][0])}</td><td>${lienColruyt(S.url[k]) ? `<a href="${esc(S.url[k])}">${esc(prodName(k) || "Fiche produit")}</a>` : esc(prodName(k))}</td><td>${price(k) ? eur(price(k)) + "/" + priceUnit(k) : "–"}</td></tr>`
     )
     .join("");
   return `<div class="mp pvx" style="${cvars()}"><h2>Catalogue de prix – prix des ingrédients</h2><div class="s">${esc(troop())} · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th>Ingrédient</th><th>Produit retenu</th><th>Prix</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Aucun ingrédient</td></tr>'}</tbody></table></div>`;
@@ -191,6 +191,7 @@ function csvList() {
         "Coût (€)",
         "Remarque",
         "Rayon",
+        "Lien produit",
       ],
     ],
     n = nn();
@@ -205,11 +206,12 @@ function csvList() {
       cn((LAST.tot[k] / per(k)) * price(k)),
       price(k) ? "" : "prix manquant",
       CATS.find((c) => c[0] === catOf(k))[1],
+      lienColruyt(S.url[k]),
     ]);
   });
   r.push([]);
-  r.push(["TOTAL", "", "", "", "", cn(LAST.sum), "", ""]);
-  if (n) r.push(["Par personne", "", "", "", "", cn(LAST.sum / n), "", ""]);
+  r.push(["TOTAL", "", "", "", "", cn(LAST.sum), "", "", ""]);
+  if (n) r.push(["Par personne", "", "", "", "", cn(LAST.sum / n), "", "", ""]);
   r.push([]);
   r.push(["Camp", C.name]);
   r.push(["Dates", fdate(C.start) + " → " + fdate(C.end)]);
@@ -218,7 +220,17 @@ function csvList() {
 }
 
 function csvPrices() {
-  const r = [["Ingrédient", "Produit retenu", "Unité du prix", "Prix (€)", "Remarque", "Rayon"]];
+  const r = [
+    [
+      "Ingrédient",
+      "Produit retenu",
+      "Unité du prix",
+      "Prix (€)",
+      "Remarque",
+      "Rayon",
+      "Lien produit",
+    ],
+  ];
   catKeys().forEach((k) =>
     r.push([
       ING[k][0],
@@ -227,6 +239,7 @@ function csvPrices() {
       cn(price(k)),
       price(k) ? "" : "prix manquant",
       CATS.find((c) => c[0] === catOf(k))[1],
+      lienColruyt(S.url[k]),
     ])
   );
   r.push([]);
