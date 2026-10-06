@@ -51,7 +51,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(18);
+  expect(liens.length).toBe(19);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -1192,9 +1192,16 @@ test("catalogue : l'import JSON propose d'ajouter les produits absents, sans les
   const avant = await page.evaluate(() => Object.keys(ING).length);
   await page.locator("#pfetch").click();
   await expect(page.locator("#pnew")).toContainText("2 produits absents de ton catalogue");
-  // rien n'est ajouté tant qu'une case n'est pas cochée
-  await page.locator('#pnew [data-pn="0"]').check();
+  // le bouton sous la liste ajoute les produits cochés (tous, au départ)
+  await expect(page.locator("#padd")).toHaveText("➕ Ajouter ces 2 produits");
+  await page.locator('#pnew [data-pn="1"]').uncheck();
+  await expect(page.locator("#padd")).toHaveText("➕ Ajouter ce produit");
+  // « Importer » n'applique que les prix des ingrédients connus : rien n'est ajouté au catalogue
   await page.locator("#imp").click();
+  expect(await page.evaluate(() => Object.keys(ING).length)).toBe(avant);
+  expect(await page.evaluate(() => price("pain"))).toBe(4.5);
+  await expect(page.locator("#padd")).toBeVisible();
+  await page.locator("#padd").click();
   await expect(page.locator("#impmsg")).toContainText("1 ingrédient ajouté");
   expect(await page.evaluate(() => Object.keys(ING).length)).toBe(avant + 1);
   const ajoute = await page.evaluate(() => {
@@ -1203,7 +1210,9 @@ test("catalogue : l'import JSON propose d'ajouter les produits absents, sans les
   });
   expect(ajoute).toEqual(["g", 3.2, "Lotus 400g", false]);
   await expect(page.locator("#ct")).toContainText("Spéculoos");
-  await expect(page.locator("#pnew")).toBeHidden();
+  // le produit décoché reste proposé
+  await expect(page.locator("#pnew")).toContainText("1 produit absent de ton catalogue");
+  await expect(page.locator("#pnew")).toContainText("Sirop de grenadine");
 });
 
 test("catalogue : la marque répétée « EVERYDAY EVERYDAY » n'est affichée qu'une fois", async ({
@@ -1241,4 +1250,142 @@ test("catalogue : « Télécharger un exemple » disparaît dès que des produit
     drawCat();
   });
   await expect(page.locator("#csvx")).toBeVisible();
+});
+
+const BAGEL = `<script type="application/ld+json">{
+  "@context": "http://schema.org",
+  "@type": "Recipe",
+  "recipeIngredient": ["400 g gyros de volaille", "1  avocat", "2  jeunes oignons", "2  tomates", "40 g mélange de germes",
+    "170 g fromage frais", "4  bagels au sésame", "1 c. à soupe huile d’olive", " poivre noir", " sel"],
+  "cookTime": "PT25M", "totalTime": "PT25M", "recipeYield": "4",
+  "description": "Ce bagel au sésame plaira aussi aux enfants.",
+  "name": "Bagel au gyros de volaille et avocat",
+  "recipeInstructions": [{ "@type": "HowToStep", "text": "" }, { "@type": "HowToStep", "text": "Préchauffez le four à 200 °C." }]
+}</script>`;
+
+test("import de recette : les lignes d'ingrédients sont converties en g, ml ou pièces", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const lire = (t) => page.evaluate((x) => ligneRecette(x), t);
+  expect(await lire("400 g gyros de volaille")).toMatchObject({
+    q: 400,
+    u: "g",
+    nom: "Gyros de volaille",
+  });
+  expect(await lire("1  avocat")).toMatchObject({ q: 1, u: "pc", nom: "Avocat" });
+  expect(await lire("1 c. à soupe huile d’olive")).toMatchObject({
+    q: 15,
+    u: "ml",
+    nom: "Huile d’olive",
+  });
+  expect(await lire("2 c. à café de sel fin")).toMatchObject({ q: 10, u: "ml", nom: "Sel fin" });
+  expect(await lire("1,5 kg de pommes de terre")).toMatchObject({
+    q: 1500,
+    u: "g",
+    nom: "Pommes de terre",
+  });
+  expect(await lire("25 cl de crème, fraîche")).toMatchObject({ q: 250, u: "ml", nom: "Crème" });
+  expect(await lire("1/2 litre de lait")).toMatchObject({ q: 500, u: "ml", nom: "Lait" });
+  expect(await lire("2 gousses d'ail")).toMatchObject({ q: 2, u: "pc", nom: "Ail" });
+  expect(await lire("2 à 3 oignons")).toMatchObject({ q: 3, u: "pc", nom: "Oignons" });
+  expect(await lire(" poivre noir")).toMatchObject({ q: null, u: null, nom: "Poivre noir" });
+  expect(await page.evaluate(() => dureeRecette("PT1H30M"))).toBe("1 h 30");
+  expect(await page.evaluate(() => dureeRecette("PT25M"))).toBe("25 min");
+});
+
+test("import de recette : aperçu, correspondances puis création par personne", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#rimp").click();
+  await page.locator("#rimt").fill(BAGEL);
+  await page.locator("#rimu").fill("https://www.colruyt.be/fr/recettes/bagel");
+  await page.locator("#rimlire").click();
+  await expect(page.locator("#rimm")).toContainText("10 lignes lues");
+  await expect(page.locator("#rimnom")).toHaveValue("Bagel au gyros de volaille et avocat");
+  await expect(page.locator("#rimn")).toHaveValue("4");
+  // sel et poivre n'ont pas de quantité : ignorés ; le reste devient de nouveaux ingrédients
+  const modes = await page
+    .locator('#rimv select[data-f="mode"]')
+    .evaluateAll((l) => l.map((s) => s.value));
+  expect(modes.slice(-2)).toEqual(["-", "-"]);
+  expect(modes.slice(0, 2)).toEqual(["+", "+"]);
+  await page.locator("#rimok").click();
+  await expect(page.locator("#rimm")).toContainText("Bagel au gyros de volaille et avocat");
+  const r = await page.evaluate(() => {
+    const R = S.rec["Bagel au gyros de volaille et avocat"],
+      par = (nom) => {
+        const k = Object.keys(R.ing).find((c) => ING[c][0] === nom);
+        return k ? [ING[k][1], R.ing[k]] : null;
+      };
+    return {
+      nb: Object.keys(R.ing).length,
+      sections: SEC.length,
+      gyros: par("Gyros de volaille"),
+      avocat: par("Avocat"),
+      huile: par("Huile d’olive"),
+      desc: R.desc,
+      cur: S.cur,
+    };
+  });
+  expect(r.nb).toBe(8);
+  expect(r.gyros).toEqual(["g", Array(r.sections).fill(100)]);
+  expect(r.avocat).toEqual(["pc", Array(r.sections).fill(0.25)]);
+  expect(r.huile).toEqual(["ml", Array(r.sections).fill(3.75)]);
+  expect(r.desc).toContain("Pour 4 personnes · 25 min");
+  expect(r.desc).toContain("Source : https://www.colruyt.be/fr/recettes/bagel");
+  expect(r.desc).not.toContain("Préchauffez");
+  expect(r.cur).toBe("Bagel au gyros de volaille et avocat");
+  // les nouveaux ingrédients de viande sont signalés aux régimes
+  expect(
+    await page.evaluate(
+      () =>
+        DIETS.veg.ex[Object.keys(S.cust).find((c) => ING[c][0] === "Gyros de volaille")] === null
+    )
+  ).toBe(true);
+});
+
+test("import de recette : ingrédient existant reconnu, étapes facultatives, erreurs claires", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#rimp").click();
+  await page.locator("#rimt").fill("pas une recette");
+  await page.locator("#rimlire").click();
+  await expect(page.locator("#rimm")).toContainText("Aucune recette trouvée");
+  const json = {
+    "@graph": [
+      {
+        "@type": ["Recipe"],
+        name: "Spaghetti express",
+        recipeYield: ["4", "4 personnes"],
+        recipeIngredient: ["500 g de pâtes", "2 pains"],
+        recipeInstructions: "Cuire les pâtes.",
+      },
+    ],
+  };
+  await page.locator("#rimt").fill(JSON.stringify(json));
+  await page.locator("#rimlire").click();
+  const premier = page.locator('#rimv select[data-f="mode"]').first();
+  await expect(premier).toHaveValue("pates"); // « Pâtes » existe déjà
+  // « 2 pains » se compte en pièces alors que « Pain » est en g : proposé en nouvel ingrédient, avec rappel
+  await expect(page.locator("#rimv")).toContainText("Existe déjà en g");
+  // choisir un ingrédient d'une autre famille d'unité est refusé
+  await page.locator('#rimv select[data-f="mode"]').nth(1).selectOption("pain");
+  await expect(page.locator("#rimv")).toContainText("se compte en g");
+  await page.locator("#rimok").click();
+  await expect(page.locator("#rimm")).toContainText("Unité différente");
+  await page.locator('#rimv select[data-f="mode"]').nth(1).selectOption("+");
+  await page.locator("#rimet").check();
+  await page.locator("#rimok").click();
+  const R = await page.evaluate(() => S.rec["Spaghetti express"]);
+  expect(R.ing.pates[0]).toBe(125);
+  expect(R.desc).toContain("Préparation :\n1. Cuire les pâtes.");
+  // un nom déjà pris est refusé
+  await page.locator("#rimp").click();
+  await page.locator("#rimt").fill(JSON.stringify(json));
+  await page.locator("#rimlire").click();
+  await page.locator("#rimok").click();
+  await expect(page.locator("#rimm")).toContainText("porte déjà ce nom");
 });

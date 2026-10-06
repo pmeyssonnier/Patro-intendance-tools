@@ -999,3 +999,24 @@ th.num,
 .ced td {
   background: #eef5ef;
 }
+
+/* Import d'une recette : une carte par ligne d'ingrédient */
+.rimpl {
+  border-top: 1px solid #d9e2da;
+  padding: 8px 0;
+}
+.rimpr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+.rimpr select {
+  width: auto;
+  max-width: 100%;
+}
+.rimpr input[type="text"] {
+  width: 220px;
+  max-width: 100%;
+}
