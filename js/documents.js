@@ -39,6 +39,25 @@ function listHTML() {
   return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">${esc(troop())} · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows || '<tr><td colspan="5">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn() ? " · par personne : " + eur(LAST.sum / nn()) : ""}</p></div>`;
 }
 
+/** Ingrédients du catalogue de prix, dans l'ordre de la page, sans ceux que l'utilisateur a masqués. */
+const catKeys = () => Object.keys(ING).filter((k) => !S.hid.includes(k));
+
+/** Nom du produit retenu (« ↳ » du catalogue), sans la note technique ajoutée par l'import de texte. */
+const prodName = (k) =>
+  (S.pn[k] || "").replace(/ \((?:→ €\/kg ou €\/L calculé|prix pris tel quel)\)$/, "");
+
+const priceUnit = (k) => (ING[k][1] === "pc" ? "pièce" : ul(k));
+
+function pricesHTML() {
+  const rows = catKeys()
+    .map(
+      (k) =>
+        `<tr><td>${esc(ING[k][0])}</td><td>${esc(prodName(k))}</td><td>${price(k) ? eur(price(k)) + "/" + priceUnit(k) : "–"}</td></tr>`
+    )
+    .join("");
+  return `<div class="mp pvx" style="${cvars()}"><h2>Catalogue de prix – prix des ingrédients</h2><div class="s">${esc(troop())} · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th>Ingrédient</th><th>Produit retenu</th><th>Prix</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Aucun ingrédient</td></tr>'}</tbody></table></div>`;
+}
+
 function recHTML(names) {
   return (
     `<div class="mp pvx" style="${cvars()}"><h2>Recettes</h2>` +
@@ -68,6 +87,21 @@ const txtList = () =>
   (LAST.keys.map((k) => "☐ " + ING[k][0] + " : " + qty(k, LAST.tot[k])).join("\n") || "(vide)") +
   "\n\nTotal estimé : " +
   eur(LAST.sum);
+
+const txtPrices = () =>
+  "🏷️ Catalogue de prix – " +
+  troop() +
+  "\n\n" +
+  (catKeys()
+    .map(
+      (k) =>
+        "- " +
+        ING[k][0] +
+        " : " +
+        (price(k) ? eur(price(k)) + "/" + priceUnit(k) : "prix manquant") +
+        (prodName(k) ? " (" + prodName(k) + ")" : "")
+    )
+    .join("\n") || "(vide)");
 
 const txtMenu = () =>
   "🍽️ " +
@@ -157,6 +191,17 @@ function csvList() {
   r.push(["Camp", C.name]);
   r.push(["Dates", fdate(C.start) + " → " + fdate(C.end)]);
   r.push(["Personnes", n]);
+  return csvOut(r);
+}
+
+function csvPrices() {
+  const r = [["Ingrédient", "Produit retenu", "Unité du prix", "Prix (€)", "Remarque"]];
+  catKeys().forEach((k) =>
+    r.push([ING[k][0], prodName(k), priceUnit(k), cn(price(k)), price(k) ? "" : "prix manquant"])
+  );
+  r.push([]);
+  r.push(["Troupe", troop()]);
+  r.push(["Date", fdate(iso(new Date()))]);
   return csvOut(r);
 }
 
