@@ -1,0 +1,7 @@
+{
+  "ingredients": [
+    { "nom": "Spéculoos", "unite": "kg" },
+    { "nom": "Sirop de grenadine", "unite": "l" },
+    { "nom": "Poivrons", "unite": "piece", "q": "poivrons rouges", "poids_piece_g": 200 }
+  ]
+}
