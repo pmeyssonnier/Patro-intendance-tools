@@ -655,6 +655,36 @@ test("catalogue : l'export du catalogue se relit tel quel", async ({ page }) => 
   await expect(page.locator("#impmsg")).not.toContainText("ignorés");
 });
 
+test("partager : le catalogue de prix se partage, s'imprime et s'exporte", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
+  await page.locator("#imp").click();
+  await aller(page, "sh");
+  await expect(page.locator('#shw option[value="prices"]')).toHaveText(
+    "Catalogue de prix – prix des ingrédients"
+  );
+  await page.locator("#shw").selectOption("prices");
+  // fichier CSV (Excel) : une ligne par ingrédient, avec le produit retenu et le prix
+  const csv = await telecharger(page, "#sx");
+  expect(csv.nom).toMatch(/^catalogue-de-prix-.*\.csv$/);
+  const lignes = csv.texte.replace(/^\uFEFF/, "").split("\r\n");
+  expect(lignes[0]).toBe("Ingrédient;Produit retenu;Unité du prix;Prix (€);Remarque");
+  expect(lignes).toContain("Pâtes;Spaghetti Boni 500g;kg;2,78;"); // note technique de l'import retirée
+  expect(lignes).toContain("Lait;;L;1,10;");
+  // fichier HTML
+  const html = await telecharger(page, "#sd");
+  expect(html.texte).toContain("Catalogue de prix – prix des ingrédients");
+  expect(html.texte).toContain("Spaghetti Boni 500g");
+  // texte copié
+  await page
+    .context()
+    .grantPermissions(["clipboard-read", "clipboard-write"])
+    .catch(() => {});
+  await page.locator("#sc").click();
+  await expect(page.locator("#shm")).not.toHaveText("Rien à partager.");
+});
+
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");

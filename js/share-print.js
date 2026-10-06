@@ -4,6 +4,7 @@
 const SH = {
   list: ["Liste de courses", txtList, listHTML, csvList],
   menu: ["Menu", txtMenu, menuHTML, csvMenu],
+  prices: ["Catalogue de prix", txtPrices, pricesHTML, csvPrices],
   rec: [
     "Recette",
     () => txtRec(S.cur),

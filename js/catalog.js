@@ -55,7 +55,7 @@ $("cexp").onclick = () => {
         unite: unit[ING[k][1]],
         prix_unitaire: price(k),
         produit: {
-          nom: (S.pn[k] || "").replace(/ \((?:→ €\/kg ou €\/L calculé|prix pris tel quel)\)$/, ""),
+          nom: prodName(k),
         },
       };
     });
