@@ -25,8 +25,26 @@ const recettesDe = (k) =>
 
 const famille = (u) => (u === "pc" ? "pc" : "poids");
 
-/** Texte d'avertissement affiché pendant la modification d'un ingrédient (nouvelle unité choisie ou non). */
-function editInfo(k, unite) {
+/** Régimes concernés par « Attention régime » (ceux de DMAP) dans lesquels un ingrédient a une règle. */
+const dietsDMAP = [...new Set(Object.values(DMAP).flat())];
+
+/** « Attention régime » actuelle d'un ingrédient (clé de DMAP, "" pour aucune), ou "perso" si ses règles ne correspondent à aucun choix. */
+function regimeActuel(k) {
+  const en = dietsDMAP.filter((d) => DIETS[d] && k in DIETS[d].ex);
+  for (const [cle, ds] of [["", []], ...Object.entries(DMAP)]) {
+    const a = ds.filter((d) => DIETS[d]);
+    if (a.length === en.length && a.every((d) => en.includes(d))) return cle;
+  }
+  return "perso";
+}
+
+/** Choix « Attention régime » : mêmes options que le formulaire d'ajout de la page Recettes (+ « Personnalisé » si les règles actuelles n'en font pas partie). */
+const optionsRegime = (cle) =>
+  $("idiet").innerHTML.replace(`value="${cle}"`, `value="${cle}" selected`) +
+  (cle === "perso" ? '<option value="perso" selected>Personnalisé (voir Régimes)</option>' : "");
+
+/** Texte d'avertissement affiché pendant la modification d'un ingrédient (nouvelle unité et nouvelle attention régime choisies ou non). */
+function editInfo(k, unite, dg) {
   const rec = recettesDe(k),
     u0 = ING[k][1];
   let t = rec.length
@@ -41,11 +59,29 @@ function editInfo(k, unite) {
       t +=
         " g ⇄ ml : quantités et prix sont conservés (le prix devient par L au lieu de par kg, ou l'inverse).";
   }
+  if (dg !== undefined && dg !== "perso" && dg !== regimeActuel(k)) {
+    const nouveau = DMAP[dg] || [],
+      perdus = dietsDMAP.filter((d) => DIETS[d] && DIETS[d].ex[k] && !nouveau.includes(d));
+    if (perdus.length)
+      t += ` ⚠ Les remplacements actuels seront supprimés pour : ${perdus.map((d) => DIETS[d].n).join(", ")}.`;
+  }
   return t;
 }
 
+/** Applique une « Attention régime » à un ingrédient : crée ou retire ses règles dans les régimes concernés. */
+function appliquerRegime(k, dg) {
+  const voulus = DMAP[dg] || [];
+  for (const d of dietsDMAP) {
+    if (!DIETS[d]) continue;
+    if (voulus.includes(d)) {
+      if (!(k in DIETS[d].ex)) DIETS[d].ex[k] = null;
+    } else delete DIETS[d].ex[k];
+  }
+  if (S.cust[k]) S.cust[k][5] = [...voulus];
+}
+
 /** Valide et applique un nouveau nom / une nouvelle unité. Renvoie un message d'erreur, ou "" si c'est fait. */
-function editIng(k, nom, unite) {
+function editIng(k, nom, unite, dg) {
   nom = nom.trim().replace(/\s+/g, " ");
   if (!nom) return "Le nom ne peut pas être vide.";
   if (nom.length > 100) return "Nom trop long (100 caractères au plus).";
@@ -72,6 +108,7 @@ function editIng(k, nom, unite) {
     S.prices[k] = 0;
     delete S.pn[k];
   }
+  if (dg !== undefined && dg !== "perso" && dg !== regimeActuel(k)) appliquerRegime(k, dg);
   return "";
 }
 
@@ -95,7 +132,7 @@ function drawCat() {
       .map(
         (k) =>
           (catEdit === k
-            ? `<tr class="ced"><td colspan="4"><div class="rtf"><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient"> <select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select> <button class="x" data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}<div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></div></td></tr>`
+            ? `<tr class="ced"><td colspan="4"><div class="g"><div><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div style="align-self:end"><button data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></td></tr>`
             : "") +
           `<tr><td>${esc(ING[k][0])}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
       )
@@ -115,8 +152,14 @@ $("ct").addEventListener("change", (e) => {
 });
 
 $("ct").addEventListener("change", (e) => {
-  const k = e.target.dataset.eu;
-  if (k) $("ct").querySelector(`[data-ei="${k}"]`).textContent = editInfo(k, e.target.value);
+  const k = e.target.dataset.eu || e.target.dataset.eg;
+  if (!k) return;
+  const ligne = $("ct").querySelector(`[data-en="${k}"]`).closest("tr");
+  ligne.querySelector("[data-ei]").textContent = editInfo(
+    k,
+    ligne.querySelector("[data-eu]").value,
+    ligne.querySelector("[data-eg]").value
+  );
 });
 
 $("ct").addEventListener("click", (e) => {
@@ -136,7 +179,8 @@ $("ct").addEventListener("click", (e) => {
       ligne = $("ct").querySelector(`[data-en="${k}"]`).closest("tr"),
       nom = d.ers ? ING0[k][0] : ligne.querySelector("[data-en]").value,
       unite = d.ers ? ING0[k][1] : ligne.querySelector("[data-eu]").value,
-      err = editIng(k, nom, unite);
+      dg = d.ers ? undefined : ligne.querySelector("[data-eg]").value,
+      err = editIng(k, nom, unite, dg);
     if (err) ligne.querySelector("[data-ei]").textContent = "⚠ " + err;
     else refreshIng();
     return;
@@ -507,6 +551,7 @@ $("cins").onclick = () => {
   $("cinf").style.display = "grid";
   $("cinn").value = "";
   $("cinp").value = "";
+  $("cing").innerHTML = optionsRegime("");
   $("cinn").focus();
 };
 
@@ -520,7 +565,7 @@ $("cinok").onclick = () => {
   if (!nom) return ($("cinm").textContent = "Donne un nom à l'ingrédient.");
   const dbl = Object.keys(ING).find((x) => cle(ING[x][0]) === cle(nom));
   if (dbl) return ($("cinm").textContent = `Un ingrédient s'appelle déjà « ${ING[dbl][0]} ».`);
-  const k = createIng(nom, $("cinu").value, ""),
+  const k = createIng(nom, $("cinu").value, $("cing").value),
     p = +$("cinp").value;
   if (p > 0) S.prices[k] = p;
   $("cinf").style.display = "none";

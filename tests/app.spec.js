@@ -1446,3 +1446,59 @@ test("import de recette : une page sans « Recipe » (article) est refusée, sa 
   expect(R.friture).toEqual(["ml", 250]);
   expect(R.farine).toEqual(["g", 25]);
 });
+
+test("catalogue : modifier un ingrédient propose les mêmes champs que l'ajout, dont « Attention régime »", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  // ajout avec une attention régime
+  await page.locator("#cins").click();
+  await page.locator("#cinn").fill("Chipolatas");
+  await page.locator("#cing").selectOption("porc");
+  await page.locator("#cinok").click();
+  const k = await page.evaluate(() => Object.keys(S.cust).find((c) => ING[c][0] === "Chipolatas"));
+  expect(await page.evaluate((c) => [c in DIETS.veg.ex, c in DIETS.halal.ex], k)).toEqual([
+    true,
+    true,
+  ]);
+  // la modification montre les mêmes champs, avec la valeur actuelle
+  await page.locator(`#ct [data-ced="${k}"]`).click();
+  await expect(page.locator(`[data-en="${k}"]`)).toHaveValue("Chipolatas");
+  await expect(page.locator(`[data-eu="${k}"]`)).toHaveValue("g");
+  await expect(page.locator(`[data-eg="${k}"]`)).toHaveValue("porc");
+  // porc → lactose : les règles végétarien et halal disparaissent, celle du lactose apparaît
+  await page.locator(`[data-eg="${k}"]`).selectOption("sl");
+  await page.locator(`[data-eok="${k}"]`).click();
+  expect(
+    await page.evaluate(
+      (c) => [c in DIETS.veg.ex, c in DIETS.halal.ex, c in DIETS.sl.ex, ING[c][5]],
+      k
+    )
+  ).toEqual([false, false, true, ["sl"]]);
+  // c'est enregistré
+  await page.reload();
+  expect(await page.evaluate((c) => c in DIETS.sl.ex && !(c in DIETS.veg.ex), k)).toBe(true);
+});
+
+test("catalogue : changer l'attention régime d'un ingrédient de base prévient que ses remplacements seront supprimés", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const avant = await page.evaluate(() => [
+    regimeActuel("pain"),
+    Object.keys(DIETS).filter((d) => DIETS[d].ex.pain),
+  ]);
+  await page.locator('#ct [data-ced="pain"]').click();
+  await expect(page.locator('[data-eg="pain"]')).toHaveValue(avant[0]);
+  await page.locator('[data-eg="pain"]').selectOption("");
+  if (avant[1].length)
+    await expect(page.locator('[data-ei="pain"]')).toContainText("⚠ Les remplacements actuels");
+  await page.locator('[data-eok="pain"]').click();
+  expect(
+    await page.evaluate(() =>
+      Object.keys(DIETS).filter((d) => d in DIETS && "pain" in DIETS[d].ex && dietsDMAP.includes(d))
+    )
+  ).toEqual([]);
+});
