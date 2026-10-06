@@ -284,7 +284,9 @@ test("export CSV : accents, virgules et total identiques à l'appli", async ({ p
   expect(csv.nom).toMatch(/^liste-de-courses-.*\.csv$/);
   expect([...csv.octets.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]); // BOM UTF-8 pour Excel
   const lignes = csv.texte.replace(/^\uFEFF/, "").split("\r\n");
-  expect(lignes[0]).toBe("Produit;Quantité;Unité;Prix unitaire (€);Prix par;Coût (€);Remarque");
+  expect(lignes[0]).toBe(
+    "Produit;Quantité;Unité;Prix unitaire (€);Prix par;Coût (€);Remarque;Rayon"
+  );
   const total = lignes.find((l) => l.startsWith("TOTAL;"));
   expect(parseFloat(total.split(";")[5].replace(",", "."))).toBeCloseTo(totalAffiche, 2);
 });
@@ -1083,7 +1085,7 @@ test("liste de courses : quantité, prix et coût sont alignés à droite", asyn
     const th = [...document.querySelectorAll("#g-list thead th")].map(
         (e) => getComputedStyle(e).textAlign
       ),
-      td = [...document.querySelectorAll("#list tr:first-child td")].map(
+      td = [...document.querySelector("#list tr:not(.grp)").children].map(
         (e) => getComputedStyle(e).textAlign
       );
     return { th, td };
@@ -1092,7 +1094,7 @@ test("liste de courses : quantité, prix et coût sont alignés à droite", asyn
   expect(al.td.slice(1)).toEqual(["right", "right", "right"]);
   // les colonnes de chiffres s'alignent sur le même bord droit d'une ligne à l'autre
   const bords = await page.evaluate(() =>
-    [...document.querySelectorAll("#list tr")]
+    [...document.querySelectorAll("#list tr:not(.grp)")]
       .slice(0, 4)
       .map((r) => Math.round(r.lastElementChild.getBoundingClientRect().right))
   );
@@ -1388,4 +1390,334 @@ test("import de recette : ingrédient existant reconnu, étapes facultatives, er
   await page.locator("#rimlire").click();
   await page.locator("#rimok").click();
   await expect(page.locator("#rimm")).toContainText("porte déjà ce nom");
+});
+
+test("import de recette : une page sans « Recipe » (article) est refusée, sa liste d'ingrédients collée est lue", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#rimp").click();
+  // un article : du ld+json sans recette
+  await page
+    .locator("#rimt")
+    .fill(
+      '<script type="application/ld+json">{"@graph":[{"@type":"NewsArticle","headline":"Croquettes","width":309}]}</script>'
+    );
+  await page.locator("#rimlire").click();
+  await expect(page.locator("#rimm")).toContainText("colle la liste des ingrédients");
+  // la liste copiée sur la page, une ligne par ingrédient
+  await page
+    .locator("#rimt")
+    .fill(
+      [
+        "800 g de pommes de terre à chair farineuse type Bintje",
+        "40 g de beurre doux",
+        "2 jaunes d'œufs",
+        "1/2 càc de noix de muscade râpée",
+        "Sel et poivre du moulin",
+        "1 l d'huile de friture pour la cuisson (tournesol ou arachide)",
+        "Pour la panure croustillante :",
+        "• 100 g de farine tamisée",
+        "1 càs d'huile d'olive",
+      ].join("\n")
+    );
+  await page.locator("#rimlire").click();
+  await expect(page.locator("#rimm")).toContainText("8 lignes lues (liste d'ingrédients");
+  await page.locator("#rimnom").fill("Croquettes de pommes de terre");
+  await page.locator("#rimn").fill("4");
+  await page.locator("#rimok").click();
+  const R = await page.evaluate(() => {
+    const r = S.rec["Croquettes de pommes de terre"],
+      v = (nom) => {
+        const k = Object.keys(r.ing).find((c) => ING[c][0].startsWith(nom));
+        return k ? [ING[k][1], r.ing[k][0]] : null;
+      };
+    return {
+      nb: Object.keys(r.ing).length,
+      pdt: v("Pommes de terre"),
+      beurre: v("Beurre"),
+      muscade: v("Noix de muscade"),
+      friture: v("Huile de friture"),
+      farine: v("Farine"),
+    };
+  });
+  expect(R.nb).toBe(7);
+  expect(R.pdt).toEqual(["g", 200]);
+  expect(R.muscade).toEqual(["ml", 0.625]);
+  expect(R.friture).toEqual(["ml", 250]);
+  expect(R.farine).toEqual(["g", 25]);
+});
+
+test("catalogue : modifier un ingrédient propose les mêmes champs que l'ajout, dont « Attention régime »", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  // ajout avec une attention régime
+  await page.locator("#cins").click();
+  await page.locator("#cinn").fill("Chipolatas");
+  await page.locator("#cing").selectOption("porc");
+  await page.locator("#cinok").click();
+  const k = await page.evaluate(() => Object.keys(S.cust).find((c) => ING[c][0] === "Chipolatas"));
+  expect(await page.evaluate((c) => [c in DIETS.veg.ex, c in DIETS.halal.ex], k)).toEqual([
+    true,
+    true,
+  ]);
+  // la modification montre les mêmes champs, avec la valeur actuelle
+  await page.locator(`#ct [data-ced="${k}"]`).click();
+  await expect(page.locator(`[data-en="${k}"]`)).toHaveValue("Chipolatas");
+  await expect(page.locator(`[data-eu="${k}"]`)).toHaveValue("g");
+  await expect(page.locator(`[data-eg="${k}"]`)).toHaveValue("porc");
+  // porc → lactose : les règles végétarien et halal disparaissent, celle du lactose apparaît
+  await page.locator(`[data-eg="${k}"]`).selectOption("sl");
+  await page.locator(`[data-eok="${k}"]`).click();
+  expect(
+    await page.evaluate(
+      (c) => [c in DIETS.veg.ex, c in DIETS.halal.ex, c in DIETS.sl.ex, ING[c][5]],
+      k
+    )
+  ).toEqual([false, false, true, ["sl"]]);
+  // c'est enregistré
+  await page.reload();
+  expect(await page.evaluate((c) => c in DIETS.sl.ex && !(c in DIETS.veg.ex), k)).toBe(true);
+});
+
+test("catalogue : changer l'attention régime d'un ingrédient de base prévient que ses remplacements seront supprimés", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const avant = await page.evaluate(() => [
+    regimeActuel("pain"),
+    Object.keys(DIETS).filter((d) => DIETS[d].ex.pain),
+  ]);
+  await page.locator('#ct [data-ced="pain"]').click();
+  await expect(page.locator('[data-eg="pain"]')).toHaveValue(avant[0]);
+  await page.locator('[data-eg="pain"]').selectOption("");
+  if (avant[1].length)
+    await expect(page.locator('[data-ei="pain"]')).toContainText("⚠ Les remplacements actuels");
+  await page.locator('[data-eok="pain"]').click();
+  expect(
+    await page.evaluate(() =>
+      Object.keys(DIETS).filter((d) => d in DIETS && "pain" in DIETS[d].ex && dietsDMAP.includes(d))
+    )
+  ).toEqual([]);
+});
+
+test("rayons : ingrédients de base classés, liste groupée par rayon, choix modifiable", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  expect(
+    await page.evaluate(() => [
+      catOf("pain"),
+      catOf("lait"),
+      catOf("jam"),
+      catOf("pdt"),
+      catOf("hache"),
+    ])
+  ).toEqual(["boul", "lai", "fri", "fl", "bou"]);
+  await aller(page, "list");
+  // groupée (par défaut) : des titres de rayon, dans l'ordre du magasin
+  const titres = await page.locator("#list tr.grp").allInnerTexts();
+  expect(titres.length).toBeGreaterThan(2);
+  const ordre = await page.evaluate(
+    (t) => t.map((x) => CATS.findIndex((c) => c[1] === x.trim())),
+    titres
+  );
+  expect(ordre).toEqual([...ordre].sort((a, b) => a - b));
+  expect(await page.evaluate(() => LAST.keys.length)).toBeGreaterThan(5);
+  // « Frais » et « Frigo » sont deux rayons distincts
+  expect(
+    await page.evaluate(() => CATS.map((c) => c[0]).filter((c) => c === "lai" || c === "fri"))
+  ).toEqual(["fri", "lai"]);
+  // dégroupée : plus de titres, ordre alphabétique
+  await page.locator("#lgrp").uncheck();
+  await expect(page.locator("#list tr.grp")).toHaveCount(0);
+  const noms = await page.locator("#list tr td:first-child").allInnerTexts();
+  const tries = [...noms].sort((a, b) => a.localeCompare(b, "fr"));
+  expect(noms.map((n) => n.split("\n")[0])).toEqual(tries.map((n) => n.split("\n")[0]));
+  await page.locator("#lgrp").check();
+  // changer le rayon d'un ingrédient dans le catalogue, enregistré
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  await page.locator('[data-ec="pain"]').selectOption("sur");
+  await page.locator('[data-eok="pain"]').click();
+  expect(await page.evaluate(() => [catOf("pain"), S.cat.pain])).toEqual(["sur", "sur"]);
+  await page.reload();
+  expect(await page.evaluate(() => catOf("pain"))).toBe("sur");
+  // revenir au rayon d'origine retire le choix enregistré
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  await page.locator('[data-ec="pain"]').selectOption("boul");
+  await page.locator('[data-eok="pain"]').click();
+  expect(await page.evaluate(() => "pain" in S.cat)).toBe(false);
+});
+
+test("rayons : ajout au catalogue et en recette, export CSV, export du catalogue", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#cins").click();
+  await page.locator("#cinn").fill("Glace vanille");
+  await page.locator("#cinc").selectOption("sur");
+  await page.locator("#cinok").click();
+  const k = await page.evaluate(() =>
+    Object.keys(S.cust).find((c) => ING[c][0] === "Glace vanille")
+  );
+  expect(await page.evaluate((c) => catOf(c), k)).toBe("sur");
+  // depuis la page Recettes
+  await aller(page, "rec");
+  await page.locator("#inew").click();
+  await page.locator("#iname").fill("Eau gazeuse");
+  await page.locator("#icat").selectOption("boi");
+  await page.locator("#iok").click();
+  const k2 = await page.evaluate(() =>
+    Object.keys(S.cust).find((c) => ING[c][0] === "Eau gazeuse")
+  );
+  expect(await page.evaluate((c) => catOf(c), k2)).toBe("boi");
+  // un ingrédient sans rayon choisi est dans « Autre »
+  await aller(page, "cat");
+  await page.locator("#cins").click();
+  await page.locator("#cinn").fill("Machin");
+  await page.locator("#cinok").click();
+  expect(
+    await page.evaluate(() => catOf(Object.keys(S.cust).find((c) => ING[c][0] === "Machin")))
+  ).toBe("aut");
+  // le rayon est dans l'export du catalogue
+  const exp = await telecharger(page, "#cexp");
+  expect(JSON.parse(exp.texte).ingredients[k].categorie).toBe("sur");
+  expect(JSON.parse(exp.texte).ingredients.pain.categorie).toBe("boul");
+  // la suppression d'un ingrédient nettoie son rayon
+  await page.evaluate((c) => {
+    rmIng(c);
+  }, k);
+  expect(await page.evaluate((c) => c in S.cat, k)).toBe(false);
+});
+
+test("rayons : un projet exporté puis importé garde les rayons", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  await page.locator('[data-ec="pain"]').selectOption("fri");
+  await page.locator('[data-eok="pain"]').click();
+  await aller(page, "pj");
+  const fichier = await telecharger(page, "#exp");
+  expect(JSON.parse(fichier.texte).cat).toEqual({ pain: "fri" });
+  await importer(page, fichier.chemin);
+  expect(await page.evaluate(() => catOf("pain"))).toBe("fri");
+});
+
+test("import de recette : rayon deviné pour les nouveaux ingrédients, modifiable", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#rimp").click();
+  await page
+    .locator("#rimt")
+    .fill(
+      "2 pains\n400 g gyros de volaille\n150 g chorizo\n1 yaourt grec\n3 carottes rapees\n1 boite de maïs\n1 truc"
+    );
+  await page.locator("#rimlire").click();
+  const rayons = await page
+    .locator('#rimv select[data-f="cat"]')
+    .evaluateAll((l) => l.map((s) => s.value));
+  expect(rayons.slice(0, 3)).toEqual(["boul", "bou", "fri"]);
+  await page.locator('#rimv select[data-f="cat"]').nth(2).selectOption("lai");
+  await page.locator("#rimnom").fill("Test rayons");
+  await page.locator("#rimok").click();
+  expect(
+    await page.evaluate(() => {
+      const r = S.rec["Test rayons"];
+      return Object.keys(r.ing).map((k) => [ING[k][0], catOf(k)]);
+    })
+  ).toEqual(
+    expect.arrayContaining([
+      ["Gyros de volaille", "bou"],
+      ["Chorizo", "lai"],
+    ])
+  );
+});
+
+test("recettes : la liste « Ajouter un ingrédient » est triée par ordre alphabétique", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.evaluate(() => {
+    createIng("Abricots", "g", "", "fl");
+    createIng("Zeste", "g", "", "fl");
+    drawRec();
+  });
+  const noms = (await page.locator("#radd option").allInnerTexts()).slice(1);
+  expect(noms.length).toBeGreaterThan(5);
+  expect(noms).toEqual([...noms].sort((a, b) => a.localeCompare(b, "fr")));
+  expect(noms[0]).toBe("Abricots");
+});
+
+test("rayons : le champ « categorie » du fichier de prix est repris sans écraser un choix existant", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#cins").click();
+  await page.locator("#cinn").fill("Spéculoos");
+  await page.locator("#cinok").click();
+  const json = {
+    source: "Colruyt",
+    date_maj: "2026-10-06",
+    ingredients: {
+      pain: { unite: "kg", prix_unitaire: 1.1, categorie: "sur" }, // rayon par défaut déjà connu : inchangé
+      x1: { nom: "Spéculoos", unite: "kg", prix_unitaire: 3.2, categorie: "epi" },
+      x2: { nom: "Sirop de grenadine", unite: "l", prix_unitaire: 2.1, categorie: "boi" },
+      x3: { nom: "Truc", unite: "kg", prix_unitaire: 2, categorie: "n'importe quoi" },
+    },
+  };
+  await page.locator("#file").setInputFiles({
+    name: "p.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(json)),
+  });
+  await page.locator("#imp").click();
+  await page.locator("#padd").click();
+  const r = await page.evaluate(() => {
+    const k = (n) => Object.keys(S.cust).find((c) => ING[c][0] === n);
+    return [catOf("pain"), catOf(k("Spéculoos")), catOf(k("Sirop de grenadine")), catOf(k("Truc"))];
+  });
+  expect(r).toEqual(["boul", "epi", "boi", "aut"]);
+});
+
+test("sauvegarde : l'export du projet affiche un message, et propose de copier si le téléchargement échoue", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+  await ouvrir(page);
+  await aller(page, "pj");
+  const fichier = await telecharger(page, "#exp");
+  expect(JSON.parse(fichier.texte).rec).toBeTruthy();
+  await expect(page.locator("#jmsg")).toContainText("préparé");
+  // téléchargement bloqué : message clair au lieu d'un échec silencieux
+  await page.evaluate(() => {
+    URL.createObjectURL = () => {
+      throw new Error("blocage simulé");
+    };
+  });
+  await page.locator("#exp").click();
+  await expect(page.locator("#jmsg")).toContainText("Téléchargement impossible (blocage simulé)");
+  // projet impossible à sérialiser : message, pas de silence
+  await page.evaluate(() => {
+    S.boucle = S;
+  });
+  await page.locator("#exp").click();
+  await expect(page.locator("#jmsg")).toContainText("Export impossible");
+  await page.evaluate(() => {
+    delete S.boucle;
+  });
+  // copie dans le presse-papiers
+  await page.locator("#expc").click();
+  await expect(page.locator("#jmsg")).toContainText(/Projet copié|Copie impossible/);
 });

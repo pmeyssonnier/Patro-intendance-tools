@@ -129,6 +129,47 @@ function chercherRecette(texte) {
   return null;
 }
 
+/** Liste d'ingrédients collée à la main (une ligne par ingrédient), pour les pages sans données « Recipe » (articles, sites sans ld+json). Renvoie une recette au même format que le ld+json, ou null. */
+function recetteDepuisListe(texte) {
+  const t = String(texte);
+  // du code (JSON, balises) n'est pas une liste d'ingrédients
+  if (/<script|<\/?[a-z][^>]*>/i.test(t) || /^\s*[{[]/.test(t)) return null;
+  const lignes = t
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^[\s\-–•*·▪►✓]+/u, "").trim())
+    .filter((l) => l && !/:$/.test(l));
+  if (lignes.length < 2 || !lignes.some((l) => ligneRecette(l).q)) return null;
+  return { name: "Recette importée", recipeYield: "4", recipeIngredient: lignes };
+}
+
+/** Rayon probable d'un nouvel ingrédient d'après son nom (clé de CATS) ; « aut » si rien ne correspond. */
+function categorieProbable(nom) {
+  const t = plain(nom);
+  const regles = [
+    ["sur", /surgel|congel|glace/],
+    ["boi", /\beau\b|jus|limonade|soda|cola|biere|vin\b|sirop|cafe|boisson/],
+    ["boul", /pain|baguette|bagel|brioche|croissant|pita|wrap|tortilla|pistolet|croque/],
+    ["fri", /jambon|saucisse|lard|bacon|chorizo|saucisson|salami|vegetari|vegan|quorn|tofu|seitan/],
+    [
+      "bou",
+      /viande|boeuf|porc|poulet|dinde|volaille|jambon|saucisse|lard|bacon|hache|steak|poisson|saumon|thon|cabillaud|crevette|merguez|gyros|kebab|veau|agneau|chorizo|saucisson|salami/,
+    ],
+    [
+      "lai",
+      /lait|fromage|beurre|creme|yaourt|oeuf|mozzarella|emmental|parmesan|margarine|skyr|mascarpone|ricotta|gruyere|cheddar/,
+    ],
+    [
+      "fl",
+      /legume|fruit|pomme|poire|banane|citron|orange|tomate|oignon|\bail\b|carotte|salade|laitue|courgette|poivron|champignon|avocat|concombre|aubergine|brocoli|chou|epinard|persil|basilic|herbe|echalote|potiron|poireau|celeri|radis|fraise|framboise|raisin|germe/,
+    ],
+    [
+      "epi",
+      /pate|riz|farine|sucre|\bsel\b|poivre|huile|vinaigre|conserve|sauce|moutarde|ketchup|mayonnaise|chocolat|biscuit|cereale|confiture|miel|epice|muscade|chapelure|semoule|couscous|lentille|haricot|pois chiche|mais|noix|amande|cacahu|tartiner|bouillon|concentre|levure/,
+    ],
+  ];
+  return (regles.find(([, re]) => re.test(t)) || ["aut"])[0];
+}
+
 /** Mots-clés d'attention régime (mêmes clés que « Attention régime » d'un ingrédient ajouté à la main) pour un nouvel ingrédient. */
 function regimeProbable(nom) {
   const t = plain(nom);
@@ -181,6 +222,19 @@ function drawImport() {
     z.innerHTML = "";
     return;
   }
+  // partie fixe (nom, personnes, étapes, boutons) : elle n'est pas redessinée quand une ligne change,
+  // sinon un clic sur « Créer la recette » juste après avoir saisi le nom serait perdu
+  z.innerHTML = `<div class="g"><div><label>Nom de la recette</label><input id="rimnom" value="${esc(RI.nom)}" maxlength="100" aria-label="Nom de la recette importée"></div>
+<div><label>Nombre de personnes de la recette</label><input id="rimn" type="number" min="1" step="1" value="${RI.n}" aria-label="Nombre de personnes de la recette"></div></div>
+${RI.desc ? `<p class="s">${esc(RI.desc)}</p>` : ""}
+<p class="s">Les quantités sont ramenées <b>par personne</b> (identiques pour toutes les sections d'âge : ajuste-les ensuite dans la recette).</p><div id="rimlig"></div>
+<label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="rimet" style="width:auto"${RI.avecEtapes ? " checked" : ""}> Reprendre aussi les ${RI.etapes.length} étapes de préparation dans la description (texte du site : respecte ses conditions d'utilisation)</label>
+<p><button id="rimok">Créer la recette</button> <button id="rimann" class="x">Annuler</button></p>`;
+  drawLignes();
+}
+
+/** Les lignes d'ingrédients de l'aperçu (seule partie redessinée quand on change un choix). */
+function drawLignes() {
   const regimes = $("idiet").innerHTML;
   const cand = Object.keys(ING)
     .filter((k) => !ING[k][4] && !S.hid.includes(k))
@@ -210,17 +264,12 @@ function drawImport() {
 <input type="number" min="0" step="any" value="${L.q ?? ""}" data-ri="${i}" data-f="q" aria-label="Quantité totale : ${esc(L.txt)}" style="width:90px"> <span class="s">${L.u || ""} au total${pp ? ` = ${pp} ${L.u}/pers.` : ""}</span></div>
 ${
   nouveau
-    ? `<div class="rimpr"><input type="text" value="${esc(L.nomNouveau)}" data-ri="${i}" data-f="nomNouveau" aria-label="Nom du nouvel ingrédient : ${esc(L.txt)}" maxlength="100"><select data-ri="${i}" data-f="dg" aria-label="Attention régime : ${esc(L.txt)}">${regimes.replace(`value="${L.dg}"`, `value="${L.dg}" selected`)}</select></div>`
+    ? `<div class="rimpr"><input type="text" value="${esc(L.nomNouveau)}" data-ri="${i}" data-f="nomNouveau" aria-label="Nom du nouvel ingrédient : ${esc(L.txt)}" maxlength="100"><select data-ri="${i}" data-f="dg" aria-label="Attention régime : ${esc(L.txt)}">${regimes.replace(`value="${L.dg}"`, `value="${L.dg}" selected`)}</select><select data-ri="${i}" data-f="cat" aria-label="Rayon : ${esc(L.txt)}">${optionsCat(L.cat)}</select></div>`
     : ""
 }${L.q ? "" : `<div class="s">Sans quantité : ignorée (ex. sel, poivre).</div>`}${autre}${alerte}</div>`;
     })
     .join("");
-  z.innerHTML = `<div class="g"><div><label>Nom de la recette</label><input id="rimnom" value="${esc(RI.nom)}" maxlength="100" aria-label="Nom de la recette importée"></div>
-<div><label>Nombre de personnes de la recette</label><input id="rimn" type="number" min="1" step="1" value="${RI.n}" aria-label="Nombre de personnes de la recette"></div></div>
-${RI.desc ? `<p class="s">${esc(RI.desc)}</p>` : ""}
-<p class="s">Les quantités sont ramenées <b>par personne</b> (identiques pour toutes les sections d'âge : ajuste-les ensuite dans la recette).</p>${lignes}
-<label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="rimet" style="width:auto"${RI.avecEtapes ? " checked" : ""}> Reprendre aussi les ${RI.etapes.length} étapes de préparation dans la description (texte du site : respecte ses conditions d'utilisation)</label>
-<p><button id="rimok">Créer la recette</button> <button id="rimann" class="x">Annuler</button></p>`;
+  $("rimlig").innerHTML = lignes;
 }
 
 /** Description de la recette créée : présentation, durée, source, et éventuellement les étapes. */
@@ -253,7 +302,7 @@ function creerRecetteImportee() {
   }
   const ing = {};
   for (const L of prises) {
-    const k = L.mode === "+" ? createIng(L.nomNouveau.trim(), L.u, L.dg) : L.mode;
+    const k = L.mode === "+" ? createIng(L.nomNouveau.trim(), L.u, L.dg, L.cat) : L.mode;
     const pp = Math.round((L.q / RI.n) * 1e6) / 1e6;
     ing[k] = SEC.map((_, i) => Math.round((((ing[k] || [])[i] || 0) + pp) * 1e6) / 1e6);
   }
@@ -268,12 +317,12 @@ $("rimp").onclick = () => {
 };
 
 $("rimlire").onclick = () => {
-  const r = chercherRecette($("rimt").value);
+  const r = chercherRecette($("rimt").value) || recetteDepuisListe($("rimt").value);
   if (!r || !Array.isArray(r.recipeIngredient) || !r.recipeIngredient.length) {
     RI = null;
     drawImport();
     $("rimm").textContent =
-      'Aucune recette trouvée : colle le bloc <script type="application/ld+json"> de la page (il contient « Recipe » et « recipeIngredient »).';
+      'Aucune recette trouvée. Colle le bloc <script type="application/ld+json"> de la page s\'il contient « Recipe » ; sinon (article, page sans données de recette) colle la liste des ingrédients, une ligne par ingrédient.';
     return;
   }
   const n =
@@ -316,12 +365,13 @@ $("rimlire").onclick = () => {
           mode: !L.q ? "-" : m ? m.k : "+",
           nomNouveau: L.nom,
           dg: regimeProbable(L.nom),
+          cat: categorieProbable(L.nom),
           autre: autre && !memeFamille(autre, L) ? autre : null,
         };
       }),
   };
   $("rimm").textContent =
-    `${RI.lignes.length} lignes lues. Vérifie chaque ingrédient puis crée la recette.`;
+    `${RI.lignes.length} lignes lues${r["@type"] ? "" : " (liste d'ingrédients : donne le nom de la recette et le nombre de personnes)"}. Vérifie chaque ingrédient puis crée la recette.`;
   drawImport();
 };
 
@@ -336,7 +386,7 @@ $("rimv").addEventListener("change", (e) => {
     if (d.f === "q") L.q = +e.target.value > 0 ? +e.target.value : null;
     else L[d.f] = e.target.value;
   }
-  drawImport();
+  if (e.target.id !== "rimnom" && e.target.id !== "rimet") drawLignes();
 });
 
 $("rimv").addEventListener("click", (e) => {

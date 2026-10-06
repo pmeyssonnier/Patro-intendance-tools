@@ -3,6 +3,17 @@
 
 let LAST = { keys: [], tot: {}, sum: 0, pm: [] };
 
+/** Regroupe les ingrédients de la liste par rayon, dans l'ordre du magasin : [[nom du rayon, [clés]], …]. Un seul groupe sans titre si le regroupement est désactivé. */
+function parRayon(keys) {
+  if (S.gl === false) return [["", keys]];
+  const g = [];
+  for (const [c, nom] of CATS) {
+    const l = keys.filter((k) => catOf(k) === c);
+    if (l.length) g.push([nom, l]);
+  }
+  return g;
+}
+
 function calc() {
   const tot = {},
     pm = [];
@@ -19,13 +30,23 @@ function calc() {
   const keys = Object.keys(tot)
     .filter((k) => tot[k] > 0)
     .sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr"));
+  // regroupée par rayon, la liste suit l'ordre des rayons (aussi dans les documents partagés, imprimés et exportés)
+  const groupes = parRayon(keys);
+  keys.splice(0, keys.length, ...groupes.flatMap(([, l]) => l));
+  $("lgrp").checked = S.gl !== false;
   $("list").innerHTML =
-    keys
-      .map((k) => {
-        const c = (tot[k] / per(k)) * price(k);
-        sum += c;
-        return `<tr><td>${esc(ING[k][0])}${price(k) ? "" : '<div class="s" style="color:#d33">⚠ prix manquant</div>'}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}</td><td>${qty(k, tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-p="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td>${eur(c)}</td></tr>`;
-      })
+    groupes
+      .map(
+        ([nom, l]) =>
+          (nom ? `<tr class="grp"><td colspan="4"><b>${esc(nom)}</b></td></tr>` : "") +
+          l
+            .map((k) => {
+              const c = (tot[k] / per(k)) * price(k);
+              sum += c;
+              return `<tr><td>${esc(ING[k][0])}${price(k) ? "" : '<div class="s" style="color:#d33">⚠ prix manquant</div>'}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}</td><td>${qty(k, tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-p="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td>${eur(c)}</td></tr>`;
+            })
+            .join("")
+      )
       .join("") || "<tr><td>Aucun repas</td></tr>";
   LAST = { keys, tot, sum, pm };
   const n = nn();
@@ -50,6 +71,12 @@ function calc() {
   drawCat();
   save();
 }
+
+$("lgrp").onchange = () => {
+  if ($("lgrp").checked) delete S.gl;
+  else S.gl = false;
+  calc();
+};
 
 $("list").addEventListener("change", (e) => {
   const k = e.target.dataset.p;

@@ -53,6 +53,7 @@ function drawRec() {
     "<option value=''>+ Ajouter un ingrédient…</option>" +
     Object.entries(ING)
       .filter(([k, v]) => R && !R.ing[k] && !v[4] && !S.hid.includes(k))
+      .sort((a, b) => a[1][0].localeCompare(b[1][0], "fr"))
       .map(([k, v]) => `<option value="${esc(k)}">${esc(v[0])}</option>`)
       .join("");
 }
@@ -209,6 +210,7 @@ function rmIng(k) {
   }
   delete S.prices[k];
   delete S.pn[k];
+  delete S.cat[k];
   if (S.cust[k]) {
     delete S.cust[k];
     delete ING[k];
@@ -264,7 +266,7 @@ $("ino").onclick = () => {
 };
 
 /** Crée un ingrédient ajouté à la main (identifiant c_…) ; dgKey = « attention régime » (viande, porc, boeuf, sl, sg, nut). Renvoie son identifiant. */
-function createIng(n, unit, dgKey) {
+function createIng(n, unit, dgKey, cat) {
   let k = "c_" + Date.now().toString(36);
   while (ING[k]) k += "a";
   const dg = DMAP[dgKey] || [];
@@ -272,6 +274,7 @@ function createIng(n, unit, dgKey) {
   const e = [n, unit, 0, kw, 0, dg];
   S.cust[k] = e;
   ING[k] = e;
+  if (cat !== "aut" && CATS.some((c) => c[0] === cat)) S.cat[k] = cat; // « Autre » est le rayon par défaut : rien à enregistrer
   dg.forEach((d) => {
     if (DIETS[d]) DIETS[d].ex[k] = null;
   });
@@ -281,7 +284,7 @@ function createIng(n, unit, dgKey) {
 $("iok").onclick = () => {
   const n = $("iname").value.trim();
   if (!n) return;
-  const k = createIng(n, $("iunit").value, $("idiet").value);
+  const k = createIng(n, $("iunit").value, $("idiet").value, $("icat").value);
   if (S.rec[S.cur]) S.rec[S.cur].ing[k] = SEC.map(() => 0);
   $("iform").style.display = "none";
   drawRec();

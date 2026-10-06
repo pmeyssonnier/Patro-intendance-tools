@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.8.0">
+<link rel="stylesheet" href="styles.css?v=1.9.1">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -80,7 +80,7 @@
 <div class="w sv"><table class="fit rec"><thead id="rh"></thead><tbody id="rb"></tbody></table></div>
 <p><select id="radd" aria-label="Ajouter un ingrédient à la recette" style="max-width:260px;display:inline-block"></select> <button id="inew" class="x">+ Nouvel ingrédient</button></p>
 <p><button id="rimp" class="x">📥 Importer une recette</button> <span class="s" id="rimm" role="status"></span></p>
-<div id="rimpf" style="display:none"><p class="s">Sur la page d'une recette, ouvre le code source (clic droit → « Afficher le code source »), cherche <b>ld+json</b> et colle ici le bloc <b>&lt;script type="application/ld+json"&gt;…&lt;/script&gt;</b> qui contient « Recipe ». L'appli ne lit que ce que tu colles, elle n'appelle aucun site.</p>
+<div id="rimpf" style="display:none"><p class="s">Sur la page d'une recette, ouvre le code source (clic droit → « Afficher le code source »), cherche <b>ld+json</b> et colle ici le bloc <b>&lt;script type="application/ld+json"&gt;…&lt;/script&gt;</b> qui contient « Recipe ». Si la page n'a pas de bloc « Recipe » (article, site sans données structurées), copie plutôt la <b>liste des ingrédients</b>, une ligne par ingrédient. L'appli ne lit que ce que tu colles, elle n'appelle aucun site.</p>
 <textarea id="rimt" rows="5" aria-label="Données de la recette (ld+json)" placeholder='{"@type":"Recipe","name":"…","recipeIngredient":["400 g …"]}'></textarea>
 <input id="rimu" type="text" aria-label="Adresse de la recette (facultatif)" placeholder="Adresse de la recette, pour garder la source (facultatif)" style="margin-top:6px">
 <p><button id="rimlire">Lire la recette</button></p>
@@ -88,6 +88,7 @@
 <div class="g" id="iform" style="display:none"><div><label>Nom</label><input id="iname" aria-label="Nom du nouvel ingrédient" placeholder="ex. Poivrons"></div>
 <div><label>Unité</label><select id="iunit" aria-label="Unité du nouvel ingrédient"><option value="g">Poids : g (prix au kg)</option><option value="ml">Liquide : ml (prix au L)</option><option value="pc">Pièce (prix à la pièce)</option></select></div>
 <div><label>Attention régime</label><select id="idiet" aria-label="Attention régime du nouvel ingrédient"><option value="">Aucun</option><option value="viande">Viande / poisson</option><option value="porc">Porc</option><option value="boeuf">Bœuf</option><option value="sl">Lactose</option><option value="sg">Gluten</option><option value="nut">Fruits à coque / arachides</option></select></div>
+<div><label>Rayon</label><select id="icat" aria-label="Rayon du nouvel ingrédient"></select></div>
 <div style="align-self:end"><button id="iok">Ajouter</button> <button id="ino" class="x">Annuler</button></div></div>
 </section></div>
 
@@ -103,12 +104,15 @@
 <p><button id="cins" class="x">➕ Insérer un ingrédient</button> <span class="s" id="cinm" role="status"></span></p>
 <div class="g" id="cinf" style="display:none"><div><label>Nom</label><input id="cinn" aria-label="Nom du nouvel ingrédient" placeholder="ex. Poivrons"></div>
 <div><label>Unité</label><select id="cinu" aria-label="Unité du nouvel ingrédient"><option value="g">Poids : g (prix au kg)</option><option value="ml">Liquide : ml (prix au L)</option><option value="pc">Pièce (prix à la pièce)</option></select></div>
+<div><label>Attention régime</label><select id="cing" aria-label="Attention régime du nouvel ingrédient"></select></div>
+<div><label>Rayon</label><select id="cinc" aria-label="Rayon du nouvel ingrédient"></select></div>
 <div><label>Prix (€ par kg, L ou pièce)</label><input id="cinp" type="number" min="0" step="any" aria-label="Prix du nouvel ingrédient" placeholder="facultatif"></div>
 <div style="align-self:end"><button id="cinok">Ajouter</button> <button id="cinno" class="x">Annuler</button></div></div>
 <p><button id="hrs" class="x">Restaurer les ingrédients de base</button></p></section></div>
 
 <div class="pg" id="g-list">
 <section class="card"><h2>Liste de courses</h2>
+<p class="s np"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="lgrp" style="width:auto"> Grouper par rayon (fruits et légumes, boucherie, produits laitiers…)</label></p>
 <div class="w st"><table class="fit"><thead><tr><th>Produit</th><th class="nw num">Quantité</th><th class="num">Prix</th><th class="nw num">Coût</th></tr></thead><tbody id="list"></tbody></table></div>
 <div class="t"><span>Total : <b id="tot"></b></span><span>Par personne : <b id="pp"></b></span><span class="s" id="np2"></span></div>
 <p class="np"><button id="plist">🖨️ Imprimer la liste</button> <button id="lcsv" class="x">📊 Exporter en CSV</button></p></section>
@@ -133,7 +137,7 @@
 </div><div class="pg" id="g-pj">
 <section class="card np"><h2>Sauvegarde du projet</h2>
 <p class="s">Sauvegarde tout (recettes, menu, effectifs, régimes, prix) dans un fichier <b>.json</b> pour le retrouver ou le passer à un autre animateur.</p>
-<p><button id="exp">💾 Exporter le projet (.json)</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json,application/json" hidden></label> <span class="s" id="jmsg" role="status"></span> </p>
+<p><button id="exp">💾 Exporter le projet (.json)</button> <button id="expc" class="x">📋 Copier le projet</button> <button id="exps" class="x">📤 Partager</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json,application/json" hidden></label> <span class="s" id="jmsg" role="status"></span> </p>
 <h2 style="margin-top:18px">Zone sensible</h2>
 <p><button id="rclr" class="x" style="color:#d33;border-color:#d33">🗑️ Vider recettes, ingrédients et menus</button></p>
 <p class="s">Supprime toutes les recettes, tous les ingrédients et les menus de tous les camps. Les camps (dates, effectifs, régimes) sont conservés.</p>
@@ -146,22 +150,22 @@
 <div id="live" class="sr" aria-live="polite"></div>
 <div id="warn" class="np" role="alert" hidden><span id="warnt"></span> <button id="warnx">💾 Exporter</button> <button id="warnc" class="x" aria-label="Fermer l'avertissement">✕</button></div>
 <!-- Scripts classiques : l'ordre compte (chaque fichier dépend de ceux qui le précèdent). -->
-<script src="js/data-defaults.js?v=1.8.0"></script>
-<script src="js/utils.js?v=1.8.0"></script>
-<script src="js/storage.js?v=1.8.0"></script>
-<script src="js/state.js?v=1.8.0"></script>
-<script src="js/calculations.js?v=1.8.0"></script>
-<script src="js/shopping-list.js?v=1.8.0"></script>
-<script src="js/documents.js?v=1.8.0"></script>
-<script src="js/share-print.js?v=1.8.0"></script>
-<script src="js/navigation.js?v=1.8.0"></script>
-<script src="js/camps.js?v=1.8.0"></script>
-<script src="js/diets.js?v=1.8.0"></script>
-<script src="js/menu.js?v=1.8.0"></script>
-<script src="js/recipes.js?v=1.8.0"></script>
-<script src="js/catalog.js?v=1.8.0"></script>
-<script src="js/recipe-import.js?v=1.8.0"></script>
-<script src="js/config.js?v=1.8.0"></script>
-<script src="js/pwa.js?v=1.8.0"></script>
-<script src="js/main.js?v=1.8.0"></script>
+<script src="js/data-defaults.js?v=1.9.1"></script>
+<script src="js/utils.js?v=1.9.1"></script>
+<script src="js/storage.js?v=1.9.1"></script>
+<script src="js/state.js?v=1.9.1"></script>
+<script src="js/calculations.js?v=1.9.1"></script>
+<script src="js/shopping-list.js?v=1.9.1"></script>
+<script src="js/documents.js?v=1.9.1"></script>
+<script src="js/share-print.js?v=1.9.1"></script>
+<script src="js/navigation.js?v=1.9.1"></script>
+<script src="js/camps.js?v=1.9.1"></script>
+<script src="js/diets.js?v=1.9.1"></script>
+<script src="js/menu.js?v=1.9.1"></script>
+<script src="js/recipes.js?v=1.9.1"></script>
+<script src="js/catalog.js?v=1.9.1"></script>
+<script src="js/recipe-import.js?v=1.9.1"></script>
+<script src="js/config.js?v=1.9.1"></script>
+<script src="js/pwa.js?v=1.9.1"></script>
+<script src="js/main.js?v=1.9.1"></script>
 </body></html>

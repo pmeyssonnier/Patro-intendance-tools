@@ -198,6 +198,27 @@ def prix_depuis_conditionnement(prix, cond):
     return prix / (n * {"l": 1, "cl": 0.01, "ml": 0.001}[u]), "l"
 
 
+# Rayons de l'appli (clés de CATS dans js/data-defaults.js) d'après le mot-clé de la catégorie Colruyt, du plus précis au plus général.
+RAYONS = [
+    ("sur", r"surgel|congel|glace"),
+    ("boi", r"boisson|\beau\b|biere|\bvin|alcool|jus\b|soda|cafe|\bthe\b"),
+    ("boul", r"boulanger|\bpain|patisserie|viennoiserie"),
+    ("bou", r"viande|boucherie|poisson|volaille|gibier"),
+    ("fri", r"charcuterie|traiteur|plat prepar|vegetarien|frigo|refriger"),
+    ("lai", r"laitier|fromage|\boeuf|beurre|yaourt|margarine|\bfrais\b"),
+    ("fl", r"fruit|legume"),
+    ("epi", r"epicerie|conserve|pate|\briz\b|sauce|condiment|sucre|biscuit|chocolat|cereale|petit.dejeuner|snack|aperitif"),
+]
+
+
+def rayon_appli(categorie):
+    """Rayon de l'appli pour une catégorie Colruyt (« Epicerie » -> « epi »), ou None si on ne la reconnaît pas."""
+    if not categorie:
+        return None
+    t = sans_accents(" ".join(categorie) if isinstance(categorie, list) else str(categorie)).lower()
+    return next((cle for cle, motif in RAYONS if re.search(motif, t)), None)
+
+
 def sans_marque_doublee(nom):
     """« EVERYDAY EVERYDAY spaghetti 500g » -> « EVERYDAY spaghetti 500g » (Colruyt répète la marque en majuscules)."""
     return re.sub(r"^([A-ZÀ-Ý0-9'.&-]+(?: [A-ZÀ-Ý0-9'.&-]+)*?) \1(?= )", r"\1", nom or "")
@@ -218,6 +239,7 @@ def normaliser(item):
         "produit_id": produit_id,
         "nom": sans_marque_doublee(pick(f, "name", "longName", "title")),
         "marque": pick(f, "brand"),
+        "categorie_colruyt": pick(f, "category", "categories", "department"),
         "prix": prix,
         "prix_unitaire": round(prix_unitaire, 2) if prix_unitaire is not None else None,
         "unite": unite,
@@ -392,6 +414,7 @@ for ing in INGREDIENTS:
     resultats[ing["id"]] = {
         "requete": ing["q"],
         **({"nom": ing["nom"]} if ing.get("nom") else {}),
+        **({"categorie": rayon_appli(choix.get("categorie_colruyt"))} if rayon_appli(choix.get("categorie_colruyt")) else {}),
         "unite": ing["unite"],
         "prix_unitaire": choix["prix_unitaire"],
         "produit": choix,

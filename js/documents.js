@@ -30,11 +30,17 @@ function menuHTML() {
 }
 
 function listHTML() {
-  const rows = LAST.keys
-    .map((k) => {
-      const c = (LAST.tot[k] / per(k)) * price(k);
-      return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${qty(k, LAST.tot[k])}</td><td>${price(k) ? eur(price(k)) + "/" + ul(k) : "–"}</td><td>${eur(c)}</td></tr>`;
-    })
+  const rows = parRayon(LAST.keys)
+    .map(
+      ([nom, l]) =>
+        (nom ? `<tr><td colspan="5"><b>${esc(nom)}</b></td></tr>` : "") +
+        l
+          .map((k) => {
+            const c = (LAST.tot[k] / per(k)) * price(k);
+            return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${qty(k, LAST.tot[k])}</td><td>${price(k) ? eur(price(k)) + "/" + ul(k) : "–"}</td><td>${eur(c)}</td></tr>`;
+          })
+          .join("")
+    )
     .join("");
   return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">${esc(troop())} · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows || '<tr><td colspan="5">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn() ? " · par personne : " + eur(LAST.sum / nn()) : ""}</p></div>`;
 }
@@ -84,7 +90,14 @@ const txtList = () =>
   " (" +
   nn() +
   " pers.)\n\n" +
-  (LAST.keys.map((k) => "☐ " + ING[k][0] + " : " + qty(k, LAST.tot[k])).join("\n") || "(vide)") +
+  (parRayon(LAST.keys)
+    .map(
+      ([nom, l]) =>
+        (nom ? "\n" + nom.toUpperCase() + "\n" : "") +
+        l.map((k) => "☐ " + ING[k][0] + " : " + qty(k, LAST.tot[k])).join("\n")
+    )
+    .join("\n")
+    .trim() || "(vide)") +
   "\n\nTotal estimé : " +
   eur(LAST.sum);
 
@@ -169,7 +182,16 @@ const qparts = (k, q) => {
 
 function csvList() {
   const r = [
-      ["Produit", "Quantité", "Unité", "Prix unitaire (€)", "Prix par", "Coût (€)", "Remarque"],
+      [
+        "Produit",
+        "Quantité",
+        "Unité",
+        "Prix unitaire (€)",
+        "Prix par",
+        "Coût (€)",
+        "Remarque",
+        "Rayon",
+      ],
     ],
     n = nn();
   LAST.keys.forEach((k) => {
@@ -182,11 +204,12 @@ function csvList() {
       ul(k),
       cn((LAST.tot[k] / per(k)) * price(k)),
       price(k) ? "" : "prix manquant",
+      CATS.find((c) => c[0] === catOf(k))[1],
     ]);
   });
   r.push([]);
-  r.push(["TOTAL", "", "", "", "", cn(LAST.sum), ""]);
-  if (n) r.push(["Par personne", "", "", "", "", cn(LAST.sum / n), ""]);
+  r.push(["TOTAL", "", "", "", "", cn(LAST.sum), "", ""]);
+  if (n) r.push(["Par personne", "", "", "", "", cn(LAST.sum / n), "", ""]);
   r.push([]);
   r.push(["Camp", C.name]);
   r.push(["Dates", fdate(C.start) + " → " + fdate(C.end)]);
