@@ -1901,3 +1901,23 @@ test("recettes : retirer un ingrédient d'une recette demande une confirmation",
   await page.locator("#rb [data-rm]").first().click();
   expect(await nb()).toBe(avant - 1);
 });
+
+test("thème : changer de mode ne fait pas disparaître la page affichée", async ({ page }) => {
+  await ouvrir(page);
+  for (const id of ["rec", "list", "cat"]) {
+    await aller(page, id);
+    const visible = () => page.locator(`#g-${id}.on`).isVisible();
+    expect(await visible()).toBe(true);
+    // téléphone : bouton de la barre du haut ; ordinateur : bouton du menu
+    if (await page.locator("#burger").isVisible()) {
+      await page.locator("#theme").click();
+      expect(await visible()).toBe(true);
+      await page.locator("#burger").click();
+    }
+    await page.locator("#theme2").click();
+    expect(await page.evaluate(() => document.querySelectorAll(".pg.on").length)).toBe(1);
+    expect(
+      await page.evaluate((g) => document.querySelector(`#g-${g}`).classList.contains("on"), id)
+    ).toBe(true);
+  }
+});

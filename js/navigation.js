@@ -67,7 +67,7 @@ document.addEventListener("keydown", (e) => {
 
 $("drawer").addEventListener("click", (e) => {
   const b = e.target.closest(".ni");
-  if (b) go(b.dataset.g);
+  if (b && b.dataset.g) go(b.dataset.g); // le bouton de thème, dans le menu, n'est pas une page
 });
 
 $("gear").onclick = () => go("cfg");
