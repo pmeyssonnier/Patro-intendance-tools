@@ -198,6 +198,11 @@ def prix_depuis_conditionnement(prix, cond):
     return prix / (n * {"l": 1, "cl": 0.01, "ml": 0.001}[u]), "l"
 
 
+def sans_marque_doublee(nom):
+    """« EVERYDAY EVERYDAY spaghetti 500g » -> « EVERYDAY spaghetti 500g » (Colruyt répète la marque en majuscules)."""
+    return re.sub(r"^([A-ZÀ-Ý0-9'.&-]+(?: [A-ZÀ-Ý0-9'.&-]+)*?) \1(?= )", r"\1", nom or "")
+
+
 def normaliser(item):
     f = aplatir(item)
     prix = to_float(pick(f, "price", "basicPrice"))
@@ -211,7 +216,7 @@ def normaliser(item):
         produit_id = m.group(1) if m else None
     return {
         "produit_id": produit_id,
-        "nom": pick(f, "name", "longName", "title"),
+        "nom": sans_marque_doublee(pick(f, "name", "longName", "title")),
         "marque": pick(f, "brand"),
         "prix": prix,
         "prix_unitaire": round(prix_unitaire, 2) if prix_unitaire is not None else None,

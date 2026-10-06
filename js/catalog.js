@@ -84,6 +84,8 @@ function refreshIng() {
 }
 
 function drawCat() {
+  // l'exemple ne sert qu'à démarrer : inutile dès que des produits sont déjà associés aux ingrédients
+  $("csvx").style.display = Object.values(S.pn).some(Boolean) ? "none" : "";
   const q = plain($("cfilt").value.trim());
   const keys = Object.keys(ING).filter(
     (k) => !S.hid.includes(k) && (!q || plain(ING[k][0] + " " + (S.pn[k] || "")).includes(q))
@@ -95,7 +97,7 @@ function drawCat() {
           (catEdit === k
             ? `<tr class="ced"><td colspan="4"><div class="rtf"><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient"> <select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select> <button class="x" data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}<div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></div></td></tr>`
             : "") +
-          `<tr><td>${esc(ING[k][0])}${S.pn[k] ? `<div class="s">↳ ${esc(S.pn[k])}</div>` : ""}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
+          `<tr><td>${esc(ING[k][0])}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
       )
       .join("") ||
     `<tr><td>${q ? "Aucun ingrédient ne correspond au filtre." : "Aucun ingrédient."}</td></tr>`;
@@ -255,9 +257,12 @@ function parsePrixJson(txt) {
     // Colruyt met déjà la marque au début du nom (« EVERYDAY spaghetti 500g ») : ne pas la doubler
     const nom = String(pr.nom || ""),
       marque = String(pr.marque || "");
-    return (
-      marque && !nom.toLowerCase().startsWith(marque.toLowerCase()) ? marque + " " + nom : nom
-    ).trim();
+    return nomProduit(
+      (marque && !nom.toLowerCase().startsWith(marque.toLowerCase())
+        ? marque + " " + nom
+        : nom
+      ).trim()
+    );
   };
   for (const cle in j.ingredients) {
     const x = j.ingredients[cle] || {},
