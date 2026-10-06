@@ -131,20 +131,45 @@ function drawCat() {
   const keys = Object.keys(ING).filter(
     (k) => !S.hid.includes(k) && (!q || plain(ING[k][0] + " " + (S.pn[k] || "")).includes(q))
   );
+  $("cgrp").checked = !!S.gp;
+  // par rayon (option) : titres de rayon, ordre alphabétique dans chaque rayon
+  const groupes = S.gp
+    ? parRayon(
+        keys.sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr")),
+        true
+      )
+    : [["", keys]];
   $("ct").innerHTML =
-    keys
+    groupes
       .map(
-        (k) =>
-          (catEdit === k
-            ? `<tr class="ced"><td colspan="4"><div class="g"><div><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div><label>Rayon</label><select data-ec="${esc(k)}" aria-label="Rayon de l'ingrédient">${optionsCat(catOf(k))}</select></div><div style="align-self:end"><button data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></td></tr>`
-            : "") +
-          `<tr><td>${esc(ING[k][0])}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
+        ([nom, l]) =>
+          (nom ? `<tr class="grp"><td colspan="4"><b>${esc(nom)}</b></td></tr>` : "") + lignesCat(l)
       )
       .join("") ||
     `<tr><td>${q ? "Aucun ingrédient ne correspond au filtre." : "Aucun ingrédient."}</td></tr>`;
 }
 
+/** Les lignes du tableau des prix pour des ingrédients (avec, pour celui en cours de modification, sa ligne d'édition). */
+function lignesCat(keys) {
+  return keys
+    .map(
+      (k) =>
+        (catEdit === k
+          ? `<tr class="ced"><td colspan="4"><div class="g"><div><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div><label>Rayon</label><select data-ec="${esc(k)}" aria-label="Rayon de l'ingrédient">${optionsCat(catOf(k))}</select></div><div style="align-self:end"><button data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></td></tr>`
+          : "") +
+        `<tr><td>${esc(ING[k][0])}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
+    )
+    .join("");
+}
+
 $("cfilt").addEventListener("input", drawCat);
+
+$("cgrp").onchange = () => {
+  if ($("cgrp").checked) S.gp = true;
+  else delete S.gp;
+  drawCat();
+  save();
+};
 
 $("ct").addEventListener("change", (e) => {
   const k = e.target.dataset.cp;

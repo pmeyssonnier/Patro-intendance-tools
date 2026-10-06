@@ -48,6 +48,15 @@ function listHTML() {
 /** Ingrédients du catalogue de prix, dans l'ordre de la page, sans ceux que l'utilisateur a masqués. */
 const catKeys = () => Object.keys(ING).filter((k) => !S.hid.includes(k));
 
+/** Le catalogue en groupes [[rayon, [clés]], …] : par rayon (ordre alphabétique dans chaque rayon) si l'option est cochée, sinon un seul groupe sans titre. */
+const catGroupes = () =>
+  S.gp
+    ? parRayon(
+        catKeys().sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr")),
+        true
+      )
+    : [["", catKeys()]];
+
 /** Nom du produit retenu (« ↳ » du catalogue), sans la note technique ajoutée par l'import de texte. */
 const prodName = (k) =>
   nomProduit(S.pn[k] || "").replace(/ \((?:→ €\/kg ou €\/L calculé|prix pris tel quel)\)$/, "");
@@ -55,10 +64,16 @@ const prodName = (k) =>
 const priceUnit = (k) => (ING[k][1] === "pc" ? "pièce" : ul(k));
 
 function pricesHTML() {
-  const rows = catKeys()
+  const rows = catGroupes()
     .map(
-      (k) =>
-        `<tr><td>${esc(ING[k][0])}</td><td>${esc(prodName(k))}</td><td>${price(k) ? eur(price(k)) + "/" + priceUnit(k) : "–"}</td></tr>`
+      ([nom, l]) =>
+        (nom ? `<tr><td colspan="3"><b>${esc(nom)}</b></td></tr>` : "") +
+        l
+          .map(
+            (k) =>
+              `<tr><td>${esc(ING[k][0])}</td><td>${esc(prodName(k))}</td><td>${price(k) ? eur(price(k)) + "/" + priceUnit(k) : "–"}</td></tr>`
+          )
+          .join("")
     )
     .join("");
   return `<div class="mp pvx" style="${cvars()}"><h2>Catalogue de prix – prix des ingrédients</h2><div class="s">${esc(troop())} · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th>Ingrédient</th><th>Produit retenu</th><th>Prix</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Aucun ingrédient</td></tr>'}</tbody></table></div>`;
@@ -105,16 +120,23 @@ const txtPrices = () =>
   "🏷️ Catalogue de prix – " +
   troop() +
   "\n\n" +
-  (catKeys()
+  (catGroupes()
     .map(
-      (k) =>
-        "- " +
-        ING[k][0] +
-        " : " +
-        (price(k) ? eur(price(k)) + "/" + priceUnit(k) : "prix manquant") +
-        (prodName(k) ? " (" + prodName(k) + ")" : "")
+      ([nom, l]) =>
+        (nom ? "\n" + nom.toUpperCase() + "\n" : "") +
+        l
+          .map(
+            (k) =>
+              "- " +
+              ING[k][0] +
+              " : " +
+              (price(k) ? eur(price(k)) + "/" + priceUnit(k) : "prix manquant") +
+              (prodName(k) ? " (" + prodName(k) + ")" : "")
+          )
+          .join("\n")
     )
-    .join("\n") || "(vide)");
+    .join("\n")
+    .trim() || "(vide)");
 
 const txtMenu = () =>
   "🍽️ " +
@@ -218,9 +240,18 @@ function csvList() {
 }
 
 function csvPrices() {
-  const r = [["Ingrédient", "Produit retenu", "Unité du prix", "Prix (€)", "Remarque"]];
-  catKeys().forEach((k) =>
-    r.push([ING[k][0], prodName(k), priceUnit(k), cn(price(k)), price(k) ? "" : "prix manquant"])
+  const r = [["Ingrédient", "Produit retenu", "Unité du prix", "Prix (€)", "Remarque", "Rayon"]];
+  catGroupes().forEach(([, l]) =>
+    l.forEach((k) =>
+      r.push([
+        ING[k][0],
+        prodName(k),
+        priceUnit(k),
+        cn(price(k)),
+        price(k) ? "" : "prix manquant",
+        CATS.find((c) => c[0] === catOf(k))[1],
+      ])
+    )
   );
   r.push([]);
   r.push(["Troupe", troop()]);

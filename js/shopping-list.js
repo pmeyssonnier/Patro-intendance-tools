@@ -3,9 +3,9 @@
 
 let LAST = { keys: [], tot: {}, sum: 0, pm: [] };
 
-/** Regroupe les ingrédients de la liste par rayon, dans l'ordre du magasin : [[nom du rayon, [clés]], …]. Un seul groupe sans titre si le regroupement est désactivé. */
-function parRayon(keys) {
-  if (S.gl === false) return [["", keys]];
+/** Regroupe des ingrédients par rayon, dans l'ordre du magasin : [[nom du rayon, [clés]], …]. Un seul groupe sans titre si le regroupement est désactivé (par défaut : l'option de la liste de courses). */
+function parRayon(keys, groupe = S.gl !== false) {
+  if (!groupe) return [["", keys]];
   const g = [];
   for (const [c, nom] of CATS) {
     const l = keys.filter((k) => catOf(k) === c);

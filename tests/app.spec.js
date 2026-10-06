@@ -671,9 +671,9 @@ test("partager : le catalogue de prix se partage, s'imprime et s'exporte", async
   const csv = await telecharger(page, "#sx");
   expect(csv.nom).toMatch(/^catalogue-de-prix-.*\.csv$/);
   const lignes = csv.texte.replace(/^\uFEFF/, "").split("\r\n");
-  expect(lignes[0]).toBe("Ingrédient;Produit retenu;Unité du prix;Prix (€);Remarque");
-  expect(lignes).toContain("Pâtes;Spaghetti Boni 500g;kg;2,78;"); // note technique de l'import retirée
-  expect(lignes).toContain("Lait;;L;1,10;");
+  expect(lignes[0]).toBe("Ingrédient;Produit retenu;Unité du prix;Prix (€);Remarque;Rayon");
+  expect(lignes).toContain("Pâtes;Spaghetti Boni 500g;kg;2,78;;Épicerie & conserves"); // note technique de l'import retirée
+  expect(lignes).toContain("Lait;;L;1,10;;Frais (produits laitiers, œufs)");
   // fichier HTML
   const html = await telecharger(page, "#sd");
   expect(html.texte).toContain("Catalogue de prix – prix des ingrédients");
@@ -1957,4 +1957,57 @@ test("recettes : la description est verrouillée hors du mode édition (✎), et
   await page.locator("#rsel").selectOption({ index: 1 });
   await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
   await expect(page.locator("#reform")).toBeHidden();
+});
+
+test("catalogue : les prix des ingrédients se groupent par rayon (option), aussi dans les documents", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  // par défaut : pas de groupe
+  await expect(page.locator("#cgrp")).not.toBeChecked();
+  await expect(page.locator("#ct tr.grp")).toHaveCount(0);
+  await page.locator("#cgrp").check();
+  const titres = await page.locator("#ct tr.grp").allInnerTexts();
+  expect(titres.length).toBeGreaterThan(3);
+  const ordre = await page.evaluate(
+    (t) => t.map((x) => CATS.findIndex((c) => c[1] === x.trim())),
+    titres
+  );
+  expect(ordre).toEqual([...ordre].sort((a, b) => a - b));
+  // « Pain » est dans Boulangerie, et chaque rayon est trié par nom
+  await expect(
+    page.locator("#ct tr.grp", { hasText: "Boulangerie" }).locator("xpath=following-sibling::tr[1]")
+  ).toContainText("Pain");
+  const fruits = await page.evaluate(() => {
+    const t = [...document.querySelectorAll("#ct tr")];
+    const i = t.findIndex((r) => r.classList.contains("grp") && /Fruits/.test(r.innerText));
+    const noms = [];
+    for (let j = i + 1; j < t.length && !t[j].classList.contains("grp"); j++)
+      noms.push(t[j].cells[0].innerText.split("\n")[0]);
+    return noms;
+  });
+  expect(fruits).toEqual([...fruits].sort((a, b) => a.localeCompare(b, "fr")));
+  // le filtre et la modification (✎) fonctionnent dans les groupes
+  await page.locator("#cfilt").fill("pain");
+  await expect(page.locator("#ct tr.grp")).toHaveCount(1);
+  await page.locator("#cfilt").fill("");
+  await page.locator('#ct [data-ced="pain"]').click();
+  await expect(page.locator('[data-en="pain"]')).toBeVisible();
+  await page.locator('[data-eno="pain"]').click();
+  // le choix est enregistré
+  await page.reload();
+  expect(await page.evaluate(() => S.gp)).toBe(true);
+  // documents : titres de rayon dans le texte et colonne « Rayon » dans le CSV
+  expect(await page.evaluate(() => txtPrices())).toContain("\nBOULANGERIE\n- Pain");
+  expect(await page.evaluate(() => pricesHTML())).toContain("<b>Boulangerie</b>");
+  const csv = await page.evaluate(() => csvPrices());
+  expect(csv).toContain("Pain;");
+  expect(csv).toContain(";Boulangerie");
+  // décoché : ordre d'origine, sans titres
+  await aller(page, "cat");
+  await page.locator("#cgrp").uncheck();
+  await expect(page.locator("#ct tr.grp")).toHaveCount(0);
+  expect(await page.evaluate(() => txtPrices())).not.toContain("BOULANGERIE");
+  expect(await page.evaluate(() => "gp" in S)).toBe(false);
 });

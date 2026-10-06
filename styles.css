@@ -1017,7 +1017,8 @@ th.num,
 }
 
 /* Liste de courses groupée par rayon */
-#list tr.grp td {
+#list tr.grp td,
+#ct tr.grp td {
   background: var(--grp);
   color: var(--tx);
   padding-top: 8px;
