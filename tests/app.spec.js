@@ -1111,3 +1111,24 @@ test("catalogue : seule la colonne des prix est alignée à droite", async ({ pa
   expect(al.th[0]).not.toBe("right");
   expect(al.td[1]).not.toBe("right");
 });
+
+test("catalogue : un ingrédient utilisé dans une recette ne peut pas être supprimé", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const messages = [];
+  page.on("dialog", (d) => messages.push(d.type() + ":" + d.message()));
+  await page.locator('#ct [data-chd="pain"]').click();
+  await expect.poll(() => messages.length).toBe(1);
+  expect(messages[0]).toContain("alert:Suppression impossible");
+  expect(await page.evaluate(() => "pain" in ING && !S.hid.includes("pain"))).toBe(true);
+  // un ingrédient inséré au catalogue, sans recette, se supprime
+  await page.locator("#cins").click();
+  await page.locator("#cinn").fill("Sirop");
+  await page.locator("#cinok").click();
+  await page.locator('#ct [data-chd^="c_"]').click();
+  await expect.poll(() => messages.length).toBe(2);
+  expect(messages[1]).toContain("confirm:Supprimer");
+  await expect(page.locator("#ct")).not.toContainText("Sirop");
+});

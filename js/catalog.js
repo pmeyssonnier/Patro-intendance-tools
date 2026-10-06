@@ -140,7 +140,21 @@ $("ct").addEventListener("click", (e) => {
     return;
   }
   const k = e.target.dataset.chd;
-  if (!k || !confirm("Supprimer « " + ING[k][0] + " » (et le retirer des recettes) ?")) return;
+  if (!k) return;
+  const rec = recettesDe(k);
+  if (rec.length) {
+    alert(
+      "Suppression impossible : « " +
+        ING[k][0] +
+        " » est utilisé dans " +
+        (rec.length > 1 ? rec.length + " recettes" : "une recette") +
+        " (" +
+        rec.join(", ") +
+        "). Retire-le d'abord de la recette."
+    );
+    return;
+  }
+  if (!confirm("Supprimer « " + ING[k][0] + " » ?")) return;
   rmIng(k);
   drawRec();
   drawDietEd();
