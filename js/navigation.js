@@ -72,6 +72,35 @@ $("drawer").addEventListener("click", (e) => {
 
 $("gear").onclick = () => go("cfg");
 
+/** Thème : suit l'appareil tant qu'on n'a rien choisi ; le choix (clair ou sombre) est gardé sur cet appareil. */
+const themeActuel = () =>
+  document.documentElement.dataset.theme ||
+  (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+function majBoutonTheme() {
+  const sombre = themeActuel() === "dark";
+  // un bouton dans la barre du haut (téléphone) et un à côté de « Configuration » dans le menu (ordinateur)
+  for (const b of [$("theme"), $("theme2")]) {
+    b.textContent = sombre ? "☀️" : "🌙";
+    b.setAttribute("aria-label", sombre ? "Passer en mode clair" : "Passer en mode sombre");
+  }
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute("content", sombre ? "#142019" : "#1f7a3f");
+}
+
+$("theme").onclick = $("theme2").onclick = () => {
+  const t = themeActuel() === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = t;
+  try {
+    localStorage.setItem("pss-theme", t);
+  } catch (_) {
+    /* stockage indisponible : le choix vaut pour cette visite seulement */
+  }
+  majBoutonTheme();
+};
+
+majBoutonTheme();
+
 /** Hauteur de la barre du haut : les titres de tableaux se collent juste en dessous. */
 const mesureBarre = () =>
   document.documentElement.style.setProperty(

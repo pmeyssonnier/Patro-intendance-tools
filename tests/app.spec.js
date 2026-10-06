@@ -1773,3 +1773,44 @@ test("recettes : renommer une recette garde sa place, ses ingrédients et son me
   );
   expect(await page.evaluate(() => S.cur)).toBe("Spaghetti maison");
 });
+
+test("thème : un bouton à côté de la configuration bascule entre clair et sombre, et se souvient du choix", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await ouvrir(page);
+  const fond = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const theme = () => page.evaluate(() => document.documentElement.dataset.theme || "");
+  // le bouton est juste à côté de la configuration : dans la barre du haut (téléphone), dans le menu (ordinateur)
+  expect(await page.evaluate(() => document.querySelector("#theme").nextElementSibling.id)).toBe(
+    "gear"
+  );
+  expect(
+    await page.evaluate(() => document.querySelector("#theme2").previousElementSibling.dataset.g)
+  ).toBe("cfg");
+  const bouton = async () => {
+    if (await page.locator("#burger").isVisible()) await page.locator("#theme").click();
+    else await page.locator("#theme2").click();
+  };
+  expect(await theme()).toBe("");
+  expect(await fond()).toBe("rgb(234, 244, 236)"); // clair, comme l'appareil
+  await bouton();
+  expect(await theme()).toBe("dark");
+  expect(await fond()).toBe("rgb(20, 32, 25)");
+  await expect(page.locator("#theme2")).toHaveAttribute("aria-label", "Passer en mode clair");
+  // le choix survit au rechargement, sans flash clair
+  await page.reload();
+  expect(await theme()).toBe("dark");
+  expect(await fond()).toBe("rgb(20, 32, 25)");
+  await bouton();
+  expect(await theme()).toBe("light");
+  expect(await fond()).toBe("rgb(234, 244, 236)");
+  // sur un appareil en mode sombre, le premier clic passe en clair
+  await page.evaluate(() => localStorage.removeItem("pss-theme"));
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.reload();
+  expect(await fond()).toBe("rgb(20, 32, 25)");
+  await bouton();
+  expect(await theme()).toBe("light");
+  expect(await fond()).toBe("rgb(234, 244, 236)");
+});
