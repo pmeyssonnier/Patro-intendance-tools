@@ -247,6 +247,7 @@ function parsePrixJson(txt) {
   if (!j || typeof j.ingredients !== "object" || j.ingredients === null) return null;
   const unit = { g: "kg", ml: "l", pc: "piece" };
   const lignes = [],
+    inconnus = [],
     pris = new Set(Object.keys(j.ingredients).filter((k) => ING[k]));
   let ignores = 0;
   const produit = (x) => {
@@ -273,57 +274,111 @@ function parsePrixJson(txt) {
       }
     }
     if (!k || !(p > 0) || u !== unit[ING[k][1]]) {
-      ignores++;
+      // produit absent du catalogue mais exploitable : proposé à l'ajout
+      const nom = String(x.nom || x.requete || "").trim(),
+        unPc = { kg: "g", l: "ml", piece: "pc" }[u];
+      const existe = ["kg", "l", "piece"].some((v) => ingParNom(nom, new Set(), v));
+      if (!k && p > 0 && nom && unPc && nom.length <= 100 && !existe) {
+        inconnus.push({ nom, unite: unPc, prix: +p.toFixed(2), produit: produit(x) });
+      } else ignores++;
       continue;
     }
     lignes.push([k, +p.toFixed(2), produit(x), via]);
   }
   return {
     lignes,
+    inconnus,
     ignores,
     date: String(j.date_maj || "").slice(0, 10),
     source: j.source || "JSON",
   };
 }
 
+/** Produits du JSON absents du catalogue : cases à cocher pour les ajouter à l'import. */
+function drawInconnus() {
+  const z = $("pnew"),
+    liste = pendingJson ? pendingJson.inconnus : [];
+  z.hidden = !liste.length;
+  z.innerHTML = liste.length
+    ? `<p class="s"><b>${liste.length} produit${liste.length > 1 ? "s" : ""} absent${liste.length > 1 ? "s" : ""} de ton catalogue.</b> Coche ceux à ajouter (ils ne sont pas ajoutés aux recettes) : <button class="x" id="pall">Tout cocher / décocher</button></p>` +
+      liste
+        .map(
+          (u, i) =>
+            `<label><input type="checkbox" data-pn="${i}"> ${esc(u.nom)} — ${u.prix.toFixed(2)} €/${u.unite === "pc" ? "pièce" : u.unite === "g" ? "kg" : "L"}</label>`
+        )
+        .join("<br>")
+    : "";
+}
+
+$("pnew").addEventListener("click", (e) => {
+  if (e.target.id !== "pall") return;
+  const cases = [...$("pnew").querySelectorAll("[data-pn]")],
+    tout = cases.some((c) => !c.checked);
+  cases.forEach((c) => (c.checked = tout));
+});
+
 $("csv").addEventListener("input", () => {
   pendingJson = null;
+  drawInconnus();
 });
+
+/** Charge le contenu d'un fichier de prix (CSV, texte ou JSON) dans l'aperçu ; le JSON n'est appliqué qu'au clic sur « Importer ». */
+function chargerPrix(nom, texte) {
+  pendingJson = null;
+  drawInconnus();
+  const json = /\.json$/i.test(nom);
+  const pj = json ? parsePrixJson(texte) : null;
+  if (json && !pj) {
+    $("csv").value = "";
+    $("impmsg").textContent = "Fichier JSON de prix non reconnu (clé « ingredients » attendue).";
+    return;
+  }
+  if (!pj) {
+    $("csv").value = texte;
+    return;
+  }
+  pendingJson = pj;
+  drawInconnus();
+  $("csv").value = pj.lignes
+    .map(
+      (l) =>
+        `${ING[l[0]][0]} : ${price(l[0]).toFixed(2)} → ${l[1].toFixed(2)} €/${ING[l[0]][1] === "pc" ? "pièce" : ul(l[0])}` +
+        (l[3] ? ` (relié par le nom : « ${l[3]} »)` : "")
+    )
+    .join("\n");
+  const d = pj.date.split("-").reverse().join("/");
+  $("impmsg").textContent =
+    `${pj.source}${d ? ", " + d : ""} : ${pj.lignes.length} prix prêts` +
+    (pj.ignores ? ` (${pj.ignores} ignorés)` : "") +
+    (pj.inconnus.length ? `, ${pj.inconnus.length} absents du catalogue (à cocher)` : "") +
+    ". Vérifie l'aperçu puis clique sur « Importer ».";
+}
 
 $("file").onchange = (e) => {
   const f = e.target.files[0];
   $("fname").textContent = f ? f.name : "Aucun fichier choisi";
   if (f) {
     const r = new FileReader();
-    r.onload = () => {
-      pendingJson = null;
-      const pj = /\.json$/i.test(f.name) ? parsePrixJson(r.result) : null;
-      if (/\.json$/i.test(f.name) && !pj) {
-        $("csv").value = "";
-        $("impmsg").textContent =
-          "Fichier JSON de prix non reconnu (clé « ingredients » attendue).";
-        return;
-      }
-      if (!pj) {
-        $("csv").value = r.result;
-        return;
-      }
-      pendingJson = pj;
-      $("csv").value = pj.lignes
-        .map(
-          (l) =>
-            `${ING[l[0]][0]} : ${price(l[0]).toFixed(2)} → ${l[1].toFixed(2)} €/${ING[l[0]][1] === "pc" ? "pièce" : ul(l[0])}` +
-            (l[3] ? ` (relié par le nom : « ${l[3]} »)` : "")
-        )
-        .join("\n");
-      const d = pj.date.split("-").reverse().join("/");
-      $("impmsg").textContent =
-        `${pj.source}${d ? ", " + d : ""} : ${pj.lignes.length} prix prêts` +
-        (pj.ignores ? ` (${pj.ignores} ignorés)` : "") +
-        ". Vérifie l'aperçu puis clique sur « Importer ».";
-    };
+    r.onload = () => chargerPrix(f.name, r.result);
     r.readAsText(f);
   }
+};
+
+/** Récupère le dernier fichier de prix publié avec l'appli (aucun service externe appelé, aucun crédit consommé). */
+$("pfetch").onclick = async () => {
+  $("impmsg").textContent = "Récupération des prix…";
+  let texte;
+  try {
+    const res = await fetch("prix/prix_colruyt.json", { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    texte = await res.text();
+  } catch {
+    $("impmsg").textContent =
+      "Aucun fichier de prix publié pour le moment (ou pas de connexion). Charge un fichier avec « Choisir un fichier ».";
+    return;
+  }
+  $("fname").textContent = "prix_colruyt.json (publié)";
+  chargerPrix("prix_colruyt.json", texte);
 };
 
 const EXCL = {
@@ -359,11 +414,24 @@ $("imp").onclick = () => {
       if (n) S.pn[k] = n;
       else delete S.pn[k];
     });
+    const ajoutes = [...$("pnew").querySelectorAll("[data-pn]:checked")].map((c) => {
+      const u = pj.inconnus[+c.dataset.pn],
+        k = createIng(u.nom, u.unite, "");
+      S.prices[k] = u.prix;
+      if (u.produit) S.pn[k] = u.produit;
+      return k;
+    });
+    pj.inconnus = [];
+    drawInconnus();
     const d = pj.date.split("-").reverse().join("/");
     $("impmsg").textContent =
       `${pj.lignes.length} prix chargés (${pj.source}${d ? ", " + d : ""}).` +
+      (ajoutes.length
+        ? ` ${ajoutes.length} ingrédient${ajoutes.length > 1 ? "s" : ""} ajouté${ajoutes.length > 1 ? "s" : ""}.`
+        : "") +
       (pj.ignores ? ` ${pj.ignores} ignorés.` : "");
-    calc();
+    if (ajoutes.length) refreshIng();
+    else calc();
     return;
   }
   const items = [];

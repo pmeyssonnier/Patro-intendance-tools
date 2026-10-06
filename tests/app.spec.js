@@ -833,7 +833,9 @@ test("catalogue : un JSON sans identifiant connu est relié par le nom de l'ingr
   await expect(apercu).toHaveValue(
     /Poivrons : .* → 0\.56 €\/pièce \(relié par le nom : « poivron rouge »\)/
   );
-  await expect(page.locator("#impmsg")).toContainText("3 prix prêts (2 ignorés)");
+  await expect(page.locator("#impmsg")).toContainText(
+    "3 prix prêts (1 ignorés), 1 absents du catalogue"
+  );
   await page.locator("#imp").click();
   await expect(page.locator('input[data-cp="pain"]')).toHaveValue("1.12");
   await expect(page.locator('input[data-cp="choc"]')).toHaveValue("2.64");
@@ -1131,4 +1133,75 @@ test("catalogue : un ingrédient utilisé dans une recette ne peut pas être sup
   await expect.poll(() => messages.length).toBe(2);
   expect(messages[1]).toContain("confirm:Supprimer");
   await expect(page.locator("#ct")).not.toContainText("Sirop");
+});
+
+/** Les tests ouvrent l'appli en file:// : on remplace fetch pour simuler le fichier de prix publié. */
+async function simulerPrixPublies(page, status, corps) {
+  await page.evaluate(
+    ([st, c]) => {
+      window.fetch = async () => new Response(JSON.stringify(c), { status: st });
+    },
+    [status, corps]
+  );
+}
+
+test("catalogue : « Récupérer les derniers prix » lit le fichier publié, sans rien appliquer avant « Importer »", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const avant = await page.evaluate(() => price("pain"));
+  await simulerPrixPublies(page, 200, {
+    source: "Colruyt",
+    date_maj: "2026-10-03",
+    ingredients: { pain: { unite: "kg", prix_unitaire: 4.5 } },
+  });
+  await page.locator("#pfetch").click();
+  await expect(page.locator("#impmsg")).toContainText("1 prix prêts");
+  await expect(page.locator("#impmsg")).toContainText("03/10/2026");
+  expect(await page.evaluate(() => price("pain"))).toBe(avant);
+  await page.locator("#imp").click();
+  expect(await page.evaluate(() => price("pain"))).toBe(4.5);
+});
+
+test("catalogue : sans fichier publié, « Récupérer les derniers prix » l'explique", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await simulerPrixPublies(page, 404, "");
+  await page.locator("#pfetch").click();
+  await expect(page.locator("#impmsg")).toContainText("Aucun fichier de prix publié");
+});
+
+test("catalogue : l'import JSON propose d'ajouter les produits absents, sans les mettre en recette", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await simulerPrixPublies(page, 200, {
+    source: "Colruyt",
+    date_maj: "2026-10-03",
+    ingredients: {
+      pain: { unite: "kg", prix_unitaire: 4.5 },
+      x1: { nom: "Spéculoos", unite: "kg", prix_unitaire: 3.2, produit: { nom: "Lotus 400g" } },
+      x2: { nom: "Sirop de grenadine", unite: "l", prix_unitaire: 2.1 },
+      x3: { unite: "kg", prix_unitaire: 1 },
+    },
+  });
+  const avant = await page.evaluate(() => Object.keys(ING).length);
+  await page.locator("#pfetch").click();
+  await expect(page.locator("#pnew")).toContainText("2 produits absents de ton catalogue");
+  // rien n'est ajouté tant qu'une case n'est pas cochée
+  await page.locator('#pnew [data-pn="0"]').check();
+  await page.locator("#imp").click();
+  await expect(page.locator("#impmsg")).toContainText("1 ingrédient ajouté");
+  expect(await page.evaluate(() => Object.keys(ING).length)).toBe(avant + 1);
+  const ajoute = await page.evaluate(() => {
+    const k = Object.keys(S.cust).find((c) => ING[c][0] === "Spéculoos");
+    return [ING[k][1], price(k), S.pn[k], Object.values(S.rec).some((r) => k in r.ing)];
+  });
+  expect(ajoute).toEqual(["g", 3.2, "Lotus 400g", false]);
+  await expect(page.locator("#ct")).toContainText("Spéculoos");
+  await expect(page.locator("#pnew")).toBeHidden();
 });
