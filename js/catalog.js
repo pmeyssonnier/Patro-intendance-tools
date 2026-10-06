@@ -551,7 +551,6 @@ $("impdlg").addEventListener("click", (e) => {
     fermerImportPrix();
 });
 
-$("filelab").addEventListener("click", ouvrirImportPrix); // « Choisir un fichier » ouvre aussi la fenêtre
 $("file2").onclick = () => $("file").click();
 $("iopen").onclick = ouvrirImportPrix;
 $("impno").onclick = fermerImportPrix;

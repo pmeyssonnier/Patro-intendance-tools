@@ -103,7 +103,7 @@
 
 <div class="pg" id="g-cat"><section class="card"><h2>Catalogue de prix</h2>
 <p class="s np">Tape le prix directement dans le tableau ci-dessous (ou dans la liste de courses), ou importe des prix : un fichier, la dernière collecte publiée, ou une liste collée.</p>
-<p class="np"><label class="x filebtn" id="filelab">📂 Choisir un fichier<input type="file" id="file" aria-label="Fichier de prix (CSV, texte ou JSON)" accept=".csv,.txt,.json" hidden></label> <button id="iopen" class="x">📋 Coller une liste</button> <button id="pfetch" class="x">🌐 Récupérer les derniers prix</button> <button id="cexp" class="x">💾 Exporter le catalogue</button> <span class="s" id="impres" role="status"></span></p>
+<p class="np"><input type="file" id="file" aria-label="Fichier de prix (CSV, texte ou JSON)" accept=".csv,.txt,.json" hidden> <button id="iopen" class="x">📥 Importer des prix</button> <button id="pfetch" class="x">🌐 Récupérer les derniers prix</button> <button id="cexp" class="x">💾 Exporter le catalogue</button> <span class="s" id="impres" role="status"></span></p>
 <dialog id="impdlg" class="np" aria-labelledby="impt">
 <h2 id="impt" style="margin-top:0">Importer des prix</h2>
 <p class="s"><b>À quoi ça sert ?</b> À remplir les prix sans les taper un par un. Importe une liste de produits d'un magasin : une ligne par produit, <b>nom ; prix</b>. L'appli lit le poids dans le nom (« Riz 1kg ; 1,95 » → 1,95 €/kg) et prend, pour chaque ingrédient, le produit <b>le moins cher</b> qui correspond. Un fichier <b>.json</b> de prix (collecte) est lu tel quel.</p>
