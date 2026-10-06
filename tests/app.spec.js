@@ -754,7 +754,8 @@ test("recettes : passer de « quantité unique » à « par personne » garde le
   expect(vals).toHaveLength(nbSec);
   // 1 000 g répartis : 33,333333 g par personne (et non 33 g, qui ferait 990 g)
   expect(vals[0]).toBeCloseTo(1000 / N, 5);
-  expect(vals.reduce((t, v, i) => t + v, 0)).toBeGreaterThan(0);
+  // la même valeur dans chaque section
+  expect(vals.every((v) => Math.abs(v - 1000 / N) < 1e-5)).toBe(true);
 });
 
 test("recettes : le passage à « par personne » suit le nombre de sections", async ({ page }) => {
