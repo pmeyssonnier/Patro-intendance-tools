@@ -1,14 +1,17 @@
 # Collecte des prix Colruyt -> prix_colruyt.json (à charger dans le catalogue de prix de l'appli)
 # À exécuter dans Google Colab : une cellule par bloc "# %%".
 # Les noms de champs de l'acteur Apify ne sont pas garantis : lancer d'abord la cellule DEBUG.
-# Aucun jeton GitHub : le fichier est simplement téléchargé, puis chargé dans l'appli
-# (Catalogue de prix > Choisir un fichier > Importer).
+# Par défaut, aucun jeton GitHub : le fichier est simplement téléchargé, puis chargé dans l'appli
+# (Catalogue de prix > Choisir un fichier > Importer). Le dépôt automatique sur GitHub est facultatif
+# (cellule finale « Dépôt sur GitHub », DEPOSER_SUR_GITHUB = True).
 
 # %% Installation et configuration
 # !pip -q install requests pandas   # dans Colab, décommenter (ou lancer cette ligne seule dans une cellule)
 
+import base64
 import datetime
 import json
+import os
 import re
 import unicodedata
 
@@ -20,7 +23,6 @@ try:
     APIFY_TOKEN = userdata.get("APIFY_TOKEN")  # Colab > icône clé > Secrets
 except ImportError:  # exécution hors Colab (tests locaux)
     files = None
-    import os
     APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
 
 ACTOR = "studio-amba~colruyt-scraper"  # à vérifier
@@ -416,3 +418,92 @@ if UTILISER_LISTE_COMMUNE:
     print(f"✅ Écrit : {SORTIE_COMMUNE} ({len(LISTE_COMMUNE)} produits)")
     if files:
         files.download(SORTIE_COMMUNE)
+
+
+# %% Dépôt sur GitHub (facultatif : publie les fichiers pour tous les utilisateurs de l'appli)
+# Il faut un jeton GitHub « fine-grained » limité à CE dépôt, avec la seule permission « Contents : Read and write »,
+# enregistré dans les secrets de Colab (icône clé) sous le nom GITHUB_TOKEN. Il n'est jamais affiché ni écrit dans un fichier.
+# Les prix collectés sont FUSIONNÉS avec ceux déjà publiés : un ingrédient non collecté cette fois garde son dernier prix.
+DEPOSER_SUR_GITHUB = False
+DEPOT_REPO = "pmeyssonnier/Patro-intendance-tools"
+DEPOT_BRANCHE = "main"  # si main est protégée (PR obligatoire), mettre une autre branche puis ouvrir une PR
+DEPOT_DOSSIER = "prix"
+
+
+def _entetes_github():
+    jeton = userdata.get("GITHUB_TOKEN") if files else os.environ.get("GITHUB_TOKEN", "")
+    if not jeton:
+        raise RuntimeError("Secret GITHUB_TOKEN absent (Colab > icône clé > Secrets)")
+    return {
+        "Authorization": f"Bearer {jeton}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+
+def lire_depot(chemin):
+    """Contenu texte et identifiant (sha) d'un fichier du dépôt ; (None, None) s'il n'existe pas encore."""
+    r = requests.get(
+        f"https://api.github.com/repos/{DEPOT_REPO}/contents/{chemin}",
+        headers=_entetes_github(),
+        params={"ref": DEPOT_BRANCHE},
+        timeout=30,
+    )
+    if r.status_code == 404:
+        return None, None
+    _verifier(r, "lecture de " + chemin)
+    d = r.json()
+    return base64.b64decode(d["content"]).decode("utf-8"), d["sha"]
+
+
+def _verifier(r, action):
+    if r.status_code >= 400:
+        # on n'affiche que le message de GitHub : jamais les en-têtes (donc jamais le jeton)
+        raise RuntimeError(f"GitHub a refusé ({r.status_code}) : {action} — {r.json().get('message', '')}")
+
+
+def deposer_fichier(chemin, texte, message, sha=None):
+    """Crée ou remplace un fichier du dépôt (un commit sur DEPOT_BRANCHE)."""
+    corps = {
+        "message": message,
+        "content": base64.b64encode(texte.encode("utf-8")).decode("ascii"),
+        "branch": DEPOT_BRANCHE,
+    }
+    if sha:
+        corps["sha"] = sha
+    r = requests.put(
+        f"https://api.github.com/repos/{DEPOT_REPO}/contents/{chemin}",
+        headers=_entetes_github(),
+        json=corps,
+        timeout=60,
+    )
+    _verifier(r, "écriture de " + chemin)
+    print("✅ Déposé :", chemin, "sur", DEPOT_REPO, f"({DEPOT_BRANCHE})")
+
+
+def fusionner_prix(publie_texte, nouveau):
+    """Prix publiés + prix collectés (les collectés l'emportent) ; la date est celle de la collecte."""
+    ancien = json.loads(publie_texte).get("ingredients", {}) if publie_texte else {}
+    return {**nouveau, "ingredients": {**ancien, **nouveau["ingredients"]}}
+
+
+if DEPOSER_SUR_GITHUB:
+    date = export["date_maj"][:10]
+    chemin_prix = f"{DEPOT_DOSSIER}/{SORTIE}"
+    publie, sha_prix = lire_depot(chemin_prix)
+    complet = fusionner_prix(publie, export)
+    deposer_fichier(
+        chemin_prix,
+        json.dumps(complet, indent=2, ensure_ascii=False) + "\n",
+        f"Prix : collecte Colruyt du {date} ({len(resultats)} prix, {len(complet['ingredients'])} au total)",
+        sha_prix,
+    )
+    if UTILISER_LISTE_COMMUNE:
+        chemin_commun = f"{DEPOT_DOSSIER}/{SORTIE_COMMUNE}"
+        _, sha_commun = lire_depot(chemin_commun)
+        deposer_fichier(
+            chemin_commun,
+            json.dumps({"ingredients": LISTE_COMMUNE}, indent=2, ensure_ascii=False) + "\n",
+            f"Prix : liste commune d'ingrédients ({len(LISTE_COMMUNE)} produits)",
+            sha_commun,
+        )
