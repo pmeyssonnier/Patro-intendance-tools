@@ -702,33 +702,39 @@ test("les pièces sont arrondies au supérieur sans erreur de calcul décimal", 
   expect(r).toEqual([true, "6 pc", "7 pc", "1 pc", ["6", "pc"]]);
 });
 
-test("recettes : « 1 pour 5 personnes » est recopié dans toutes les sections", async ({ page }) => {
+test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la quantité par personne", async ({
+  page,
+}) => {
   await ouvrir(page);
   await aller(page, "rec");
   await page.locator("#inew").click();
   await page.locator("#iname").fill("Baguette");
   await page.locator("#iunit").selectOption("pc");
   await page.locator("#iok").click();
-  const ligne = page.locator("#rb tr", { hasText: "Baguette" });
-  await ligne.locator("summary").click();
-  await ligne.locator("[data-rq]").fill("1");
-  await ligne.locator("[data-rn]").fill("5");
-  // aperçu : 0,2 par personne et total pour l'effectif actuel
-  const n = await page.evaluate(() => nn());
-  await expect(ligne.locator("[data-rp]")).toContainText("0.2 pc par personne");
-  await expect(ligne.locator("[data-rp]")).toContainText(Math.ceil(n / 5 - 1e-9) + " pc pour " + n);
-  await ligne.locator("[data-ra]").click();
-  const champs = page.locator("#rb tr", { hasText: "Baguette" }).locator("input[data-s]");
+  const ligne = () => page.locator("#rb tr", { hasText: "Baguette" });
+  // pas de saisie par ratio en mode « par personne » : elle est dans le mode « quantité unique »
+  await expect(ligne().locator("[data-rq]")).toHaveCount(0);
+  await ligne().locator("[data-tg]").click(); // → quantité unique
+  const N = await page.evaluate(() => nn());
+  await ligne().locator("[data-rq]").fill("1");
+  await ligne().locator("[data-rn]").fill("5");
+  await expect(ligne().locator("[data-rp]")).toContainText(
+    "= " + Math.ceil(N / 5 - 1e-9) + " pc pour " + N + " personnes"
+  );
+  await ligne().locator("[data-ra]").click();
+  await expect(ligne().locator("[data-fx]")).toHaveValue(String(N / 5));
+  // « → par personne » répartit : 1/5 = 0,2 dans chaque section
+  await ligne().locator("[data-tg]").click();
+  const champs = ligne().locator("input[data-s]");
   await expect(champs).toHaveCount(4);
   for (let i = 0; i < 4; i++) await expect(champs.nth(i)).toHaveValue("0.2");
-  // la virgule française est acceptée
-  await page.locator("#rb tr", { hasText: "Baguette" }).locator("summary").click();
-  await page.locator("#rb tr", { hasText: "Baguette" }).locator("[data-rq]").fill("0,5");
-  await page.locator("#rb tr", { hasText: "Baguette" }).locator("[data-rn]").fill("4");
-  await page.locator("#rb tr", { hasText: "Baguette" }).locator("[data-ra]").click();
-  await expect(
-    page.locator("#rb tr", { hasText: "Baguette" }).locator("input[data-s]").first()
-  ).toHaveValue("0.125");
+  // la virgule française est acceptée : 0,5 pour 4 personnes = 0,125 par personne
+  await ligne().locator("[data-tg]").click();
+  await ligne().locator("[data-rq]").fill("0,5");
+  await ligne().locator("[data-rn]").fill("4");
+  await ligne().locator("[data-ra]").click();
+  await ligne().locator("[data-tg]").click();
+  await expect(ligne().locator("input[data-s]").first()).toHaveValue("0.125");
 });
 
 test("recettes : passer de « quantité unique » à « par personne » garde le total, sans arrondi à l'entier", async ({
