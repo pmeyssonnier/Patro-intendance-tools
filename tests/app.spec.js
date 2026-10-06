@@ -1876,3 +1876,28 @@ test("import de recette : « Annuler » à côté de « Lire la recette » refer
   await page.locator("#rimfer").click();
   await expect(page.locator("#rimpf")).toBeHidden();
 });
+
+test("recettes : retirer un ingrédient d'une recette demande une confirmation", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const nb = () => page.evaluate(() => Object.keys(S.rec[S.cur].ing).length);
+  const avant = await nb();
+  const messages = [];
+  page.removeAllListeners("dialog");
+  let accepter = false;
+  page.on("dialog", (d) => {
+    messages.push(d.type() + ":" + d.message());
+    return accepter ? d.accept() : d.dismiss();
+  });
+  // refusé : rien ne change
+  await page.locator("#rb [data-rm]").first().click();
+  expect(messages).toHaveLength(1);
+  expect(messages[0]).toMatch(/^confirm:Retirer « .+ » de la recette « Spaghetti bolognaise » \?$/);
+  expect(await nb()).toBe(avant);
+  // accepté : l'ingrédient est retiré
+  accepter = true;
+  await page.locator("#rb [data-rm]").first().click();
+  expect(await nb()).toBe(avant - 1);
+});

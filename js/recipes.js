@@ -190,6 +190,7 @@ $("rb").addEventListener("click", (e) => {
     drawRec();
     calc();
   } else if (t.rm) {
+    if (!confirm("Retirer « " + ING[t.rm][0] + " » de la recette « " + S.cur + " » ?")) return;
     delete R.ing[t.rm];
     if (R.fx) delete R.fx[t.rm];
     if (R.fa) delete R.fa[t.rm];
