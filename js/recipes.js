@@ -63,12 +63,73 @@ $("rsel").onchange = () => {
   drawRec();
 };
 
-$("rdesc").onchange = () => {
+/** Enregistre la description au fil de la saisie (et pas seulement quand le champ perd le focus : sur téléphone, on quitte souvent la page sans cela). */
+function saveDesc() {
   if (S.rec[S.cur]) {
     S.rec[S.cur].desc = $("rdesc").value;
     save();
   }
+}
+
+$("rdesc").onchange = saveDesc;
+$("rdesc").oninput = saveDesc;
+
+/** Renomme une recette : garde sa place dans la liste et met à jour les menus de tous les camps. Renvoie un message d'erreur ou "". */
+function renameRecipe(ancien, nom) {
+  nom = nom.trim().replace(/\s+/g, " ");
+  if (!S.rec[ancien]) return "Recette introuvable.";
+  if (!nom) return "Le nom ne peut pas être vide.";
+  if (nom.length > 100) return "Nom trop long (100 caractères au plus).";
+  if (nom === ancien) return "";
+  if (nom === "__proto__" || S.rec[nom]) return "Une recette porte déjà ce nom.";
+  const rec = {};
+  for (const [n, r] of Object.entries(S.rec)) rec[n === ancien ? nom : n] = r;
+  S.rec = rec;
+  if (S.cur === ancien) S.cur = nom;
+  // les menus (de tous les camps) désignent les recettes par leur nom
+  for (const c of Object.values(S.camps))
+    for (const jour of Object.values(c.menu))
+      for (const k in jour)
+        if (Array.isArray(jour[k])) jour[k] = jour[k].map((n) => (n === ancien ? nom : n));
+  for (const k of Object.keys(RATIO))
+    if (k.startsWith(ancien + "|")) {
+      RATIO[nom + k.slice(ancien.length)] = RATIO[k];
+      delete RATIO[k];
+    }
+  return "";
+}
+
+$("redit").onclick = () => {
+  if (!S.rec[S.cur]) return;
+  $("reform").style.display = "grid";
+  $("remsg").textContent = "";
+  $("rename").value = S.cur;
+  $("rename").focus();
+  $("rename").select();
 };
+
+$("reno").onclick = () => {
+  $("reform").style.display = "none";
+  $("remsg").textContent = "";
+};
+
+$("reok").onclick = () => {
+  const err = renameRecipe(S.cur, $("rename").value);
+  if (err) {
+    $("remsg").textContent = "⚠ " + err;
+    return;
+  }
+  $("reform").style.display = "none";
+  $("remsg").textContent = "";
+  drawRec();
+  drawMenu();
+  calc();
+};
+
+$("rename").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("reok").click();
+  else if (e.key === "Escape") $("reno").click();
+});
 
 $("rb").addEventListener("change", (e) => {
   const d = e.target.dataset,

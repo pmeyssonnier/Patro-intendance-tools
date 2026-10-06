@@ -1721,3 +1721,55 @@ test("sauvegarde : l'export du projet affiche un message, et propose de copier s
   await page.locator("#expc").click();
   await expect(page.locator("#jmsg")).toContainText(/Projet copié|Copie impossible/);
 });
+
+test("recettes : renommer une recette garde sa place, ses ingrédients et son menu ; la description s'enregistre en tapant", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const avant = await page.evaluate(() => ({
+    noms: Object.keys(S.rec),
+    total: LAST.sum,
+    ing: Object.keys(S.rec["Spaghetti bolognaise"].ing),
+  }));
+  await page.locator("#redit").click();
+  await expect(page.locator("#rename")).toHaveValue("Spaghetti bolognaise");
+  // un nom déjà pris ou vide est refusé
+  await page.locator("#rename").fill("Croque-monsieur");
+  await page.locator("#reok").click();
+  await expect(page.locator("#remsg")).toContainText("porte déjà ce nom");
+  await page.locator("#rename").fill("   ");
+  await page.locator("#reok").click();
+  await expect(page.locator("#remsg")).toContainText("ne peut pas être vide");
+  await page.locator("#rename").fill("Spaghetti maison");
+  await page.locator("#reok").click();
+  await expect(page.locator("#rsel")).toHaveValue("Spaghetti maison");
+  const apres = await page.evaluate(() => ({
+    noms: Object.keys(S.rec),
+    total: LAST.sum,
+    ing: Object.keys(S.rec["Spaghetti maison"].ing),
+    cur: S.cur,
+    menus: JSON.stringify(S.camps),
+  }));
+  expect(apres.noms).toEqual(
+    avant.noms.map((n) => (n === "Spaghetti bolognaise" ? "Spaghetti maison" : n))
+  );
+  expect(apres.ing).toEqual(avant.ing);
+  expect(apres.total).toBeCloseTo(avant.total, 6); // le menu suit : le budget ne change pas
+  expect(apres.cur).toBe("Spaghetti maison");
+  expect(apres.menus).toContain("Spaghetti maison");
+  expect(apres.menus).not.toContain("Spaghetti bolognaise");
+  // Échap annule
+  await page.locator("#redit").click();
+  await page.locator("#rename").fill("Autre");
+  await page.locator("#rename").press("Escape");
+  await expect(page.locator("#reform")).toBeHidden();
+  expect(await page.evaluate(() => S.cur)).toBe("Spaghetti maison");
+  // la description est enregistrée dès la frappe, sans quitter le champ
+  await page.locator("#rdesc").fill("Nouvelle description de la recette");
+  await page.reload();
+  expect(await page.evaluate(() => S.rec["Spaghetti maison"].desc)).toBe(
+    "Nouvelle description de la recette"
+  );
+  expect(await page.evaluate(() => S.cur)).toBe("Spaghetti maison");
+});

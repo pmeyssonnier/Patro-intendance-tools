@@ -107,7 +107,7 @@ button.x {
   margin-bottom: 8px;
 }
 .rrow {
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
 }
 .rrow select,

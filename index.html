@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.9.1">
+<link rel="stylesheet" href="styles.css?v=1.9.2">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -73,8 +73,10 @@
 </div>
 
 <div class="pg" id="g-rec"><section class="card"><h2>Recettes</h2>
-<div class="row rrow"><select id="rsel" aria-label="Recette"></select><button id="rnew" class="x" title="Nouvelle recette" aria-label="Nouvelle recette">+</button><button id="rdel" class="x" title="Supprimer cette recette" aria-label="Supprimer cette recette">✕</button></div>
+<div class="row rrow"><select id="rsel" aria-label="Recette"></select><button id="rnew" class="x" title="Nouvelle recette" aria-label="Nouvelle recette">+</button><button id="redit" class="x" title="Renommer cette recette" aria-label="Renommer cette recette">✎</button><button id="rdel" class="x" title="Supprimer cette recette" aria-label="Supprimer cette recette">✕</button></div>
 <div class="row" id="rform" style="display:none;grid-template-columns:1fr auto auto"><input id="rname" aria-label="Nom de la nouvelle recette" placeholder="Nom de la recette"><button id="rok">Créer</button><button id="rno" class="x">Annuler</button></div>
+<div class="row" id="reform" style="display:none;grid-template-columns:1fr auto auto"><input id="rename" aria-label="Nouveau nom de la recette" placeholder="Nom de la recette" maxlength="100"><button id="reok">Renommer</button><button id="reno" class="x">Annuler</button></div>
+<p class="s" id="remsg" role="status"></p>
 <label>Description / déroulé</label><textarea id="rdesc" aria-label="Description de la recette" rows="4"></textarea>
 <p class="s">Quantité <b>par personne</b> et par section (g, ml ou pièces). Pour une quantité <b>unique</b> (ex. 5 pains, 5 L de lait), clique sur « → quantité unique » sous l'ingrédient. Elle est répartie au prorata des régimes (désactivable).</p>
 <div class="w sv"><table class="fit rec"><thead id="rh"></thead><tbody id="rb"></tbody></table></div>
@@ -150,22 +152,22 @@
 <div id="live" class="sr" aria-live="polite"></div>
 <div id="warn" class="np" role="alert" hidden><span id="warnt"></span> <button id="warnx">💾 Exporter</button> <button id="warnc" class="x" aria-label="Fermer l'avertissement">✕</button></div>
 <!-- Scripts classiques : l'ordre compte (chaque fichier dépend de ceux qui le précèdent). -->
-<script src="js/data-defaults.js?v=1.9.1"></script>
-<script src="js/utils.js?v=1.9.1"></script>
-<script src="js/storage.js?v=1.9.1"></script>
-<script src="js/state.js?v=1.9.1"></script>
-<script src="js/calculations.js?v=1.9.1"></script>
-<script src="js/shopping-list.js?v=1.9.1"></script>
-<script src="js/documents.js?v=1.9.1"></script>
-<script src="js/share-print.js?v=1.9.1"></script>
-<script src="js/navigation.js?v=1.9.1"></script>
-<script src="js/camps.js?v=1.9.1"></script>
-<script src="js/diets.js?v=1.9.1"></script>
-<script src="js/menu.js?v=1.9.1"></script>
-<script src="js/recipes.js?v=1.9.1"></script>
-<script src="js/catalog.js?v=1.9.1"></script>
-<script src="js/recipe-import.js?v=1.9.1"></script>
-<script src="js/config.js?v=1.9.1"></script>
-<script src="js/pwa.js?v=1.9.1"></script>
-<script src="js/main.js?v=1.9.1"></script>
+<script src="js/data-defaults.js?v=1.9.2"></script>
+<script src="js/utils.js?v=1.9.2"></script>
+<script src="js/storage.js?v=1.9.2"></script>
+<script src="js/state.js?v=1.9.2"></script>
+<script src="js/calculations.js?v=1.9.2"></script>
+<script src="js/shopping-list.js?v=1.9.2"></script>
+<script src="js/documents.js?v=1.9.2"></script>
+<script src="js/share-print.js?v=1.9.2"></script>
+<script src="js/navigation.js?v=1.9.2"></script>
+<script src="js/camps.js?v=1.9.2"></script>
+<script src="js/diets.js?v=1.9.2"></script>
+<script src="js/menu.js?v=1.9.2"></script>
+<script src="js/recipes.js?v=1.9.2"></script>
+<script src="js/catalog.js?v=1.9.2"></script>
+<script src="js/recipe-import.js?v=1.9.2"></script>
+<script src="js/config.js?v=1.9.2"></script>
+<script src="js/pwa.js?v=1.9.2"></script>
+<script src="js/main.js?v=1.9.2"></script>
 </body></html>
