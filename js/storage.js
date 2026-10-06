@@ -133,7 +133,6 @@ function cleanProject(x) {
   // rayons choisis (identifiant -> clé de CATS) et regroupement de la liste par rayon
   for (const [k, v] of ent(x.cat)) if (okid(k) && CATS.some((c) => c[0] === v)) o.cat[k] = v;
   if (x.gl === false) o.gl = false;
-  if (x.gp === true) o.gp = true;
   if (obj(x.dd)) {
     o.dd = {};
     for (const [k, v] of ent(x.dd)) {

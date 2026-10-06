@@ -124,29 +124,40 @@ function refreshIng() {
   calc();
 }
 
+/** Rayon choisi dans la liste de filtre du catalogue ("" = tous). */
+let catRayon = "";
+
+/** Remplit la liste des rayons (triée par ordre alphabétique, avec le nombre d'ingrédients) en gardant le choix en cours. */
+function majListeRayons() {
+  const n = {};
+  for (const k of Object.keys(ING)) if (!S.hid.includes(k)) n[catOf(k)] = (n[catOf(k)] || 0) + 1;
+  const total = Object.values(n).reduce((a, b) => a + b, 0);
+  if (catRayon && !CATS.some((c) => c[0] === catRayon)) catRayon = "";
+  $("crayon").innerHTML =
+    `<option value="">Tous les rayons (${total})</option>` +
+    [...CATS]
+      .sort((a, b) => a[1].localeCompare(b[1], "fr"))
+      .map(
+        ([cle, nom]) =>
+          `<option value="${cle}"${cle === catRayon ? " selected" : ""}>${esc(nom)} (${n[cle] || 0})</option>`
+      )
+      .join("");
+}
+
 function drawCat() {
+  majListeRayons();
   // l'exemple ne sert qu'à démarrer : inutile dès que des produits sont déjà associés aux ingrédients
   $("csvx").style.display = Object.values(S.pn).some(Boolean) ? "none" : "";
   const q = plain($("cfilt").value.trim());
   const keys = Object.keys(ING).filter(
-    (k) => !S.hid.includes(k) && (!q || plain(ING[k][0] + " " + (S.pn[k] || "")).includes(q))
+    (k) =>
+      !S.hid.includes(k) &&
+      (!catRayon || catOf(k) === catRayon) &&
+      (!q || plain(ING[k][0] + " " + (S.pn[k] || "")).includes(q))
   );
-  $("cgrp").checked = !!S.gp;
-  // par rayon (option) : titres de rayon, ordre alphabétique dans chaque rayon
-  const groupes = S.gp
-    ? parRayon(
-        keys.sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr")),
-        true
-      )
-    : [["", keys]];
   $("ct").innerHTML =
-    groupes
-      .map(
-        ([nom, l]) =>
-          (nom ? `<tr class="grp"><td colspan="4"><b>${esc(nom)}</b></td></tr>` : "") + lignesCat(l)
-      )
-      .join("") ||
-    `<tr><td>${q ? "Aucun ingrédient ne correspond au filtre." : "Aucun ingrédient."}</td></tr>`;
+    lignesCat(keys) ||
+    `<tr><td>${q || catRayon ? "Aucun ingrédient ne correspond au filtre." : "Aucun ingrédient."}</td></tr>`;
 }
 
 /** Les lignes du tableau des prix pour des ingrédients (avec, pour celui en cours de modification, sa ligne d'édition). */
@@ -164,11 +175,9 @@ function lignesCat(keys) {
 
 $("cfilt").addEventListener("input", drawCat);
 
-$("cgrp").onchange = () => {
-  if ($("cgrp").checked) S.gp = true;
-  else delete S.gp;
+$("crayon").onchange = () => {
+  catRayon = $("crayon").value;
   drawCat();
-  save();
 };
 
 $("ct").addEventListener("change", (e) => {
