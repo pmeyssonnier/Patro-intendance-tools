@@ -250,7 +250,7 @@ def appliquer_catalogue(cat):
             if not nom:
                 raise ValueError(f"Ingrédient {k} sans nom : réexporter le catalogue depuis l'appli à jour")
             q = REQUETES_PERSO.get(k, nom)
-            ing = {"id": k, "q": q, "unite": unites.get(v.get("unite"), "kg")}
+            ing = {"id": k, "nom": nom, "q": q, "unite": unites.get(v.get("unite"), "kg")}
             if k in POIDS_PIECE_G:
                 ing["poids_piece_g"] = POIDS_PIECE_G[k]
             nouveaux.append(ing)
@@ -265,6 +265,81 @@ if UTILISER_CATALOGUE:
     # on lit le contenu envoyé, pas le fichier du même nom : Colab renomme un fichier déjà présent
     # (« … (1) (2).json ») mais renvoie le nom d'origine, ce qui ferait relire un ancien fichier
     appliquer_catalogue(json.loads(next(iter(envoye.values())).decode("utf-8")))
+
+# %% Liste commune (ingrédients partagés par tous les utilisateurs de l'appli)
+# La liste commune est un fichier du dépôt : prix/ingredients_communs.json. Elle complète INGREDIENTS : ses produits sont
+# collectés à chaque exécution et apparaissent dans prix_colruyt.json, où l'appli propose de les ajouter au catalogue
+# de chacun (rattachés par le nom). Colab ne garde rien d'une exécution à l'autre : le fichier est lu depuis GitHub,
+# puis une version à jour est téléchargée à la fin (à redéposer dans le dépôt, dossier « prix »).
+UTILISER_LISTE_COMMUNE = True
+AJOUTER_AU_COMMUN = True  # True : les ingrédients ajoutés à la main du catalogue exporté entrent dans la liste commune
+URL_LISTE_COMMUNE = "https://raw.githubusercontent.com/pmeyssonnier/Patro-intendance-tools/main/prix/ingredients_communs.json"
+SORTIE_COMMUNE = "ingredients_communs.json"
+LISTE_COMMUNE = []  # [{"nom": "Spéculoos", "unite": "kg", "q": "speculoos" (facultatif), "poids_piece_g": 200 (facultatif)}]
+
+
+def cle_commune(nom, unite):
+    """Identité d'un produit de la liste commune : nom sans accents ni majuscules + unité."""
+    return re.sub(r"[^a-z0-9]+", "_", sans_accents(nom).lower()).strip("_") + "_" + unite
+
+
+def charger_liste_commune():
+    """Lit la liste commune publiée ; liste vide si elle n'existe pas encore."""
+    r = requests.get(URL_LISTE_COMMUNE, timeout=30)
+    if r.status_code == 404:
+        print("Pas encore de liste commune publiée : on repart d'une liste vide.")
+        return []
+    r.raise_for_status()
+    return [x for x in r.json().get("ingredients", []) if x.get("nom") and x.get("unite") in ("kg", "l", "piece")]
+
+
+def completer_liste_commune(nouveaux):
+    """Ajoute à LISTE_COMMUNE les produits qui n'y sont pas déjà (même nom, même unité)."""
+    connus = {cle_commune(x["nom"], x["unite"]) for x in LISTE_COMMUNE}
+    ajoutes = []
+    for x in nouveaux:
+        c = cle_commune(x["nom"], x["unite"])
+        if c not in connus:
+            connus.add(c)
+            LISTE_COMMUNE.append(x)
+            ajoutes.append(x["nom"])
+    return ajoutes
+
+
+def ajouter_communs_a_collecter():
+    """Ajoute les produits de la liste commune à INGREDIENTS (sauf ceux déjà collectés sous le même nom et la même unité)."""
+    deja = {cle_commune(i.get("nom") or i["q"], i["unite"]) for i in INGREDIENTS}
+    n = 0
+    for x in LISTE_COMMUNE:
+        c = cle_commune(x["nom"], x["unite"])
+        if c in deja:
+            continue
+        q = x.get("q") or x["nom"]
+        ing = {"id": "x_" + c, "nom": x["nom"], "q": q, "unite": x["unite"]}
+        if x.get("poids_piece_g"):
+            ing["poids_piece_g"] = x["poids_piece_g"]
+        INGREDIENTS.append(ing)
+        FILTRES[ing["id"]] = (mots_filtre(q), None)
+        deja.add(c)
+        n += 1
+    print(f"{n} produits de la liste commune ajoutés à la collecte ({len(LISTE_COMMUNE)} dans la liste commune).")
+
+
+if UTILISER_LISTE_COMMUNE:
+    LISTE_COMMUNE = charger_liste_commune()
+    if AJOUTER_AU_COMMUN and UTILISER_CATALOGUE:
+        # ingrédients ajoutés à la main (identifiant c_…) du catalogue exporté
+        perso = [i for i in INGREDIENTS if i["id"].startswith("c_")]
+        nouveaux = []
+        for i in perso:
+            x = {"nom": i["nom"], "unite": i["unite"]}
+            if i["q"] != i["nom"]:
+                x["q"] = i["q"]  # recherche différente du nom (REQUETES_PERSO)
+            if i.get("poids_piece_g"):
+                x["poids_piece_g"] = i["poids_piece_g"]
+            nouveaux.append(x)
+        print("Ajoutés à la liste commune :", completer_liste_commune(nouveaux) or "rien de nouveau")
+    ajouter_communs_a_collecter()
 
 # %% DEBUG : champs réellement renvoyés par l'acteur (adapter les noms candidats ci-dessus si besoin)
 test = appeler_apify("spaghetti")
@@ -309,6 +384,7 @@ for ing in INGREDIENTS:
     choix = ok[0]
     resultats[ing["id"]] = {
         "requete": ing["q"],
+        **({"nom": ing["nom"]} if ing.get("nom") else {}),
         "unite": ing["unite"],
         "prix_unitaire": choix["prix_unitaire"],
         "produit": choix,
@@ -332,3 +408,11 @@ with open(SORTIE, "w", encoding="utf-8") as f:
 print("✅ Écrit :", SORTIE)
 if files:
     files.download(SORTIE)
+
+# Liste commune mise à jour : à déposer dans le dépôt GitHub sous prix/ingredients_communs.json (Add file > Upload files)
+if UTILISER_LISTE_COMMUNE:
+    with open(SORTIE_COMMUNE, "w", encoding="utf-8") as f:
+        json.dump({"ingredients": LISTE_COMMUNE}, f, indent=2, ensure_ascii=False)
+    print(f"✅ Écrit : {SORTIE_COMMUNE} ({len(LISTE_COMMUNE)} produits)")
+    if files:
+        files.download(SORTIE_COMMUNE)
