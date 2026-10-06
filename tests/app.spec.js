@@ -1132,3 +1132,42 @@ test("catalogue : un ingrédient utilisé dans une recette ne peut pas être sup
   expect(messages[1]).toContain("confirm:Supprimer");
   await expect(page.locator("#ct")).not.toContainText("Sirop");
 });
+
+/** Les tests ouvrent l'appli en file:// : on remplace fetch pour simuler le fichier de prix publié. */
+async function simulerPrixPublies(page, status, corps) {
+  await page.evaluate(
+    ([st, c]) => {
+      window.fetch = async () => new Response(JSON.stringify(c), { status: st });
+    },
+    [status, corps]
+  );
+}
+
+test("catalogue : « Récupérer les derniers prix » lit le fichier publié, sans rien appliquer avant « Importer »", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const avant = await page.evaluate(() => price("pain"));
+  await simulerPrixPublies(page, 200, {
+    source: "Colruyt",
+    date_maj: "2026-10-03",
+    ingredients: { pain: { unite: "kg", prix_unitaire: 4.5 } },
+  });
+  await page.locator("#pfetch").click();
+  await expect(page.locator("#impmsg")).toContainText("1 prix prêts");
+  await expect(page.locator("#impmsg")).toContainText("03/10/2026");
+  expect(await page.evaluate(() => price("pain"))).toBe(avant);
+  await page.locator("#imp").click();
+  expect(await page.evaluate(() => price("pain"))).toBe(4.5);
+});
+
+test("catalogue : sans fichier publié, « Récupérer les derniers prix » l'explique", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await simulerPrixPublies(page, 404, "");
+  await page.locator("#pfetch").click();
+  await expect(page.locator("#impmsg")).toContainText("Aucun fichier de prix publié");
+});

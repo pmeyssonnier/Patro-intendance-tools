@@ -290,40 +290,60 @@ $("csv").addEventListener("input", () => {
   pendingJson = null;
 });
 
+/** Charge le contenu d'un fichier de prix (CSV, texte ou JSON) dans l'aperçu ; le JSON n'est appliqué qu'au clic sur « Importer ». */
+function chargerPrix(nom, texte) {
+  pendingJson = null;
+  const json = /\.json$/i.test(nom);
+  const pj = json ? parsePrixJson(texte) : null;
+  if (json && !pj) {
+    $("csv").value = "";
+    $("impmsg").textContent = "Fichier JSON de prix non reconnu (clé « ingredients » attendue).";
+    return;
+  }
+  if (!pj) {
+    $("csv").value = texte;
+    return;
+  }
+  pendingJson = pj;
+  $("csv").value = pj.lignes
+    .map(
+      (l) =>
+        `${ING[l[0]][0]} : ${price(l[0]).toFixed(2)} → ${l[1].toFixed(2)} €/${ING[l[0]][1] === "pc" ? "pièce" : ul(l[0])}` +
+        (l[3] ? ` (relié par le nom : « ${l[3]} »)` : "")
+    )
+    .join("\n");
+  const d = pj.date.split("-").reverse().join("/");
+  $("impmsg").textContent =
+    `${pj.source}${d ? ", " + d : ""} : ${pj.lignes.length} prix prêts` +
+    (pj.ignores ? ` (${pj.ignores} ignorés)` : "") +
+    ". Vérifie l'aperçu puis clique sur « Importer ».";
+}
+
 $("file").onchange = (e) => {
   const f = e.target.files[0];
   $("fname").textContent = f ? f.name : "Aucun fichier choisi";
   if (f) {
     const r = new FileReader();
-    r.onload = () => {
-      pendingJson = null;
-      const pj = /\.json$/i.test(f.name) ? parsePrixJson(r.result) : null;
-      if (/\.json$/i.test(f.name) && !pj) {
-        $("csv").value = "";
-        $("impmsg").textContent =
-          "Fichier JSON de prix non reconnu (clé « ingredients » attendue).";
-        return;
-      }
-      if (!pj) {
-        $("csv").value = r.result;
-        return;
-      }
-      pendingJson = pj;
-      $("csv").value = pj.lignes
-        .map(
-          (l) =>
-            `${ING[l[0]][0]} : ${price(l[0]).toFixed(2)} → ${l[1].toFixed(2)} €/${ING[l[0]][1] === "pc" ? "pièce" : ul(l[0])}` +
-            (l[3] ? ` (relié par le nom : « ${l[3]} »)` : "")
-        )
-        .join("\n");
-      const d = pj.date.split("-").reverse().join("/");
-      $("impmsg").textContent =
-        `${pj.source}${d ? ", " + d : ""} : ${pj.lignes.length} prix prêts` +
-        (pj.ignores ? ` (${pj.ignores} ignorés)` : "") +
-        ". Vérifie l'aperçu puis clique sur « Importer ».";
-    };
+    r.onload = () => chargerPrix(f.name, r.result);
     r.readAsText(f);
   }
+};
+
+/** Récupère le dernier fichier de prix publié avec l'appli (aucun service externe appelé, aucun crédit consommé). */
+$("pfetch").onclick = async () => {
+  $("impmsg").textContent = "Récupération des prix…";
+  let texte;
+  try {
+    const res = await fetch("prix/prix_colruyt.json", { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    texte = await res.text();
+  } catch {
+    $("impmsg").textContent =
+      "Aucun fichier de prix publié pour le moment (ou pas de connexion). Charge un fichier avec « Choisir un fichier ».";
+    return;
+  }
+  $("fname").textContent = "prix_colruyt.json (publié)";
+  chargerPrix("prix_colruyt.json", texte);
 };
 
 const EXCL = {

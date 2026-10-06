@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.7.1">
+<link rel="stylesheet" href="styles.css?v=1.7.2">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -89,7 +89,7 @@
 <p class="s"><b>À quoi ça sert ?</b> À remplir les prix sans les taper un par un. Deux façons, au choix (aucune n'est obligatoire) :</p>
 <p class="s">① <b>Tape le prix</b> directement dans le tableau ci-dessous (ou dans la liste de courses).<br>② <b>Importe une liste de produits</b> d'un magasin : une ligne par produit, <b>nom ; prix</b>. L'appli lit le poids dans le nom (« Riz 1kg ; 1,95 » → 1,95 €/kg) et prend, pour chaque ingrédient, le produit <b>le moins cher</b> qui correspond.</p>
 <textarea id="csv" aria-label="Liste de produits et prix, un par ligne" rows="4" placeholder="Spaghetti Boni 500g;1,39&#10;Riz long grain Boni 1kg;1,95"></textarea>
-<p><label class="x filebtn">📂 Choisir un fichier<input type="file" id="file" aria-label="Fichier de prix (CSV, texte ou JSON)" accept=".csv,.txt,.json" hidden></label> <span class="s" id="fname" role="status">Aucun fichier choisi</span><br><button id="imp" style="margin-top:8px">Importer</button> <button id="csvx" class="x">Télécharger un exemple</button> <button id="cexp" class="x">💾 Exporter le catalogue</button> <span class="s" id="impmsg"></span></p>
+<p><label class="x filebtn">📂 Choisir un fichier<input type="file" id="file" aria-label="Fichier de prix (CSV, texte ou JSON)" accept=".csv,.txt,.json" hidden></label> <span class="s" id="fname" role="status">Aucun fichier choisi</span><br><button id="imp" style="margin-top:8px">Importer</button> <button id="pfetch" class="x">🌐 Récupérer les derniers prix</button> <button id="csvx" class="x">Télécharger un exemple</button> <button id="cexp" class="x">💾 Exporter le catalogue</button> <span class="s" id="impmsg"></span></p>
 <h2 style="margin-top:14px">Prix des ingrédients</h2>
 <input type="search" id="cfilt" aria-label="Filtrer les ingrédients par nom ou nom de produit" placeholder="🔍 Filtrer par ingrédient ou produit…" autocomplete="off" style="margin-bottom:8px">
 <div class="w st"><table class="fit"><thead><tr><th>Ingrédient</th><th>Unité</th><th class="num">Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
@@ -139,21 +139,21 @@
 <div id="live" class="sr" aria-live="polite"></div>
 <div id="warn" class="np" role="alert" hidden><span id="warnt"></span> <button id="warnx">💾 Exporter</button> <button id="warnc" class="x" aria-label="Fermer l'avertissement">✕</button></div>
 <!-- Scripts classiques : l'ordre compte (chaque fichier dépend de ceux qui le précèdent). -->
-<script src="js/data-defaults.js?v=1.7.1"></script>
-<script src="js/utils.js?v=1.7.1"></script>
-<script src="js/storage.js?v=1.7.1"></script>
-<script src="js/state.js?v=1.7.1"></script>
-<script src="js/calculations.js?v=1.7.1"></script>
-<script src="js/shopping-list.js?v=1.7.1"></script>
-<script src="js/documents.js?v=1.7.1"></script>
-<script src="js/share-print.js?v=1.7.1"></script>
-<script src="js/navigation.js?v=1.7.1"></script>
-<script src="js/camps.js?v=1.7.1"></script>
-<script src="js/diets.js?v=1.7.1"></script>
-<script src="js/menu.js?v=1.7.1"></script>
-<script src="js/recipes.js?v=1.7.1"></script>
-<script src="js/catalog.js?v=1.7.1"></script>
-<script src="js/config.js?v=1.7.1"></script>
-<script src="js/pwa.js?v=1.7.1"></script>
-<script src="js/main.js?v=1.7.1"></script>
+<script src="js/data-defaults.js?v=1.7.2"></script>
+<script src="js/utils.js?v=1.7.2"></script>
+<script src="js/storage.js?v=1.7.2"></script>
+<script src="js/state.js?v=1.7.2"></script>
+<script src="js/calculations.js?v=1.7.2"></script>
+<script src="js/shopping-list.js?v=1.7.2"></script>
+<script src="js/documents.js?v=1.7.2"></script>
+<script src="js/share-print.js?v=1.7.2"></script>
+<script src="js/navigation.js?v=1.7.2"></script>
+<script src="js/camps.js?v=1.7.2"></script>
+<script src="js/diets.js?v=1.7.2"></script>
+<script src="js/menu.js?v=1.7.2"></script>
+<script src="js/recipes.js?v=1.7.2"></script>
+<script src="js/catalog.js?v=1.7.2"></script>
+<script src="js/config.js?v=1.7.2"></script>
+<script src="js/pwa.js?v=1.7.2"></script>
+<script src="js/main.js?v=1.7.2"></script>
 </body></html>
