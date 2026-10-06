@@ -20,7 +20,11 @@
     --bd: #2c4234;
   }
 }
+:root[data-theme="light"] {
+  color-scheme: light;
+}
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --bg: #142019;
   --card: #1c2b21;
   --tx: #e6f0e8;
@@ -107,7 +111,7 @@ button.x {
   margin-bottom: 8px;
 }
 .rrow {
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto;
   align-items: center;
 }
 .rrow select,
@@ -641,6 +645,17 @@ body.nav #drawer {
   border-radius: 10px;
   font-size: 1rem;
 }
+.nirow {
+  display: flex;
+  gap: 4px;
+}
+.nirow .ni:first-child {
+  flex: 1;
+}
+#theme2 {
+  width: auto;
+  flex: 0 0 auto;
+}
 .ni.on {
   background: color-mix(in srgb, var(--ac) 16%, transparent);
   color: var(--ac);
@@ -720,7 +735,7 @@ body.nav #drawer {
   }
 }
 
-#gear {
+#theme {
   margin-left: auto;
 }
 .secrow {

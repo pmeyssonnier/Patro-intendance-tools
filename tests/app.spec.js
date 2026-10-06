@@ -1721,3 +1721,96 @@ test("sauvegarde : l'export du projet affiche un message, et propose de copier s
   await page.locator("#expc").click();
   await expect(page.locator("#jmsg")).toContainText(/Projet copié|Copie impossible/);
 });
+
+test("recettes : renommer une recette garde sa place, ses ingrédients et son menu ; la description s'enregistre en tapant", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const avant = await page.evaluate(() => ({
+    noms: Object.keys(S.rec),
+    total: LAST.sum,
+    ing: Object.keys(S.rec["Spaghetti bolognaise"].ing),
+  }));
+  await page.locator("#redit").click();
+  await expect(page.locator("#rename")).toHaveValue("Spaghetti bolognaise");
+  // un nom déjà pris ou vide est refusé
+  await page.locator("#rename").fill("Croque-monsieur");
+  await page.locator("#reok").click();
+  await expect(page.locator("#remsg")).toContainText("porte déjà ce nom");
+  await page.locator("#rename").fill("   ");
+  await page.locator("#reok").click();
+  await expect(page.locator("#remsg")).toContainText("ne peut pas être vide");
+  await page.locator("#rename").fill("Spaghetti maison");
+  await page.locator("#reok").click();
+  await expect(page.locator("#rsel")).toHaveValue("Spaghetti maison");
+  const apres = await page.evaluate(() => ({
+    noms: Object.keys(S.rec),
+    total: LAST.sum,
+    ing: Object.keys(S.rec["Spaghetti maison"].ing),
+    cur: S.cur,
+    menus: JSON.stringify(S.camps),
+  }));
+  expect(apres.noms).toEqual(
+    avant.noms.map((n) => (n === "Spaghetti bolognaise" ? "Spaghetti maison" : n))
+  );
+  expect(apres.ing).toEqual(avant.ing);
+  expect(apres.total).toBeCloseTo(avant.total, 6); // le menu suit : le budget ne change pas
+  expect(apres.cur).toBe("Spaghetti maison");
+  expect(apres.menus).toContain("Spaghetti maison");
+  expect(apres.menus).not.toContain("Spaghetti bolognaise");
+  // Échap annule
+  await page.locator("#redit").click();
+  await page.locator("#rename").fill("Autre");
+  await page.locator("#rename").press("Escape");
+  await expect(page.locator("#reform")).toBeHidden();
+  expect(await page.evaluate(() => S.cur)).toBe("Spaghetti maison");
+  // la description est enregistrée dès la frappe, sans quitter le champ
+  await page.locator("#rdesc").fill("Nouvelle description de la recette");
+  await page.reload();
+  expect(await page.evaluate(() => S.rec["Spaghetti maison"].desc)).toBe(
+    "Nouvelle description de la recette"
+  );
+  expect(await page.evaluate(() => S.cur)).toBe("Spaghetti maison");
+});
+
+test("thème : un bouton à côté de la configuration bascule entre clair et sombre, et se souvient du choix", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await ouvrir(page);
+  const fond = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const theme = () => page.evaluate(() => document.documentElement.dataset.theme || "");
+  // le bouton est juste à côté de la configuration : dans la barre du haut (téléphone), dans le menu (ordinateur)
+  expect(await page.evaluate(() => document.querySelector("#theme").nextElementSibling.id)).toBe(
+    "gear"
+  );
+  expect(
+    await page.evaluate(() => document.querySelector("#theme2").previousElementSibling.dataset.g)
+  ).toBe("cfg");
+  const bouton = async () => {
+    if (await page.locator("#burger").isVisible()) await page.locator("#theme").click();
+    else await page.locator("#theme2").click();
+  };
+  expect(await theme()).toBe("");
+  expect(await fond()).toBe("rgb(234, 244, 236)"); // clair, comme l'appareil
+  await bouton();
+  expect(await theme()).toBe("dark");
+  expect(await fond()).toBe("rgb(20, 32, 25)");
+  await expect(page.locator("#theme2")).toHaveAttribute("aria-label", "Passer en mode clair");
+  // le choix survit au rechargement, sans flash clair
+  await page.reload();
+  expect(await theme()).toBe("dark");
+  expect(await fond()).toBe("rgb(20, 32, 25)");
+  await bouton();
+  expect(await theme()).toBe("light");
+  expect(await fond()).toBe("rgb(234, 244, 236)");
+  // sur un appareil en mode sombre, le premier clic passe en clair
+  await page.evaluate(() => localStorage.removeItem("pss-theme"));
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.reload();
+  expect(await fond()).toBe("rgb(20, 32, 25)");
+  await bouton();
+  expect(await theme()).toBe("light");
+  expect(await fond()).toBe("rgb(234, 244, 236)");
+});
