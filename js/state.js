@@ -162,6 +162,10 @@ if (!S.cust) S.cust = {};
 
 if (!Array.isArray(S.hid)) S.hid = [];
 
+/** Nom et unité d'origine des ingrédients de base (avant les modifications de S.ov). */
+const ING0 = {};
+for (const k in ING) ING0[k] = [ING[k][0], ING[k][1]];
+
 for (const k in S.cust) {
   ING[k] = S.cust[k];
   if (!S.dd)
@@ -169,6 +173,14 @@ for (const k in S.cust) {
       if (DIETS[d]) DIETS[d].ex[k] = null;
     });
 }
+
+if (!S.ov || typeof S.ov !== "object") S.ov = {};
+
+for (const k in S.ov)
+  if (ING0[k] && S.ov[k] && S.ov[k].n) {
+    ING[k][0] = S.ov[k].n;
+    ING[k][1] = S.ov[k].u;
+  }
 
 if (S.dd && typeof S.dd === "object") DIETS = S.dd;
 

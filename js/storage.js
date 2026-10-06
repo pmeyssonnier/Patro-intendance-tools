@@ -73,6 +73,7 @@ function cleanProject(x) {
     prices: {},
     pn: {},
     cust: {},
+    ov: {},
     hid: Array.isArray(x.hid)
       ? x.hid.filter((k) => typeof k === "string" && okid(k)).slice(0, 200)
       : [],
@@ -118,6 +119,16 @@ function cleanProject(x) {
         .slice(0, 20),
     ];
   }
+  // noms et unités modifiés des ingrédients de base (identifiant -> { n, u })
+  for (const [k, v] of ent(x.ov))
+    if (
+      okid(k) &&
+      obj(v) &&
+      typeof v.n === "string" &&
+      v.n.trim() &&
+      ["g", "ml", "pc"].includes(v.u)
+    )
+      o.ov[k] = { n: v.n.trim().slice(0, 100), u: v.u };
   if (obj(x.dd)) {
     o.dd = {};
     for (const [k, v] of ent(x.dd)) {

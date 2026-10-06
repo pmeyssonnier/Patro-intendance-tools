@@ -263,18 +263,25 @@ $("ino").onclick = () => {
   $("iform").style.display = "none";
 };
 
-$("iok").onclick = () => {
-  const n = $("iname").value.trim();
-  if (!n) return;
-  const k = "c_" + Date.now().toString(36);
-  const dg = DMAP[$("idiet").value] || [];
+/** Crée un ingrédient ajouté à la main (identifiant c_…) ; dgKey = « attention régime » (viande, porc, boeuf, sl, sg, nut). Renvoie son identifiant. */
+function createIng(n, unit, dgKey) {
+  let k = "c_" + Date.now().toString(36);
+  while (ING[k]) k += "a";
+  const dg = DMAP[dgKey] || [];
   const kw = n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const e = [n, $("iunit").value, 0, kw, 0, dg];
+  const e = [n, unit, 0, kw, 0, dg];
   S.cust[k] = e;
   ING[k] = e;
   dg.forEach((d) => {
     if (DIETS[d]) DIETS[d].ex[k] = null;
   });
+  return k;
+}
+
+$("iok").onclick = () => {
+  const n = $("iname").value.trim();
+  if (!n) return;
+  const k = createIng(n, $("iunit").value, $("idiet").value);
   if (S.rec[S.cur]) S.rec[S.cur].ing[k] = SEC.map(() => 0);
   $("iform").style.display = "none";
   drawRec();

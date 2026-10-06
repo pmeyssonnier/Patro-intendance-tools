@@ -987,3 +987,15 @@ th.num,
 .rtf .s[data-rp] {
   flex-basis: 100%;
 }
+
+/* Catalogue de prix : modification d'un ingrédient */
+.ced .rtf input[type="text"] {
+  width: 220px;
+  max-width: 100%;
+}
+.ced .rtf select {
+  width: auto;
+}
+.ced td {
+  background: #eef5ef;
+}
