@@ -618,6 +618,7 @@ test("catalogue : le filtre cherche dans le nom de l'ingrédient et du produit",
   await expect(lignes.first()).toContainText("Céréales");
   // le nom d'un produit importé est cherché aussi
   await page.locator("#cfilt").fill("");
+  await page.locator("#iopen").click();
   await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
   await page.locator("#imp").click();
   await page.locator("#cfilt").fill("boni");
@@ -636,6 +637,7 @@ test("catalogue : le filtre cherche dans le nom de l'ingrédient et du produit",
 test("catalogue : l'export du catalogue se relit tel quel", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");
+  await page.locator("#iopen").click();
   await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
   await page.locator("#imp").click();
   await page.locator('input[data-cp="riz"]').fill("2.5");
@@ -660,6 +662,7 @@ test("catalogue : l'export du catalogue se relit tel quel", async ({ page }) => 
 test("partager : le catalogue de prix se partage, s'imprime et s'exporte", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");
+  await page.locator("#iopen").click();
   await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
   await page.locator("#imp").click();
   await aller(page, "sh");
@@ -1243,6 +1246,7 @@ test("catalogue : « Télécharger un exemple » disparaît dès que des produit
 }) => {
   await ouvrir(page);
   await aller(page, "cat");
+  await page.locator("#iopen").click();
   await expect(page.locator("#csvx")).toBeVisible();
   await page.evaluate(() => {
     S.pn.pain = "Pain blanc 800g";
@@ -1254,6 +1258,37 @@ test("catalogue : « Télécharger un exemple » disparaît dès que des produit
     drawCat();
   });
   await expect(page.locator("#csvx")).toBeVisible();
+});
+
+test("catalogue : l'import s'ouvre dans une fenêtre, Importer l'applique et la ferme, Annuler la ferme", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await expect(page.locator("#impdlg")).toBeHidden();
+  await page.locator("#iopen").click();
+  await expect(page.locator("#impdlg")).toBeVisible();
+  await page.locator("#impno").click();
+  await expect(page.locator("#impdlg")).toBeHidden();
+  await page.locator("#iopen").click();
+  await page.locator("#csv").fill("Spaghetti Boni 500g;1,39");
+  await page.locator("#imp").click();
+  await expect(page.locator("#impdlg")).toBeHidden();
+  await expect(page.locator("#impres")).not.toHaveText("");
+  await page.locator("#iopen").click();
+  await expect(page.locator("#csv")).toHaveValue("");
+});
+
+test("catalogue : « Choisir un fichier » ouvre la fenêtre d'import", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#file").setInputFiles({
+    name: "prix.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("Spaghetti Boni 500g;1,39"),
+  });
+  await expect(page.locator("#impdlg")).toBeVisible();
+  await expect(page.locator("#fname")).toContainText("prix.csv");
 });
 
 const BAGEL = `<script type="application/ld+json">{

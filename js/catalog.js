@@ -463,7 +463,9 @@ $("pnew").addEventListener("click", (e) => {
     drawInconnus();
     $("impmsg").textContent =
       `${n} ingrédient${n > 1 ? "s" : ""} ajouté${n > 1 ? "s" : ""} au catalogue.`;
+    $("impres").textContent = $("impmsg").textContent;
     refreshIng();
+    if (!pendingInconnus.length) fermerImportPrix();
     return;
   }
   if (e.target.id !== "pall") return;
@@ -517,8 +519,46 @@ function chargerPrix(nom, texte) {
     ". Vérifie l'aperçu puis clique sur « Importer ».";
 }
 
+/** Ouvre la fenêtre d'import (messages et aperçu vides). */
+function ouvrirImportPrix() {
+  $("impmsg").textContent = "";
+  $("impres").textContent = "";
+  if (!$("impdlg").open) $("impdlg").showModal();
+}
+
+/** Referme la fenêtre d'import : l'état de l'aperçu est remis à zéro par l'événement « close ». */
+function fermerImportPrix() {
+  if ($("impdlg").open) $("impdlg").close();
+}
+
+// quelle que soit la façon de fermer (Importer, Annuler, Échap), on repart d'une fenêtre vide
+$("impdlg").addEventListener("close", () => {
+  pendingJson = null;
+  pendingInconnus = [];
+  $("csv").value = "";
+  $("file").value = "";
+  $("fname").textContent = "Aucun fichier choisi";
+  drawInconnus();
+});
+
+// un clic sur le fond (hors de la fenêtre) la referme
+$("impdlg").addEventListener("click", (e) => {
+  const r = $("impdlg").getBoundingClientRect();
+  if (
+    e.target === $("impdlg") &&
+    (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
+  )
+    fermerImportPrix();
+});
+
+$("filelab").addEventListener("click", ouvrirImportPrix); // « Choisir un fichier » ouvre aussi la fenêtre
+$("file2").onclick = () => $("file").click();
+$("iopen").onclick = ouvrirImportPrix;
+$("impno").onclick = fermerImportPrix;
+
 $("file").onchange = (e) => {
   const f = e.target.files[0];
+  if (f && !$("impdlg").open) ouvrirImportPrix();
   $("fname").textContent = f ? f.name : "Aucun fichier choisi";
   if (f) {
     const r = new FileReader();
@@ -529,6 +569,7 @@ $("file").onchange = (e) => {
 
 /** Récupère le dernier fichier de prix publié avec l'appli (aucun service externe appelé, aucun crédit consommé). */
 $("pfetch").onclick = async () => {
+  ouvrirImportPrix();
   $("impmsg").textContent = "Récupération des prix…";
   let texte;
   try {
@@ -568,6 +609,12 @@ function perUnit(name, p) {
   return q ? (p / q) * 1000 : null;
 }
 
+/** Fin d'un import : le résultat reste affiché sur la page et la fenêtre se referme, sauf s'il reste des produits absents à ajouter. */
+function finImport() {
+  $("impres").textContent = $("impmsg").textContent;
+  if (!pendingInconnus.length) fermerImportPrix();
+}
+
 $("imp").onclick = () => {
   if (pendingJson) {
     const pj = pendingJson;
@@ -590,6 +637,7 @@ $("imp").onclick = () => {
       (pendingInconnus.length
         ? ` ${pendingInconnus.length} produits absents restent à ajouter avec le bouton sous la liste.`
         : "");
+    finImport();
     calc();
     return;
   }
@@ -622,6 +670,7 @@ $("imp").onclick = () => {
   }
   $("impmsg").textContent =
     `${items.length} produits lus, ${hit} ingrédients reliés. Vérifie les ↳ dans les tableaux.`;
+  finImport();
   calc();
 };
 
