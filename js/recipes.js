@@ -27,14 +27,26 @@ function ratioPreview(k, q, n) {
     : "Renseigne d'abord les effectifs (page « Camp & effectifs »).";
 }
 
+/** Mode édition du nom et de la description : { nom, desc } de la recette au moment où il a commencé (pour « Annuler »), ou null. */
+let EDIT = null;
+
 function drawRec() {
   const names = Object.keys(S.rec);
   if (!S.rec[S.cur]) S.cur = names[0] || "";
+  // changer de recette ou en supprimer une referme le mode édition
+  if (EDIT && EDIT.nom !== S.cur) {
+    EDIT = null;
+    $("reform").style.display = "none";
+  }
   $("rsel").innerHTML = names
     .map((d) => `<option${d === S.cur ? " selected" : ""}>${esc(d)}</option>`)
     .join("");
   const R = S.rec[S.cur];
   $("rdesc").value = R ? R.desc : "";
+  // la description n'est modifiable que dans le mode édition (✎)
+  $("rdesc").readOnly = !EDIT;
+  $("rdesc").placeholder =
+    EDIT || !R ? "" : "Aucune description. Clique sur ✎ pour en ajouter une.";
   $("rh").innerHTML =
     "<tr><th>Ingrédient</th>" +
     SEC.map(
@@ -100,18 +112,29 @@ function renameRecipe(ancien, nom) {
 }
 
 $("redit").onclick = () => {
-  if (!S.rec[S.cur]) return;
+  if (!S.rec[S.cur] || EDIT) return;
+  EDIT = { nom: S.cur, desc: S.rec[S.cur].desc };
   $("reform").style.display = "grid";
   $("remsg").textContent = "";
   $("rename").value = S.cur;
+  drawRec();
   $("rename").focus();
   $("rename").select();
 };
 
-$("reno").onclick = () => {
+/** Referme le mode édition ; avec « restaurer », la description reprend sa valeur d'avant. */
+function finEdition(restaurer) {
+  if (EDIT && restaurer && S.rec[EDIT.nom]) {
+    S.rec[EDIT.nom].desc = EDIT.desc;
+    save();
+  }
+  EDIT = null;
   $("reform").style.display = "none";
   $("remsg").textContent = "";
-};
+  drawRec();
+}
+
+$("reno").onclick = () => finEdition(true);
 
 $("reok").onclick = () => {
   const err = renameRecipe(S.cur, $("rename").value);
@@ -119,9 +142,8 @@ $("reok").onclick = () => {
     $("remsg").textContent = "⚠ " + err;
     return;
   }
-  $("reform").style.display = "none";
-  $("remsg").textContent = "";
-  drawRec();
+  EDIT = null;
+  finEdition(false);
   drawMenu();
   calc();
 };
@@ -190,6 +212,7 @@ $("rb").addEventListener("click", (e) => {
     drawRec();
     calc();
   } else if (t.rm) {
+    if (!confirm("Retirer « " + ING[t.rm][0] + " » de la recette « " + S.cur + " » ?")) return;
     delete R.ing[t.rm];
     if (R.fx) delete R.fx[t.rm];
     if (R.fa) delete R.fa[t.rm];

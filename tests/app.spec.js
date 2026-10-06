@@ -1765,7 +1765,8 @@ test("recettes : renommer une recette garde sa place, ses ingrédients et son me
   await page.locator("#rename").press("Escape");
   await expect(page.locator("#reform")).toBeHidden();
   expect(await page.evaluate(() => S.cur)).toBe("Spaghetti maison");
-  // la description est enregistrée dès la frappe, sans quitter le champ
+  // la description est enregistrée dès la frappe (mode édition), sans quitter le champ
+  await page.locator("#redit").click();
   await page.locator("#rdesc").fill("Nouvelle description de la recette");
   await page.reload();
   expect(await page.evaluate(() => S.rec["Spaghetti maison"].desc)).toBe(
@@ -1813,4 +1814,147 @@ test("thème : un bouton à côté de la configuration bascule entre clair et so
   await bouton();
   expect(await theme()).toBe("light");
   expect(await fond()).toBe("rgb(234, 244, 236)");
+});
+
+test("thème sombre : titres de rayon et ligne d'édition restent lisibles (fond sombre, pas de bandeau blanc)", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await ouvrir(page);
+  const lum = (css) => {
+    // « rgb(20, 32, 25) » (0 à 255) ou « color(srgb 0.08 0.12 0.1) » (0 à 1), selon que la couleur est mélangée ou non
+    const [r, g, b] = css
+        .match(/[\d.]+/g)
+        .slice(0, 3)
+        .map(Number),
+      max = css.startsWith("color(") ? 1 : 255;
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / max;
+  };
+  await aller(page, "list");
+  const titre = await page
+    .locator("#list tr.grp td")
+    .first()
+    .evaluate((e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).color]);
+  expect(lum(titre[0])).toBeLessThan(0.35); // fond sombre
+  expect(lum(titre[1])).toBeGreaterThan(0.6); // texte clair
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  const edition = await page
+    .locator("#ct tr.ced td")
+    .evaluate((e) => getComputedStyle(e).backgroundColor);
+  expect(lum(edition)).toBeLessThan(0.35);
+  // en clair, le fond reste un bandeau vert très clair
+  await page.emulateMedia({ colorScheme: "light" });
+  await aller(page, "list");
+  const clair = await page
+    .locator("#list tr.grp td")
+    .first()
+    .evaluate((e) => getComputedStyle(e).backgroundColor);
+  expect(lum(clair)).toBeGreaterThan(0.8);
+});
+
+test("import de recette : « Annuler » à côté de « Lire la recette » referme la zone sans rien créer", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const avant = await page.evaluate(() => Object.keys(S.rec).length);
+  await page.locator("#rimp").click();
+  await expect(page.locator("#rimpf")).toBeVisible();
+  await page.locator("#rimt").fill("2 pains\n400 g gyros de volaille");
+  await page.locator("#rimu").fill("https://exemple.be/recette");
+  await page.locator("#rimlire").click();
+  await expect(page.locator("#rimv")).toContainText("Créer la recette");
+  await page.locator("#rimfer").click();
+  await expect(page.locator("#rimpf")).toBeHidden();
+  await expect(page.locator("#rimt")).toHaveValue("");
+  await expect(page.locator("#rimu")).toHaveValue("");
+  await expect(page.locator("#rimv")).toBeEmpty();
+  expect(await page.evaluate(() => Object.keys(S.rec).length)).toBe(avant);
+  // sans avoir lu de recette, le bouton referme aussi la zone
+  await page.locator("#rimp").click();
+  await expect(page.locator("#rimpf")).toBeVisible();
+  await page.locator("#rimfer").click();
+  await expect(page.locator("#rimpf")).toBeHidden();
+});
+
+test("recettes : retirer un ingrédient d'une recette demande une confirmation", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const nb = () => page.evaluate(() => Object.keys(S.rec[S.cur].ing).length);
+  const avant = await nb();
+  const messages = [];
+  page.removeAllListeners("dialog");
+  let accepter = false;
+  page.on("dialog", (d) => {
+    messages.push(d.type() + ":" + d.message());
+    return accepter ? d.accept() : d.dismiss();
+  });
+  // refusé : rien ne change
+  await page.locator("#rb [data-rm]").first().click();
+  expect(messages).toHaveLength(1);
+  expect(messages[0]).toMatch(/^confirm:Retirer « .+ » de la recette « Spaghetti bolognaise » \?$/);
+  expect(await nb()).toBe(avant);
+  // accepté : l'ingrédient est retiré
+  accepter = true;
+  await page.locator("#rb [data-rm]").first().click();
+  expect(await nb()).toBe(avant - 1);
+});
+
+test("thème : changer de mode ne fait pas disparaître la page affichée", async ({ page }) => {
+  await ouvrir(page);
+  for (const id of ["rec", "list", "cat"]) {
+    await aller(page, id);
+    const visible = () => page.locator(`#g-${id}.on`).isVisible();
+    expect(await visible()).toBe(true);
+    // téléphone : bouton de la barre du haut ; ordinateur : bouton du menu
+    if (await page.locator("#burger").isVisible()) {
+      await page.locator("#theme").click();
+      expect(await visible()).toBe(true);
+      await page.locator("#burger").click();
+    }
+    await page.locator("#theme2").click();
+    expect(await page.evaluate(() => document.querySelectorAll(".pg.on").length)).toBe(1);
+    expect(
+      await page.evaluate((g) => document.querySelector(`#g-${g}`).classList.contains("on"), id)
+    ).toBe(true);
+  }
+});
+
+test("recettes : la description est verrouillée hors du mode édition (✎), et « Annuler » la restaure", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const desc = () => page.evaluate(() => S.rec[S.cur].desc);
+  const avant = await desc();
+  // verrouillée par défaut
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
+  await page.locator("#rdesc").click();
+  await page.keyboard.type("XYZ");
+  expect(await desc()).toBe(avant);
+  // mode édition : modifiable
+  await page.locator("#redit").click();
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", false);
+  await page.locator("#rdesc").fill("Texte provisoire");
+  expect(await desc()).toBe("Texte provisoire");
+  // Annuler : retour à la description d'avant, de nouveau verrouillée
+  await page.locator("#reno").click();
+  expect(await desc()).toBe(avant);
+  await expect(page.locator("#rdesc")).toHaveValue(avant);
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
+  await expect(page.locator("#reform")).toBeHidden();
+  // Enregistrer : la nouvelle description reste, verrouillée
+  await page.locator("#redit").click();
+  await page.locator("#rdesc").fill("Description finale");
+  await page.locator("#reok").click();
+  expect(await desc()).toBe("Description finale");
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
+  // changer de recette referme le mode édition
+  await page.locator("#redit").click();
+  await page.locator("#rsel").selectOption({ index: 1 });
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
+  await expect(page.locator("#reform")).toBeHidden();
 });
