@@ -6,6 +6,7 @@
   --mu: #5c6f62;
   --ac: #1f7a3f;
   --bd: #c9e0cf;
+  --grp: #e3efe6;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -18,6 +19,7 @@
     --mu: #9bb3a2;
     --ac: #2a8a50;
     --bd: #2c4234;
+    --grp: #264a33;
   }
 }
 :root[data-theme="light"] {
@@ -25,6 +27,7 @@
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
+  --grp: #264a33;
   --bg: #142019;
   --card: #1c2b21;
   --tx: #e6f0e8;
@@ -1010,12 +1013,16 @@ th.num,
 
 /* Catalogue de prix : modification d'un ingrédient */
 .ced td {
-  background: color-mix(in srgb, var(--ac) 14%, var(--card));
+  background: var(--grp);
+}
+
+.promo {
+  color: var(--ac);
 }
 
 /* Liste de courses groupée par rayon */
 #list tr.grp td {
-  background: color-mix(in srgb, var(--ac) 14%, var(--card));
+  background: var(--grp);
   color: var(--tx);
   padding-top: 8px;
 }

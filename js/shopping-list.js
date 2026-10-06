@@ -3,9 +3,23 @@
 
 let LAST = { keys: [], tot: {}, sum: 0, pm: [] };
 
-/** Regroupe les ingrédients de la liste par rayon, dans l'ordre du magasin : [[nom du rayon, [clés]], …]. Un seul groupe sans titre si le regroupement est désactivé. */
-function parRayon(keys) {
-  if (S.gl === false) return [["", keys]];
+/** Économie possible sur un ingrédient si la promotion s'applique à toute la quantité achetée (le budget garde le prix normal). */
+const economie = (k, q) => {
+  const x = promoDe(k);
+  return x ? ((price(k) - x.p) * q) / per(k) : 0;
+};
+
+/** Ligne « 🏷️ promo » sous un ingrédient (catalogue, liste de courses) ; "" s'il n'y en a pas. */
+const etiquettePromo = (k, q) => {
+  const x = promoDe(k);
+  if (!x) return "";
+  const gain = q ? ` · économie possible ≈ ${eur(economie(k, q))}` : "";
+  return `<div class="s promo">🏷️ promo : ${eur(x.p)}/${ING[k][1] === "pc" ? "pièce" : ul(k)}${x.t ? " (" + esc(x.t) + ")" : ""}${gain}</div>`;
+};
+
+/** Regroupe des ingrédients par rayon, dans l'ordre du magasin : [[nom du rayon, [clés]], …]. Un seul groupe sans titre si le regroupement est désactivé (par défaut : l'option de la liste de courses). */
+function parRayon(keys, groupe = S.gl !== false) {
+  if (!groupe) return [["", keys]];
   const g = [];
   for (const [c, nom] of CATS) {
     const l = keys.filter((k) => catOf(k) === c);
@@ -43,12 +57,15 @@ function calc() {
             .map((k) => {
               const c = (tot[k] / per(k)) * price(k);
               sum += c;
-              return `<tr><td>${esc(ING[k][0])}${price(k) ? "" : '<div class="s" style="color:#d33">⚠ prix manquant</div>'}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}</td><td>${qty(k, tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-p="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td>${eur(c)}</td></tr>`;
+              return `<tr><td>${esc(ING[k][0])}${price(k) ? "" : '<div class="s" style="color:#d33">⚠ prix manquant</div>'}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}${etiquettePromo(k, tot[k])}</td><td>${qty(k, tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-p="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td>${eur(c)}</td></tr>`;
             })
             .join("")
       )
       .join("") || "<tr><td>Aucun repas</td></tr>";
   LAST = { keys, tot, sum, pm };
+  const eco = keys.reduce((a, k) => a + economie(k, tot[k]), 0);
+  $("ecow").hidden = !(eco > 0.005);
+  $("eco").textContent = eur(eco);
   const n = nn();
   $("tot").textContent = eur(sum);
   $("ntot").textContent = eur(sum);
@@ -83,6 +100,7 @@ $("list").addEventListener("change", (e) => {
   if (k) {
     S.prices[k] = +e.target.value || 0;
     delete S.pn[k];
+    delete S.promo[k];
     calc();
   }
 });

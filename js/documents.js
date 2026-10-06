@@ -218,9 +218,16 @@ function csvList() {
 }
 
 function csvPrices() {
-  const r = [["Ingrédient", "Produit retenu", "Unité du prix", "Prix (€)", "Remarque"]];
+  const r = [["Ingrédient", "Produit retenu", "Unité du prix", "Prix (€)", "Remarque", "Rayon"]];
   catKeys().forEach((k) =>
-    r.push([ING[k][0], prodName(k), priceUnit(k), cn(price(k)), price(k) ? "" : "prix manquant"])
+    r.push([
+      ING[k][0],
+      prodName(k),
+      priceUnit(k),
+      cn(price(k)),
+      price(k) ? "" : "prix manquant",
+      CATS.find((c) => c[0] === catOf(k))[1],
+    ])
   );
   r.push([]);
   r.push(["Troupe", troop()]);

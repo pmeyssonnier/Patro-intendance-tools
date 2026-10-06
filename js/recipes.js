@@ -295,6 +295,7 @@ function rmIng(k) {
   delete S.prices[k];
   delete S.pn[k];
   delete S.cat[k];
+  delete S.promo[k];
   if (S.cust[k]) {
     delete S.cust[k];
     delete ING[k];

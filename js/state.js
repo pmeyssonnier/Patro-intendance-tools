@@ -178,6 +178,14 @@ if (!S.ov || typeof S.ov !== "object") S.ov = {};
 
 if (!S.cat || typeof S.cat !== "object") S.cat = {};
 
+if (!S.promo || typeof S.promo !== "object") S.promo = {};
+
+/** Promotion connue d'un ingrédient { p: prix promo par unité (€/kg, €/L ou €/pièce), t: texte } si elle est vraiment moins chère que le prix actuel, sinon null. Le budget garde le prix normal. */
+const promoDe = (k) => {
+  const x = S.promo[k];
+  return x && x.p > 0 && x.p < price(k) ? x : null;
+};
+
 /** Rayon d'un ingrédient (clé de CATS) : celui choisi, sinon le rayon par défaut des ingrédients de base, sinon « Autre ». */
 const catOf = (k) => S.cat[k] || CAT0[k] || "aut";
 
@@ -215,6 +223,7 @@ if (S.dd && typeof S.dd === "object") DIETS = S.dd;
       for (const k of Object.keys(r.fa)) if (!(r.fx && k in r.fx)) delete r.fa[k];
     } else delete r.fa;
   }
+  for (const k of Object.keys(S.promo)) if (!ING[k]) delete S.promo[k];
   for (const k of Object.keys(S.cat))
     if (!ING[k] || !CATS.some((c) => c[0] === S.cat[k])) delete S.cat[k];
   for (const d in DIETS) {
