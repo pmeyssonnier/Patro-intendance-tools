@@ -702,6 +702,74 @@ test("les pièces sont arrondies au supérieur sans erreur de calcul décimal", 
   expect(r).toEqual([true, "6 pc", "7 pc", "1 pc", ["6", "pc"]]);
 });
 
+test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la quantité par personne", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#inew").click();
+  await page.locator("#iname").fill("Baguette");
+  await page.locator("#iunit").selectOption("pc");
+  await page.locator("#iok").click();
+  const ligne = () => page.locator("#rb tr", { hasText: "Baguette" });
+  // pas de saisie par ratio en mode « par personne » : elle est dans le mode « quantité unique »
+  await expect(ligne().locator("[data-rq]")).toHaveCount(0);
+  await ligne().locator("[data-tg]").click(); // → quantité unique
+  const N = await page.evaluate(() => nn());
+  await ligne().locator("[data-rq]").fill("1");
+  await ligne().locator("[data-rn]").fill("5");
+  await expect(ligne().locator("[data-rp]")).toContainText(
+    "= " + Math.ceil(N / 5 - 1e-9) + " pc pour " + N + " personnes"
+  );
+  await ligne().locator("[data-ra]").click();
+  await expect(ligne().locator("[data-fx]")).toHaveValue(String(N / 5));
+  // « → par personne » répartit : 1/5 = 0,2 dans chaque section
+  await ligne().locator("[data-tg]").click();
+  const champs = ligne().locator("input[data-s]");
+  await expect(champs).toHaveCount(4);
+  for (let i = 0; i < 4; i++) await expect(champs.nth(i)).toHaveValue("0.2");
+  // la virgule française est acceptée : 0,5 pour 4 personnes = 0,125 par personne
+  await ligne().locator("[data-tg]").click();
+  await ligne().locator("[data-rq]").fill("0,5");
+  await ligne().locator("[data-rn]").fill("4");
+  await ligne().locator("[data-ra]").click();
+  await ligne().locator("[data-tg]").click();
+  await expect(ligne().locator("input[data-s]").first()).toHaveValue("0.125");
+});
+
+test("recettes : passer de « quantité unique » à « par personne » garde le total, sans arrondi à l'entier", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const premiere = () => page.locator("#rb tr").first();
+  await premiere().locator("[data-tg]").click(); // → quantité unique
+  await premiere().locator("[data-fx]").fill("1"); // 1 kg au total
+  await premiere().locator("[data-fx]").press("Tab");
+  await premiere().locator("[data-tg]").click(); // → par personne
+  const { vals, N, nbSec } = await page.evaluate(() => {
+    const k = Object.keys(S.rec[S.cur].ing)[0];
+    return { vals: S.rec[S.cur].ing[k], N: nn(), nbSec: SEC.length };
+  });
+  expect(vals).toHaveLength(nbSec);
+  // 1 000 g répartis : 33,333333 g par personne (et non 33 g, qui ferait 990 g)
+  expect(vals[0]).toBeCloseTo(1000 / N, 5);
+  // la même valeur dans chaque section
+  expect(vals.every((v) => Math.abs(v - 1000 / N) < 1e-5)).toBe(true);
+});
+
+test("recettes : le passage à « par personne » suit le nombre de sections", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cfg");
+  await page.locator('[data-sx="3"]').click();
+  await page.locator('[data-sx="2"]').click(); // 2 sections restantes
+  await aller(page, "rec");
+  const premiere = () => page.locator("#rb tr").first();
+  await premiere().locator("[data-tg]").click();
+  await premiere().locator("[data-tg]").click();
+  await expect(premiere().locator("input[data-s]")).toHaveCount(2);
+});
+
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");

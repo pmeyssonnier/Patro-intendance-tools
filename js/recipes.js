@@ -1,6 +1,26 @@
 /* Intendance PSS – Recettes et ingrédients : édition, quantités (par personne ou uniques), ingrédients personnalisés, suppression.
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
+/** « X pour N personnes » en mode quantité unique : le total (X ÷ N × effectif) remplace la quantité unique. */
+function ratioForm(k) {
+  const u = ING[k][1];
+  return `<div class="rtf"><span class="s">ou</span> <input type="text" inputmode="decimal" value="1" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="5" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personnes</span> <button class="x" data-ra="${esc(k)}">Appliquer</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, 1, 5)}</div></div>`;
+}
+
+/** Nombre saisi dans un champ texte, virgule ou point (« 0,5 »). */
+const nbr = (v) => parseFloat(String(v).replace(",", "."));
+
+/** Total d'un ingrédient pour « q pour n personnes » avec l'effectif actuel, en unité de base (g, ml, pièce). */
+const ratioTotal = (q, n) => Math.round((q / n) * nn() * 1000) / 1000;
+
+function ratioPreview(k, q, n) {
+  if (!(q >= 0) || !(n > 0)) return "";
+  const N = nn();
+  return N
+    ? `= ${qty(k, ratioTotal(q, n))} pour ${N} personnes (${Math.round((q / n) * 1e6) / 1e6} ${ING[k][1]} par personne)`
+    : "Renseigne d'abord les effectifs (page « Camp & effectifs »).";
+}
+
 function drawRec() {
   const names = Object.keys(S.rec);
   if (!S.rec[S.cur]) S.cur = names[0] || "";
@@ -19,7 +39,7 @@ function drawRec() {
     ? Object.entries(R.ing)
         .map(([k, q]) => {
           const fx = R.fx && k in R.fx;
-          return `<tr><td>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${esc(k)}">${fx ? "→ par personne" : "→ quantité unique"}</button></div></td>${fx ? `<td colspan="${SEC.length}"><input type="number" min="0" step="any" value="${+(R.fx[k] / fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span><label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa && R.fa[k] === 0 ? "" : " checked"} style="width:auto"> adapter aux régimes</label></td>` : q.map((v, i) => `<td><input type="number" min="0" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${esc(SEC[i][0])}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>`;
+          return `<tr><td>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${esc(k)}">${fx ? "→ par personne" : "→ quantité unique"}</button></div></td>${fx ? `<td colspan="${SEC.length}"><input type="number" min="0" step="any" value="${+(R.fx[k] / fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span>${ratioForm(k)}<label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa && R.fa[k] === 0 ? "" : " checked"} style="width:auto"> adapter aux régimes</label></td>` : q.map((v, i) => `<td><input type="number" min="0" step="any" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${esc(SEC[i][0])}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>`;
         })
         .join("")
     : "";
@@ -61,6 +81,18 @@ $("rb").addEventListener("change", (e) => {
   }
 });
 
+$("rb").addEventListener("input", (e) => {
+  const d = e.target.dataset,
+    box = e.target.closest(".rtf");
+  if (!box || (d.rq === undefined && d.rn === undefined)) return;
+  const k = d.rq ?? d.rn;
+  box.querySelector("[data-rp]").textContent = ratioPreview(
+    k,
+    nbr(box.querySelector("[data-rq]").value),
+    nbr(box.querySelector("[data-rn]").value)
+  );
+});
+
 $("rb").addEventListener("click", (e) => {
   const t = e.target.dataset,
     R = S.rec[S.cur];
@@ -70,11 +102,20 @@ $("rb").addEventListener("click", (e) => {
     R.fx = R.fx || {};
     if (k in R.fx) {
       const n = nn(),
-        pp = n ? (ING[k][1] === "pc" ? +(R.fx[k] / n).toFixed(2) : Math.round(R.fx[k] / n)) : 0;
-      R.ing[k] = [pp, pp, pp, pp];
+        pp = n ? Math.round((R.fx[k] / n) * 1e6) / 1e6 : 0;
+      R.ing[k] = SEC.map(() => pp);
       delete R.fx[k];
       if (R.fa) delete R.fa[k];
     } else R.fx[k] = Math.round(R.ing[k].reduce((a, q, i) => a + q * C.n[i], 0) * 100) / 100;
+    drawRec();
+    calc();
+  } else if (t.ra) {
+    const box = e.target.closest(".rtf"),
+      q = nbr(box.querySelector("[data-rq]").value),
+      n = nbr(box.querySelector("[data-rn]").value);
+    if (!(q >= 0) || !(n > 0)) return;
+    if (!nn() || !R.fx || !(t.ra in R.fx)) return;
+    R.fx[t.ra] = ratioTotal(q, n);
     drawRec();
     calc();
   } else if (t.rm) {

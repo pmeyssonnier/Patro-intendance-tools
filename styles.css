@@ -968,3 +968,22 @@ th.num,
   margin-left: auto;
   text-align: right;
 }
+
+/* Recettes : saisie « X pour N personnes » */
+.rtf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+.rtf input {
+  width: 52px;
+  min-width: 0;
+}
+.rtf button {
+  flex-shrink: 0;
+}
+.rtf .s[data-rp] {
+  flex-basis: 100%;
+}

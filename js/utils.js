@@ -29,8 +29,8 @@ const price = (k) => S.prices[k] ?? ING[k][2],
 const fxu = (k) => (ING[k][1] === "pc" ? 1 : 1000),
   fxl = (k) => ({ g: "kg", ml: "L", pc: "pièces" })[ING[k][1]];
 
-/** Arrondi au supérieur sans les erreurs de calcul décimal : 6,000000000000001 (somme de 0,2 × effectifs) donne 6, pas 7. */
-const ceilp = (q) => Math.ceil(Math.round(q * 1e6) / 1e6);
+/** Arrondi au supérieur sans les erreurs de calcul décimal : 6,000000000000001 (somme de 0,2 × effectifs) ou 2,000001 (2/3 arrondi × 3) donnent 6 et 2, pas 7 et 3. */
+const ceilp = (q) => Math.ceil(Math.round(q * 1e4) / 1e4);
 
 function qty(k, q) {
   const u = ING[k][1];
