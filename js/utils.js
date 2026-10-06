@@ -18,6 +18,10 @@ const esc = (s) =>
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
   );
 
+/** Nom de produit sans la marque répétée au début (Colruyt : « EVERYDAY EVERYDAY spaghetti 500g » → « EVERYDAY spaghetti 500g »). */
+const nomProduit = (t) =>
+  String(t).replace(/^([A-ZÀ-Ý0-9'.&-]+(?: [A-ZÀ-Ý0-9'.&-]+)*?) \1(?= )/, "$1");
+
 const eur = (v) => v.toLocaleString("fr-BE", { style: "currency", currency: "EUR" });
 
 const price = (k) => S.prices[k] ?? ING[k][2],

@@ -7,7 +7,7 @@
       "unite": "kg",
       "prix_unitaire": 0.9,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY spaghetti 500g"
+        "nom": "EVERYDAY spaghetti 500g"
       }
     },
     "riz": {
@@ -15,7 +15,7 @@
       "unite": "kg",
       "prix_unitaire": 0.89,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY riz long grain étuvé 2kg"
+        "nom": "EVERYDAY riz long grain étuvé 2kg"
       }
     },
     "hache": {
@@ -31,7 +31,7 @@
       "unite": "kg",
       "prix_unitaire": 1.13,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY tomates pelées 400g"
+        "nom": "EVERYDAY tomates pelées 400g"
       }
     },
     "oig": {
@@ -39,7 +39,7 @@
       "unite": "kg",
       "prix_unitaire": 0.9,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY oignons 2kg"
+        "nom": "EVERYDAY oignons 2kg"
       }
     },
     "fro": {
@@ -47,7 +47,7 @@
       "unite": "kg",
       "prix_unitaire": 5.98,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY emmental râpé 500g"
+        "nom": "EVERYDAY emmental râpé 500g"
       }
     },
     "poulet": {
@@ -55,7 +55,7 @@
       "unite": "kg",
       "prix_unitaire": 7.25,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY filet de poulet tranches 200g"
+        "nom": "EVERYDAY filet de poulet tranches 200g"
       }
     },
     "leg": {
@@ -63,7 +63,7 @@
       "unite": "kg",
       "prix_unitaire": 1.29,
       "produit": {
-        "nom": "BONI BONI légumes minestrone 1kg"
+        "nom": "BONI légumes minestrone 1kg"
       }
     },
     "coco": {
@@ -71,7 +71,7 @@
       "unite": "l",
       "prix_unitaire": 2.48,
       "produit": {
-        "nom": "BONI BONI lait de coco cons 400ml"
+        "nom": "BONI lait de coco cons 400ml"
       }
     },
     "pdt": {
@@ -79,7 +79,7 @@
       "unite": "kg",
       "prix_unitaire": 1.4,
       "produit": {
-        "nom": "POTATO CHEF POTATO CHEF pommes de terre belges 4kg"
+        "nom": "POTATO CHEF pommes de terre belges 4kg"
       }
     },
     "sauc": {
@@ -87,7 +87,7 @@
       "unite": "kg",
       "prix_unitaire": 3.33,
       "produit": {
-        "nom": "CHATAR CHATAR saucisses cuites 3x280g"
+        "nom": "CHATAR saucisses cuites 3x280g"
       }
     },
     "car": {
@@ -95,7 +95,7 @@
       "unite": "kg",
       "prix_unitaire": 0.72,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY carottes 2kg"
+        "nom": "EVERYDAY carottes 2kg"
       }
     },
     "pain": {
@@ -103,7 +103,7 @@
       "unite": "kg",
       "prix_unitaire": 1.12,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY pain blanc tranches 800g"
+        "nom": "EVERYDAY pain blanc tranches 800g"
       }
     },
     "jam": {
@@ -111,7 +111,7 @@
       "unite": "kg",
       "prix_unitaire": 8.72,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY DES DE JAMBON CUIT 250g"
+        "nom": "EVERYDAY DES DE JAMBON CUIT 250g"
       }
     },
     "beu": {
@@ -119,7 +119,7 @@
       "unite": "kg",
       "prix_unitaire": 7.56,
       "produit": {
-        "nom": "BONI BONI beurre de laiterie doux 250g"
+        "nom": "BONI beurre de laiterie doux 250g"
       }
     },
     "conf": {
@@ -127,7 +127,7 @@
       "unite": "kg",
       "prix_unitaire": 1.93,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY confiture fraises 50% 700g"
+        "nom": "EVERYDAY confiture fraises 50% 700g"
       }
     },
     "cer": {
@@ -143,7 +143,7 @@
       "unite": "l",
       "prix_unitaire": 0.85,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY Lait demi-écrémé brique 1L"
+        "nom": "EVERYDAY Lait demi-écrémé brique 1L"
       }
     },
     "choc": {
@@ -151,7 +151,7 @@
       "unite": "kg",
       "prix_unitaire": 2.64,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY pâte à tartiner noisettes 750g"
+        "nom": "EVERYDAY pâte à tartiner noisettes 750g"
       }
     },
     "suc": {
@@ -159,7 +159,7 @@
       "unite": "kg",
       "prix_unitaire": 0.69,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY sucre cristallisé fin 1kg"
+        "nom": "EVERYDAY sucre cristallisé fin 1kg"
       }
     },
     "hache_h": {
@@ -199,7 +199,7 @@
       "unite": "kg",
       "prix_unitaire": 1.98,
       "produit": {
-        "nom": "EVERYDAY EVERYDAY margarine cuire et rôtir 500g"
+        "nom": "EVERYDAY margarine cuire et rôtir 500g"
       }
     }
   }

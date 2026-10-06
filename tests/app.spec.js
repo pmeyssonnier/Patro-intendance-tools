@@ -1205,3 +1205,40 @@ test("catalogue : l'import JSON propose d'ajouter les produits absents, sans les
   await expect(page.locator("#ct")).toContainText("Spéculoos");
   await expect(page.locator("#pnew")).toBeHidden();
 });
+
+test("catalogue : la marque répétée « EVERYDAY EVERYDAY » n'est affichée qu'une fois", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.evaluate(() => {
+    S.pn.pates = "EVERYDAY EVERYDAY spaghetti 500g";
+    S.pn.pdt = "POTATO CHEF POTATO CHEF pommes de terre 4kg";
+    S.pn.cer = "EVERYDAY Corn flakes 750g";
+    drawCat();
+  });
+  const t = await page.locator("#ct").innerText();
+  expect(t).toContain("↳ EVERYDAY spaghetti 500g");
+  expect(t).toContain("↳ POTATO CHEF pommes de terre 4kg");
+  expect(t).toContain("↳ EVERYDAY Corn flakes 750g");
+  expect(t).not.toContain("EVERYDAY EVERYDAY");
+  expect(await page.evaluate(() => prodName("pates"))).toBe("EVERYDAY spaghetti 500g");
+});
+
+test("catalogue : « Télécharger un exemple » disparaît dès que des produits sont associés", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await expect(page.locator("#csvx")).toBeVisible();
+  await page.evaluate(() => {
+    S.pn.pain = "Pain blanc 800g";
+    drawCat();
+  });
+  await expect(page.locator("#csvx")).toBeHidden();
+  await page.evaluate(() => {
+    delete S.pn.pain;
+    drawCat();
+  });
+  await expect(page.locator("#csvx")).toBeVisible();
+});

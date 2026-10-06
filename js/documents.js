@@ -44,7 +44,7 @@ const catKeys = () => Object.keys(ING).filter((k) => !S.hid.includes(k));
 
 /** Nom du produit retenu (« ↳ » du catalogue), sans la note technique ajoutée par l'import de texte. */
 const prodName = (k) =>
-  (S.pn[k] || "").replace(/ \((?:→ €\/kg ou €\/L calculé|prix pris tel quel)\)$/, "");
+  nomProduit(S.pn[k] || "").replace(/ \((?:→ €\/kg ou €\/L calculé|prix pris tel quel)\)$/, "");
 
 const priceUnit = (k) => (ING[k][1] === "pc" ? "pièce" : ul(k));
 
