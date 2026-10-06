@@ -266,6 +266,15 @@ def promo_pour(c):
     }
 
 
+def lien_produit(c):
+    """Adresse de la fiche produit sur colruyt.be (celle de l'acteur si elle est valide, sinon construite avec l'identifiant), ou None."""
+    u = str(c.get("url") or "")
+    if re.fullmatch(r"https://www\.colruyt\.be/[A-Za-z0-9/._~%?=&#:-]{1,150}", u):
+        return u
+    pid = str(c.get("produit_id") or "")
+    return f"https://www.colruyt.be/fr/produits/{pid}" if pid.isdigit() else None
+
+
 def en_stock(v):
     """True/False d'après le champ de stock (booléen, « true »/« false », « inStock »…), None s'il est absent ou illisible."""
     if isinstance(v, bool):
@@ -297,6 +306,7 @@ def normaliser(item):
         "prix": prix,
         "prix_unitaire": round(prix_unitaire, 2) if prix_unitaire is not None else None,
         "unite": unite,
+        "url": pick(f, "url"),
         "promo": pick(f, "promotionPrice", "promotion", "promo"),
         "promo_prix": promo_numerique(pick(f, "promotionPrice", "promotion", "promo")),
         "en_stock": en_stock(pick(f, "inStock", "available", "availability")),
@@ -486,6 +496,7 @@ for ing in INGREDIENTS:
         "unite": ing["unite"],
         "prix_unitaire": choix["prix_unitaire"],
         **({"promo": promo_pour(choix)} if promo_pour(choix) else {}),
+        **({"lien": lien_produit(choix)} if lien_produit(choix) else {}),
         "produit": choix,
         "alternatives": ok[1:4],
     }

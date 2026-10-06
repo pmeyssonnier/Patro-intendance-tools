@@ -180,6 +180,19 @@ if (!S.cat || typeof S.cat !== "object") S.cat = {};
 
 if (!S.promo || typeof S.promo !== "object") S.promo = {};
 
+if (!S.url || typeof S.url !== "object") S.url = {};
+
+/** Nom du produit retenu (« ↳ ») pour un ingrédient, cliquable (fiche Colruyt) quand le lien est connu ; "" s'il n'y a ni produit ni lien. */
+const produitLien = (k) => {
+  const nom = S.pn[k] ? nomProduit(S.pn[k]) : "",
+    lien = lienColruyt(S.url[k]);
+  if (!nom && !lien) return "";
+  const txt = nom ? "↳ " + esc(nom) : "🔗 Fiche produit";
+  return lien
+    ? `<div class="s"><a href="${esc(lien)}" target="_blank" rel="noopener noreferrer" title="Ouvrir la fiche du produit sur colruyt.be">${txt} 🔗</a></div>`
+    : `<div class="s">${txt}</div>`;
+};
+
 /** Promotion connue d'un ingrédient { p: prix promo par unité (€/kg, €/L ou €/pièce), t: texte } si elle est vraiment moins chère que le prix actuel, sinon null. Le budget garde le prix normal. */
 const promoDe = (k) => {
   const x = S.promo[k];
@@ -224,6 +237,7 @@ if (S.dd && typeof S.dd === "object") DIETS = S.dd;
     } else delete r.fa;
   }
   for (const k of Object.keys(S.promo)) if (!ING[k]) delete S.promo[k];
+  for (const k of Object.keys(S.url)) if (!ING[k] || !lienColruyt(S.url[k])) delete S.url[k];
   for (const k of Object.keys(S.cat))
     if (!ING[k] || !CATS.some((c) => c[0] === S.cat[k])) delete S.cat[k];
   for (const d in DIETS) {

@@ -108,6 +108,7 @@ function editIng(k, nom, unite, dg, cat) {
     S.prices[k] = 0;
     delete S.pn[k];
     delete S.promo[k];
+    delete S.url[k];
   }
   if (dg !== undefined && dg !== "perso" && dg !== regimeActuel(k)) appliquerRegime(k, dg);
   if (CATS.some((c) => c[0] === cat)) {
@@ -169,7 +170,7 @@ function lignesCat(keys) {
         (catEdit === k
           ? `<tr class="ced"><td colspan="4"><div class="g"><div><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div><label>Rayon</label><select data-ec="${esc(k)}" aria-label="Rayon de l'ingrédient">${optionsCat(catOf(k))}</select></div><div style="align-self:end"><button data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></td></tr>`
           : "") +
-        `<tr><td>${esc(ING[k][0])}${S.pn[k] ? `<div class="s">↳ ${esc(nomProduit(S.pn[k]))}</div>` : ""}${etiquettePromo(k)}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
+        `<tr><td>${esc(ING[k][0])}${produitLien(k)}${etiquettePromo(k)}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
     )
     .join("");
 }
@@ -187,6 +188,7 @@ $("ct").addEventListener("change", (e) => {
     S.prices[k] = +e.target.value || 0;
     delete S.pn[k];
     delete S.promo[k]; // le prix saisi à la main n'est plus celui du produit en promotion
+    delete S.url[k]; // ni celui du produit dont on gardait le lien
     calc();
   }
 });
@@ -377,6 +379,7 @@ function parsePrixJson(txt) {
           prix: +p.toFixed(2),
           produit: produit(x),
           categorie: String(x.categorie || ""),
+          lien: lienColruyt(x.lien),
           promo:
             x.promo && +x.promo.prix_unitaire > 0 && +x.promo.prix_unitaire < p
               ? {
@@ -398,6 +401,7 @@ function parsePrixJson(txt) {
       x.promo && +x.promo.prix_unitaire > 0 && +x.promo.prix_unitaire < p
         ? { p: +(+x.promo.prix_unitaire).toFixed(2), t: String(x.promo.texte || "").slice(0, 60) }
         : null,
+      lienColruyt(x.lien),
     ]);
   }
   return {
@@ -446,6 +450,7 @@ function ajouterInconnus() {
       k = createIng(u.nom, u.unite, "", u.categorie);
     S.prices[k] = u.prix;
     if (u.promo) S.promo[k] = u.promo;
+    if (u.lien) S.url[k] = u.lien;
     if (u.produit) S.pn[k] = u.produit;
   });
   pendingInconnus = pendingInconnus.filter((_, i) => !idx.includes(i));
@@ -567,9 +572,11 @@ $("imp").onclick = () => {
   if (pendingJson) {
     const pj = pendingJson;
     pendingJson = null;
-    pj.lignes.forEach(([k, p, n, , cat, promo]) => {
+    pj.lignes.forEach(([k, p, n, , cat, promo, lien]) => {
       if (promo) S.promo[k] = promo;
       else delete S.promo[k];
+      if (lien) S.url[k] = lien;
+      else delete S.url[k];
       // le rayon du fichier ne sert que pour un ingrédient qui n'en a pas encore (ni choisi, ni par défaut)
       if (cat && !S.cat[k] && !CAT0[k]) S.cat[k] = cat;
       S.prices[k] = p;
@@ -608,6 +615,7 @@ $("imp").onclick = () => {
     if (c) {
       S.prices[k] = +c[1].toFixed(2);
       delete S.promo[k];
+      delete S.url[k];
       S.pn[k] = c[0] + (c[2] ? " (→ €/kg ou €/L calculé)" : " (prix pris tel quel)");
       hit++;
     }

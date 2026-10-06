@@ -76,6 +76,7 @@ function cleanProject(x) {
     ov: {},
     cat: {},
     promo: {},
+    url: {},
     hid: Array.isArray(x.hid)
       ? x.hid.filter((k) => typeof k === "string" && okid(k)).slice(0, 200)
       : [],
@@ -134,6 +135,8 @@ function cleanProject(x) {
   // rayons choisis (identifiant -> clé de CATS) et regroupement de la liste par rayon
   for (const [k, v] of ent(x.cat)) if (okid(k) && CATS.some((c) => c[0] === v)) o.cat[k] = v;
   if (x.gl === false) o.gl = false;
+  // fiches produit Colruyt (identifiant -> adresse https://www.colruyt.be/…)
+  for (const [k, v] of ent(x.url)) if (okid(k) && lienColruyt(v)) o.url[k] = v;
   // promotions repérées (identifiant -> { p: prix promo par unité, t: texte })
   for (const [k, v] of ent(x.promo))
     if (okid(k) && obj(v) && +v.p > 0 && +v.p < 1e5)

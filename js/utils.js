@@ -22,6 +22,14 @@ const esc = (s) =>
 const nomProduit = (t) =>
   String(t).replace(/^([A-ZÀ-Ý0-9'.&-]+(?: [A-ZÀ-Ý0-9'.&-]+)*?) \1(?= )/, "$1");
 
+/** Adresse d'une fiche produit Colruyt si elle est bien en https://www.colruyt.be/…, sinon "" (un fichier de prix ou de projet ne doit pas pouvoir mettre un autre site, ni javascript:). */
+const lienColruyt = (u) =>
+  typeof u === "string" &&
+  u.length <= 200 &&
+  /^https:\/\/www\.colruyt\.be\/[A-Za-z0-9/._~%?=&#:-]*$/.test(u)
+    ? u
+    : "";
+
 const eur = (v) => v.toLocaleString("fr-BE", { style: "currency", currency: "EUR" });
 
 const price = (k) => S.prices[k] ?? ING[k][2],
