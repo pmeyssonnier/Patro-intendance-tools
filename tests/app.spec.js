@@ -1389,3 +1389,60 @@ test("import de recette : ingrédient existant reconnu, étapes facultatives, er
   await page.locator("#rimok").click();
   await expect(page.locator("#rimm")).toContainText("porte déjà ce nom");
 });
+
+test("import de recette : une page sans « Recipe » (article) est refusée, sa liste d'ingrédients collée est lue", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#rimp").click();
+  // un article : du ld+json sans recette
+  await page
+    .locator("#rimt")
+    .fill(
+      '<script type="application/ld+json">{"@graph":[{"@type":"NewsArticle","headline":"Croquettes","width":309}]}</script>'
+    );
+  await page.locator("#rimlire").click();
+  await expect(page.locator("#rimm")).toContainText("colle la liste des ingrédients");
+  // la liste copiée sur la page, une ligne par ingrédient
+  await page
+    .locator("#rimt")
+    .fill(
+      [
+        "800 g de pommes de terre à chair farineuse type Bintje",
+        "40 g de beurre doux",
+        "2 jaunes d'œufs",
+        "1/2 càc de noix de muscade râpée",
+        "Sel et poivre du moulin",
+        "1 l d'huile de friture pour la cuisson (tournesol ou arachide)",
+        "Pour la panure croustillante :",
+        "• 100 g de farine tamisée",
+        "1 càs d'huile d'olive",
+      ].join("\n")
+    );
+  await page.locator("#rimlire").click();
+  await expect(page.locator("#rimm")).toContainText("8 lignes lues (liste d'ingrédients");
+  await page.locator("#rimnom").fill("Croquettes de pommes de terre");
+  await page.locator("#rimn").fill("4");
+  await page.locator("#rimok").click();
+  const R = await page.evaluate(() => {
+    const r = S.rec["Croquettes de pommes de terre"],
+      v = (nom) => {
+        const k = Object.keys(r.ing).find((c) => ING[c][0].startsWith(nom));
+        return k ? [ING[k][1], r.ing[k][0]] : null;
+      };
+    return {
+      nb: Object.keys(r.ing).length,
+      pdt: v("Pommes de terre"),
+      beurre: v("Beurre"),
+      muscade: v("Noix de muscade"),
+      friture: v("Huile de friture"),
+      farine: v("Farine"),
+    };
+  });
+  expect(R.nb).toBe(7);
+  expect(R.pdt).toEqual(["g", 200]);
+  expect(R.muscade).toEqual(["ml", 0.625]);
+  expect(R.friture).toEqual(["ml", 250]);
+  expect(R.farine).toEqual(["g", 25]);
+});

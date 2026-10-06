@@ -129,6 +129,19 @@ function chercherRecette(texte) {
   return null;
 }
 
+/** Liste d'ingrédients collée à la main (une ligne par ingrédient), pour les pages sans données « Recipe » (articles, sites sans ld+json). Renvoie une recette au même format que le ld+json, ou null. */
+function recetteDepuisListe(texte) {
+  const t = String(texte);
+  // du code (JSON, balises) n'est pas une liste d'ingrédients
+  if (/<script|<\/?[a-z][^>]*>/i.test(t) || /^\s*[{[]/.test(t)) return null;
+  const lignes = t
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^[\s\-–•*·▪►✓]+/u, "").trim())
+    .filter((l) => l && !/:$/.test(l));
+  if (lignes.length < 2 || !lignes.some((l) => ligneRecette(l).q)) return null;
+  return { name: "Recette importée", recipeYield: "4", recipeIngredient: lignes };
+}
+
 /** Mots-clés d'attention régime (mêmes clés que « Attention régime » d'un ingrédient ajouté à la main) pour un nouvel ingrédient. */
 function regimeProbable(nom) {
   const t = plain(nom);
@@ -268,12 +281,12 @@ $("rimp").onclick = () => {
 };
 
 $("rimlire").onclick = () => {
-  const r = chercherRecette($("rimt").value);
+  const r = chercherRecette($("rimt").value) || recetteDepuisListe($("rimt").value);
   if (!r || !Array.isArray(r.recipeIngredient) || !r.recipeIngredient.length) {
     RI = null;
     drawImport();
     $("rimm").textContent =
-      'Aucune recette trouvée : colle le bloc <script type="application/ld+json"> de la page (il contient « Recipe » et « recipeIngredient »).';
+      'Aucune recette trouvée. Colle le bloc <script type="application/ld+json"> de la page s\'il contient « Recipe » ; sinon (article, page sans données de recette) colle la liste des ingrédients, une ligne par ingrédient.';
     return;
   }
   const n =
@@ -321,7 +334,7 @@ $("rimlire").onclick = () => {
       }),
   };
   $("rimm").textContent =
-    `${RI.lignes.length} lignes lues. Vérifie chaque ingrédient puis crée la recette.`;
+    `${RI.lignes.length} lignes lues${r["@type"] ? "" : " (liste d'ingrédients : donne le nom de la recette et le nombre de personnes)"}. Vérifie chaque ingrédient puis crée la recette.`;
   drawImport();
 };
 

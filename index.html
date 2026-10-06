@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.8.0">
+<link rel="stylesheet" href="styles.css?v=1.8.1">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -80,7 +80,7 @@
 <div class="w sv"><table class="fit rec"><thead id="rh"></thead><tbody id="rb"></tbody></table></div>
 <p><select id="radd" aria-label="Ajouter un ingrédient à la recette" style="max-width:260px;display:inline-block"></select> <button id="inew" class="x">+ Nouvel ingrédient</button></p>
 <p><button id="rimp" class="x">📥 Importer une recette</button> <span class="s" id="rimm" role="status"></span></p>
-<div id="rimpf" style="display:none"><p class="s">Sur la page d'une recette, ouvre le code source (clic droit → « Afficher le code source »), cherche <b>ld+json</b> et colle ici le bloc <b>&lt;script type="application/ld+json"&gt;…&lt;/script&gt;</b> qui contient « Recipe ». L'appli ne lit que ce que tu colles, elle n'appelle aucun site.</p>
+<div id="rimpf" style="display:none"><p class="s">Sur la page d'une recette, ouvre le code source (clic droit → « Afficher le code source »), cherche <b>ld+json</b> et colle ici le bloc <b>&lt;script type="application/ld+json"&gt;…&lt;/script&gt;</b> qui contient « Recipe ». Si la page n'a pas de bloc « Recipe » (article, site sans données structurées), copie plutôt la <b>liste des ingrédients</b>, une ligne par ingrédient. L'appli ne lit que ce que tu colles, elle n'appelle aucun site.</p>
 <textarea id="rimt" rows="5" aria-label="Données de la recette (ld+json)" placeholder='{"@type":"Recipe","name":"…","recipeIngredient":["400 g …"]}'></textarea>
 <input id="rimu" type="text" aria-label="Adresse de la recette (facultatif)" placeholder="Adresse de la recette, pour garder la source (facultatif)" style="margin-top:6px">
 <p><button id="rimlire">Lire la recette</button></p>
@@ -146,22 +146,22 @@
 <div id="live" class="sr" aria-live="polite"></div>
 <div id="warn" class="np" role="alert" hidden><span id="warnt"></span> <button id="warnx">💾 Exporter</button> <button id="warnc" class="x" aria-label="Fermer l'avertissement">✕</button></div>
 <!-- Scripts classiques : l'ordre compte (chaque fichier dépend de ceux qui le précèdent). -->
-<script src="js/data-defaults.js?v=1.8.0"></script>
-<script src="js/utils.js?v=1.8.0"></script>
-<script src="js/storage.js?v=1.8.0"></script>
-<script src="js/state.js?v=1.8.0"></script>
-<script src="js/calculations.js?v=1.8.0"></script>
-<script src="js/shopping-list.js?v=1.8.0"></script>
-<script src="js/documents.js?v=1.8.0"></script>
-<script src="js/share-print.js?v=1.8.0"></script>
-<script src="js/navigation.js?v=1.8.0"></script>
-<script src="js/camps.js?v=1.8.0"></script>
-<script src="js/diets.js?v=1.8.0"></script>
-<script src="js/menu.js?v=1.8.0"></script>
-<script src="js/recipes.js?v=1.8.0"></script>
-<script src="js/catalog.js?v=1.8.0"></script>
-<script src="js/recipe-import.js?v=1.8.0"></script>
-<script src="js/config.js?v=1.8.0"></script>
-<script src="js/pwa.js?v=1.8.0"></script>
-<script src="js/main.js?v=1.8.0"></script>
+<script src="js/data-defaults.js?v=1.8.1"></script>
+<script src="js/utils.js?v=1.8.1"></script>
+<script src="js/storage.js?v=1.8.1"></script>
+<script src="js/state.js?v=1.8.1"></script>
+<script src="js/calculations.js?v=1.8.1"></script>
+<script src="js/shopping-list.js?v=1.8.1"></script>
+<script src="js/documents.js?v=1.8.1"></script>
+<script src="js/share-print.js?v=1.8.1"></script>
+<script src="js/navigation.js?v=1.8.1"></script>
+<script src="js/camps.js?v=1.8.1"></script>
+<script src="js/diets.js?v=1.8.1"></script>
+<script src="js/menu.js?v=1.8.1"></script>
+<script src="js/recipes.js?v=1.8.1"></script>
+<script src="js/catalog.js?v=1.8.1"></script>
+<script src="js/recipe-import.js?v=1.8.1"></script>
+<script src="js/config.js?v=1.8.1"></script>
+<script src="js/pwa.js?v=1.8.1"></script>
+<script src="js/main.js?v=1.8.1"></script>
 </body></html>
