@@ -685,6 +685,23 @@ test("partager : le catalogue de prix se partage, s'imprime et s'exporte", async
   await expect(page.locator("#shm")).not.toHaveText("Rien à partager.");
 });
 
+test("les pièces sont arrondies au supérieur sans erreur de calcul décimal", async ({ page }) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    ING.t_pain = ["Pain test", "pc", 1, "pain", 0];
+    // 10 × 0,2 + 8 × 0,2 + 6 × 0,2 + 6 × 0,2 vaut 6,000000000000001 en calcul décimal
+    const somme = [10, 8, 6, 6].reduce((t, n) => t + n * 0.2, 0);
+    return [
+      somme > 6,
+      qty("t_pain", somme),
+      qty("t_pain", 6.01),
+      qty("t_pain", 0.2),
+      qparts("t_pain", somme),
+    ];
+  });
+  expect(r).toEqual([true, "6 pc", "7 pc", "1 pc", ["6", "pc"]]);
+});
+
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");

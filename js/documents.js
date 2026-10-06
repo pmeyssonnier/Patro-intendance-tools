@@ -163,7 +163,7 @@ const csvOut = (rows) => "\uFEFF" + rows.map((r) => r.map(cs).join(";")).join("\
 
 const qparts = (k, q) => {
   const u = ING[k][1];
-  if (u === "pc") return [String(Math.ceil(q)), "pc"];
+  if (u === "pc") return [String(ceilp(q)), "pc"];
   return q >= 1000 ? [cn(q / 1000), u === "ml" ? "L" : "kg"] : [String(Math.round(q)), u];
 };
 
