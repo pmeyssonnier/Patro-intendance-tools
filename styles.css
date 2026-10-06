@@ -1016,6 +1016,10 @@ th.num,
   background: var(--grp);
 }
 
+/* liste des rayons du catalogue : deux fois plus large (toute la largeur de la ligne) */
+#crayon {
+  width: 100%;
+}
 .promo {
   color: var(--ac);
 }

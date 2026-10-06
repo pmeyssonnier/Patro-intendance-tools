@@ -2079,3 +2079,23 @@ test("promotions : enregistrées dans le projet, nettoyées à la suppression d'
   });
   expect(await page.evaluate((c) => c in S.promo, k)).toBe(false);
 });
+
+test("catalogue : la liste des rayons est deux fois plus large, sans changer de hauteur ni de texte", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const t = await page.evaluate(() => {
+    const e = document.querySelector("#crayon"),
+      r = e.getBoundingClientRect();
+    return [
+      r.width,
+      r.height,
+      getComputedStyle(e).fontSize,
+      document.querySelector("#cfilt").getBoundingClientRect().width,
+    ];
+  });
+  expect(Math.abs(t[0] - t[3])).toBeLessThan(2); // aussi large que le filtre : environ le double de l'ancienne largeur
+  expect(t[1]).toBeLessThan(45); // hauteur d'origine (37 px)
+  expect(t[2]).toBe("16px"); // texte d'origine
+});
