@@ -798,6 +798,154 @@ test("recettes : le passage à « par personne » suit le nombre de sections", a
   await expect(premiere().locator("input[data-s]")).toHaveCount(2);
 });
 
+test("catalogue : un JSON sans identifiant connu est relié par le nom de l'ingrédient", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  // un ingrédient ajouté à la main (identifiant propre à l'appareil)
+  await aller(page, "rec");
+  await page.locator("#inew").click();
+  await page.locator("#iname").fill("Poivrons");
+  await page.locator("#iunit").selectOption("pc");
+  await page.locator("#iok").click();
+  await aller(page, "cat");
+  const json = {
+    source: "Colruyt",
+    date_maj: "2026-10-06T00:00:00",
+    ingredients: {
+      x1: { nom: "Pains", unite: "kg", prix_unitaire: 1.12, produit: { nom: "pain blanc 800g" } },
+      x2: { requete: "Pate à tartiner", unite: "kg", prix_unitaire: 2.64 },
+      x3: { nom: "poivron rouge", unite: "piece", prix_unitaire: 0.56 },
+      x4: { nom: "sauce tomate", unite: "kg", prix_unitaire: 3 }, // aucun ingrédient correspondant
+      x5: { nom: "pains", unite: "piece", prix_unitaire: 1 }, // mauvaise unité
+    },
+  };
+  await page.locator("#file").setInputFiles({
+    name: "p.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(json)),
+  });
+  const apercu = page.locator("#csv");
+  await expect(apercu).toHaveValue(/Pain : .* → 1\.12 €\/kg \(relié par le nom : « Pains »\)/);
+  await expect(apercu).toHaveValue(
+    /Pâte à tartiner : .* → 2\.64 €\/kg \(relié par le nom : « Pate à tartiner »\)/
+  );
+  await expect(apercu).toHaveValue(
+    /Poivrons : .* → 0\.56 €\/pièce \(relié par le nom : « poivron rouge »\)/
+  );
+  await expect(page.locator("#impmsg")).toContainText("3 prix prêts (2 ignorés)");
+  await page.locator("#imp").click();
+  await expect(page.locator('input[data-cp="pain"]')).toHaveValue("1.12");
+  await expect(page.locator('input[data-cp="choc"]')).toHaveValue("2.64");
+  await expect(page.locator("#ct tr", { hasText: "Poivrons" }).locator("input")).toHaveValue(
+    "0.56"
+  );
+});
+
+test("catalogue : renommer un ingrédient de base le change partout, et se rétablit", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  await expect(page.locator(`[data-ei="pain"]`)).toContainText("Utilisé dans 3 recettes");
+  await page.locator('[data-en="pain"]').fill("Pains");
+  await page.locator('[data-eok="pain"]').click();
+  await expect(page.locator("#ct")).toContainText("Pains");
+  // le nom est repris dans les recettes ; les quantités ne bougent pas
+  await aller(page, "list");
+  expect(await page.evaluate(() => ING.pain[0])).toBe("Pains");
+  // enregistré : il survit à un rechargement
+  await page.reload();
+  expect(await page.evaluate(() => ING.pain[0])).toBe("Pains");
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  await page.locator('[data-ers="pain"]').click(); // rétablir « Pain »
+  expect(await page.evaluate(() => [ING.pain[0], Object.keys(S.ov).length])).toEqual(["Pain", 0]);
+});
+
+test("catalogue : l'unité d'un ingrédient utilisé en recette ne passe pas de g à pièce", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  // « Pâtes » est utilisé dans la recette d'exemple
+  await page.locator('#ct [data-ced="pates"]').click();
+  await page.locator('[data-eu="pates"]').selectOption("pc");
+  await expect(page.locator('[data-ei="pates"]')).toContainText("Changement impossible");
+  await page.locator('[data-eok="pates"]').click();
+  await expect(page.locator('[data-ei="pates"]')).toContainText("⚠");
+  expect(await page.evaluate(() => ING.pates[1])).toBe("g");
+  // g → ml reste permis : quantités et prix conservés
+  const avant = await page.evaluate(() => [S.rec[S.cur].ing.pates.slice(), price("pates")]);
+  await page.locator('[data-eu="pates"]').selectOption("ml");
+  await page.locator('[data-eok="pates"]').click();
+  const apres = await page.evaluate(() => [
+    ING.pates[1],
+    S.rec[S.cur].ing.pates.slice(),
+    price("pates"),
+  ]);
+  expect(apres).toEqual(["ml", avant[0], avant[1]]);
+});
+
+test("catalogue : un ingrédient inutilisé peut changer d'unité (prix remis à zéro) mais pas de nom en double", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#cins").click();
+  await page.locator("#cinn").fill("Poivrons");
+  await page.locator("#cinu").selectOption("g");
+  await page.locator("#cinp").fill("2.78");
+  await page.locator("#cinok").click();
+  const k = await page.evaluate(() => Object.keys(S.cust)[0]);
+  await page.locator(`#ct [data-ced="${k}"]`).click();
+  // nom déjà pris (le pluriel et les accents comptent pour pareil)
+  await page.locator(`[data-en="${k}"]`).fill("pâtes");
+  await page.locator(`[data-eok="${k}"]`).click();
+  await expect(page.locator(`[data-ei="${k}"]`)).toContainText("s'appelle déjà « Pâtes »");
+  // pièce : permis car aucune recette ne l'utilise ; le prix repart à zéro
+  await page.locator(`[data-en="${k}"]`).fill("Poivron");
+  await page.locator(`[data-eu="${k}"]`).selectOption("pc");
+  await page.locator(`[data-eok="${k}"]`).click();
+  expect(await page.evaluate((id) => [ING[id][0], ING[id][1], price(id)], k)).toEqual([
+    "Poivron",
+    "pc",
+    0,
+  ]);
+});
+
+test("catalogue : « Insérer un ingrédient » ne l'ajoute à aucune recette", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#cins").click();
+  await page.locator("#cinn").fill("Courgettes");
+  await page.locator("#cinp").fill("1.99");
+  await page.locator("#cinok").click();
+  await expect(page.locator("#ct")).toContainText("Courgettes");
+  const r = await page.evaluate(() => {
+    const k = Object.keys(S.cust)[0];
+    return [price(k), Object.values(S.rec).some((x) => k in x.ing)];
+  });
+  expect(r).toEqual([1.99, false]);
+  // il est proposé dans la liste « + Ajouter un ingrédient » des recettes
+  await aller(page, "rec");
+  await expect(page.locator('#radd option:text("Courgettes")')).toHaveCount(1);
+});
+
+test("catalogue : un nom modifié survit à l'export puis à l'import du projet", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  await page.locator('[data-en="pain"]').fill("Pain gris");
+  await page.locator('[data-eok="pain"]').click();
+  await aller(page, "pj");
+  const fichier = await telecharger(page, "#exp");
+  expect(JSON.parse(fichier.texte).ov.pain).toEqual({ n: "Pain gris", u: "g" });
+  await importer(page, fichier.chemin);
+  expect(await page.evaluate(() => ING.pain[0])).toBe("Pain gris");
+});
+
 test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "cat");
@@ -962,4 +1110,25 @@ test("catalogue : seule la colonne des prix est alignée à droite", async ({ pa
   expect(al.td[2]).toBe("right");
   expect(al.th[0]).not.toBe("right");
   expect(al.td[1]).not.toBe("right");
+});
+
+test("catalogue : un ingrédient utilisé dans une recette ne peut pas être supprimé", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const messages = [];
+  page.on("dialog", (d) => messages.push(d.type() + ":" + d.message()));
+  await page.locator('#ct [data-chd="pain"]').click();
+  await expect.poll(() => messages.length).toBe(1);
+  expect(messages[0]).toContain("alert:Suppression impossible");
+  expect(await page.evaluate(() => "pain" in ING && !S.hid.includes("pain"))).toBe(true);
+  // un ingrédient inséré au catalogue, sans recette, se supprime
+  await page.locator("#cins").click();
+  await page.locator("#cinn").fill("Sirop");
+  await page.locator("#cinok").click();
+  await page.locator('#ct [data-chd^="c_"]').click();
+  await expect.poll(() => messages.length).toBe(2);
+  expect(messages[1]).toContain("confirm:Supprimer");
+  await expect(page.locator("#ct")).not.toContainText("Sirop");
 });
