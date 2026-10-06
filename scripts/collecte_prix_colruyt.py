@@ -224,6 +224,28 @@ def sans_marque_doublee(nom):
     return re.sub(r"^([A-ZÀ-Ý0-9'.&-]+(?: [A-ZÀ-Ý0-9'.&-]+)*?) \1(?= )", r"\1", nom or "")
 
 
+def promo_numerique(v):
+    """Prix promotionnel (nombre) si le champ en est un (« 1.09 », « 1,09 € »), None s'il s'agit d'un texte (« 2+1 gratuit ») ou s'il est absent."""
+    if isinstance(v, bool) or v is None:
+        return None
+    if isinstance(v, (int, float)):
+        return float(v) if v > 0 else None
+    m = re.fullmatch(r"\s*(\d+(?:[.,]\d+)?)\s*(?:€|eur)?\s*", str(v), re.I)
+    return float(m.group(1).replace(",", ".")) if m else None
+
+
+def promo_pour(c):
+    """Promotion d'un produit retenu { prix_unitaire, prix, texte } si elle est moins chère que le prix normal, sinon None."""
+    p, pp, pu = c.get("prix"), c.get("promo_prix"), c.get("prix_unitaire")
+    if not (p and pp and pu and 0 < pp < p):
+        return None
+    return {
+        "prix_unitaire": round(pu * pp / p, 2),
+        "prix": round(pp, 2),
+        "texte": f"{pp:.2f} € au lieu de {p:.2f} €".replace(".", ","),
+    }
+
+
 def en_stock(v):
     """True/False d'après le champ de stock (booléen, « true »/« false », « inStock »…), None s'il est absent ou illisible."""
     if isinstance(v, bool):
@@ -256,6 +278,7 @@ def normaliser(item):
         "prix_unitaire": round(prix_unitaire, 2) if prix_unitaire is not None else None,
         "unite": unite,
         "promo": pick(f, "promotionPrice", "promotion", "promo"),
+        "promo_prix": promo_numerique(pick(f, "promotionPrice", "promotion", "promo")),
         "en_stock": en_stock(pick(f, "inStock", "available", "availability")),
     }
 
@@ -439,6 +462,7 @@ for ing in INGREDIENTS:
         **({"categorie": rayon_appli(choix.get("categorie_colruyt"))} if rayon_appli(choix.get("categorie_colruyt")) else {}),
         "unite": ing["unite"],
         "prix_unitaire": choix["prix_unitaire"],
+        **({"promo": promo_pour(choix)} if promo_pour(choix) else {}),
         "produit": choix,
         "alternatives": ok[1:4],
     }

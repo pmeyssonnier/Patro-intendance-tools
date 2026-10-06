@@ -1016,6 +1016,10 @@ th.num,
   background: var(--grp);
 }
 
+.promo {
+  color: var(--ac);
+}
+
 /* Liste de courses groupée par rayon */
 #list tr.grp td {
   background: var(--grp);

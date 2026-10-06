@@ -1996,3 +1996,86 @@ test("catalogue : une liste déroulante triée filtre les prix des ingrédients 
   // les documents restent complets, avec la colonne « Rayon » dans le CSV
   expect(await page.evaluate(() => csvPrices())).toContain(";Surgelés");
 });
+
+const importerPrix = async (page, ingredients) => {
+  await page.locator("#file").setInputFiles({
+    name: "p.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify({ source: "Colruyt", date_maj: "2026-10-06", ingredients })),
+  });
+  await page.locator("#imp").click();
+};
+
+test("promotions : affichées dans la liste et le catalogue, sans changer le budget", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await importerPrix(page, {
+    pain: { unite: "kg", prix_unitaire: 1.12 },
+    riz: { unite: "kg", prix_unitaire: 0.89 },
+  });
+  const sans = await page.evaluate(() => LAST.sum);
+  await importerPrix(page, {
+    pain: {
+      unite: "kg",
+      prix_unitaire: 1.12,
+      promo: { prix_unitaire: 1.0, texte: "1,00 € au lieu de 1,12 €" },
+    },
+    riz: {
+      unite: "kg",
+      prix_unitaire: 0.89,
+      promo: { prix_unitaire: 0.95, texte: "pas moins cher" },
+    },
+  });
+  expect(await page.evaluate(() => S.promo)).toEqual({
+    pain: { p: 1, t: "1,00 € au lieu de 1,12 €" },
+  });
+  // le budget garde le prix normal
+  expect(await page.evaluate(() => LAST.sum)).toBeCloseTo(sans, 6);
+  // catalogue : étiquette sous le produit
+  await expect(page.locator("#ct tr", { hasText: "Pain" }).first()).toContainText(
+    "🏷️ promo : 1,00"
+  );
+  await expect(page.locator("#ct tr", { hasText: "Riz" }).first()).not.toContainText("🏷️");
+  // liste de courses : étiquette avec l'économie possible, et total des économies
+  await aller(page, "list");
+  const gain = await page.evaluate(() => economie("pain", LAST.tot.pain));
+  expect(gain).toBeGreaterThan(0);
+  await expect(page.locator("#list tr", { hasText: "Pain" }).first()).toContainText("🏷️ promo");
+  await expect(page.locator("#ecow")).toBeVisible();
+  expect(await page.evaluate(() => (+LAST.tot.pain / 1000) * (1.12 - 1.0))).toBeCloseTo(gain, 6);
+  // un prix saisi à la main n'est plus celui du produit en promotion : l'étiquette disparaît
+  await page.locator('#list input[data-p="pain"]').fill("1.5");
+  await page.locator('#list input[data-p="pain"]').press("Tab");
+  expect(await page.evaluate(() => "pain" in S.promo)).toBe(false);
+  await expect(page.locator("#ecow")).toBeHidden();
+});
+
+test("promotions : enregistrées dans le projet, nettoyées à la suppression d'un ingrédient", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await importerPrix(page, {
+    pain: { unite: "kg", prix_unitaire: 1.12, promo: { prix_unitaire: 1.0, texte: "promo" } },
+  });
+  await aller(page, "pj");
+  const fichier = await telecharger(page, "#exp");
+  expect(JSON.parse(fichier.texte).promo).toEqual({ pain: { p: 1, t: "promo" } });
+  await importer(page, fichier.chemin);
+  expect(await page.evaluate(() => S.promo)).toEqual({ pain: { p: 1, t: "promo" } });
+  // un fichier de projet abîmé : promo non numérique ou identifiant invalide ignorés
+  const abime = JSON.parse(fichier.texte);
+  abime.promo = { pain: { p: "x" }, "a b": { p: 1 }, riz: { p: -2 } };
+  expect(await page.evaluate((x) => cleanProject(x).promo, abime)).toEqual({});
+  // supprimer un ingrédient ajouté à la main efface sa promotion
+  const k = await page.evaluate(() => {
+    const c = createIng("Test promo", "g", "", "aut");
+    S.prices[c] = 2;
+    S.promo[c] = { p: 1, t: "" };
+    rmIng(c);
+    return c;
+  });
+  expect(await page.evaluate((c) => c in S.promo, k)).toBe(false);
+});
