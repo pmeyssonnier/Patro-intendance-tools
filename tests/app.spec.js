@@ -1291,6 +1291,25 @@ test("catalogue : « Choisir un fichier » ouvre la fenêtre d'import", async ({
   await expect(page.locator("#fname")).toContainText("prix.csv");
 });
 
+test("catalogue : un prix manquant est signalé en rouge, comme dans la liste de courses", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const champ = page.locator('input[data-cp="pates"]');
+  const ligne = page.locator("#ct tr", { has: champ });
+  await expect(ligne.locator(".manq")).toBeHidden();
+  await expect(champ).not.toHaveClass(/nop/);
+  await champ.fill("0");
+  await champ.press("Tab");
+  await expect(ligne.locator(".manq")).toBeVisible();
+  await expect(champ).toHaveClass(/nop/);
+  await champ.fill("1.4");
+  await champ.press("Tab");
+  await expect(ligne.locator(".manq")).toBeHidden();
+  await expect(champ).not.toHaveClass(/nop/);
+});
+
 const BAGEL = `<script type="application/ld+json">{
   "@context": "http://schema.org",
   "@type": "Recipe",
