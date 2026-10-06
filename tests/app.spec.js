@@ -1689,3 +1689,35 @@ test("rayons : le champ « categorie » du fichier de prix est repris sans écra
   });
   expect(r).toEqual(["boul", "epi", "boi", "aut"]);
 });
+
+test("sauvegarde : l'export du projet affiche un message, et propose de copier si le téléchargement échoue", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+  await ouvrir(page);
+  await aller(page, "pj");
+  const fichier = await telecharger(page, "#exp");
+  expect(JSON.parse(fichier.texte).rec).toBeTruthy();
+  await expect(page.locator("#jmsg")).toContainText("préparé");
+  // téléchargement bloqué : message clair au lieu d'un échec silencieux
+  await page.evaluate(() => {
+    URL.createObjectURL = () => {
+      throw new Error("blocage simulé");
+    };
+  });
+  await page.locator("#exp").click();
+  await expect(page.locator("#jmsg")).toContainText("Téléchargement impossible (blocage simulé)");
+  // projet impossible à sérialiser : message, pas de silence
+  await page.evaluate(() => {
+    S.boucle = S;
+  });
+  await page.locator("#exp").click();
+  await expect(page.locator("#jmsg")).toContainText("Export impossible");
+  await page.evaluate(() => {
+    delete S.boucle;
+  });
+  // copie dans le presse-papiers
+  await page.locator("#expc").click();
+  await expect(page.locator("#jmsg")).toContainText(/Projet copié|Copie impossible/);
+});

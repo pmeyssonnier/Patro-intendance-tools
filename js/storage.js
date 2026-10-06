@@ -238,13 +238,64 @@ addEventListener(
   { once: true }
 );
 
+/** Contenu du projet à exporter (JSON) et nom du fichier ; renvoie null et affiche la raison si le projet ne peut pas être sérialisé. */
+function projetExporte() {
+  try {
+    S.dd = DIETS;
+    return {
+      texte: JSON.stringify(S, null, 1),
+      nom: "projet-patro-" + new Date().toISOString().slice(0, 10) + ".json",
+    };
+  } catch (e) {
+    $("jmsg").textContent = "Export impossible : " + (e && e.message ? e.message : e);
+    return null;
+  }
+}
+
 $("exp").onclick = () => {
-  S.dd = DIETS;
-  dl(
-    JSON.stringify(S, null, 1),
-    "projet-patro-" + new Date().toISOString().slice(0, 10) + ".json",
-    "application/json"
-  );
+  const p = projetExporte();
+  if (!p) return;
+  try {
+    dl(p.texte, p.nom, "application/json");
+    $("jmsg").textContent =
+      "« " +
+      p.nom +
+      " » préparé : cherche-le dans tes téléchargements. Rien ne s'est téléchargé ? Utilise « Copier le projet » ou « Partager ».";
+  } catch (e) {
+    $("jmsg").textContent =
+      "Téléchargement impossible (" +
+      (e && e.message ? e.message : e) +
+      ") : utilise « Copier le projet » ou « Partager ».";
+  }
+};
+
+// repli quand le navigateur bloque le téléchargement (navigateur intégré à une appli, appli installée, Safari…)
+$("expc").onclick = () => {
+  const p = projetExporte();
+  if (!p) return;
+  const ok = () => {
+    $("jmsg").textContent =
+      "Projet copié (" +
+      Math.round(p.texte.length / 1000) +
+      " ko) : colle-le dans un fichier texte enregistré en .json, ou dans un message à toi-même.";
+  };
+  const ko = () => {
+    $("jmsg").textContent = "Copie impossible : ton navigateur la refuse. Essaie « Partager ».";
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(p.texte).then(ok, ko);
+  else ko();
+};
+
+$("exps").onclick = () => {
+  const p = projetExporte();
+  if (!p) return;
+  const f = new File([p.texte], p.nom, { type: "application/json" });
+  if (navigator.canShare && navigator.canShare({ files: [f] }))
+    navigator.share({ files: [f], title: "Projet Intendance PSS" }).catch(() => {});
+  else
+    $("jmsg").textContent =
+      "Le partage de fichier n'est pas disponible sur cet appareil : utilise « Exporter » ou « Copier le projet ».";
 };
 
 $("jin").onchange = (e) => {
