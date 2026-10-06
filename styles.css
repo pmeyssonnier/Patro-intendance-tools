@@ -110,6 +110,11 @@ button.x {
   gap: 8px;
   margin-bottom: 8px;
 }
+#rdesc[readonly] {
+  background: transparent;
+  resize: none;
+  cursor: default;
+}
 .rrow {
   grid-template-columns: 1fr auto auto auto;
   align-items: center;

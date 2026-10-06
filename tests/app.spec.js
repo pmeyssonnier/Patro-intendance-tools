@@ -1765,7 +1765,8 @@ test("recettes : renommer une recette garde sa place, ses ingrédients et son me
   await page.locator("#rename").press("Escape");
   await expect(page.locator("#reform")).toBeHidden();
   expect(await page.evaluate(() => S.cur)).toBe("Spaghetti maison");
-  // la description est enregistrée dès la frappe, sans quitter le champ
+  // la description est enregistrée dès la frappe (mode édition), sans quitter le champ
+  await page.locator("#redit").click();
   await page.locator("#rdesc").fill("Nouvelle description de la recette");
   await page.reload();
   expect(await page.evaluate(() => S.rec["Spaghetti maison"].desc)).toBe(
@@ -1920,4 +1921,40 @@ test("thème : changer de mode ne fait pas disparaître la page affichée", asyn
       await page.evaluate((g) => document.querySelector(`#g-${g}`).classList.contains("on"), id)
     ).toBe(true);
   }
+});
+
+test("recettes : la description est verrouillée hors du mode édition (✎), et « Annuler » la restaure", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  const desc = () => page.evaluate(() => S.rec[S.cur].desc);
+  const avant = await desc();
+  // verrouillée par défaut
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
+  await page.locator("#rdesc").click();
+  await page.keyboard.type("XYZ");
+  expect(await desc()).toBe(avant);
+  // mode édition : modifiable
+  await page.locator("#redit").click();
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", false);
+  await page.locator("#rdesc").fill("Texte provisoire");
+  expect(await desc()).toBe("Texte provisoire");
+  // Annuler : retour à la description d'avant, de nouveau verrouillée
+  await page.locator("#reno").click();
+  expect(await desc()).toBe(avant);
+  await expect(page.locator("#rdesc")).toHaveValue(avant);
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
+  await expect(page.locator("#reform")).toBeHidden();
+  // Enregistrer : la nouvelle description reste, verrouillée
+  await page.locator("#redit").click();
+  await page.locator("#rdesc").fill("Description finale");
+  await page.locator("#reok").click();
+  expect(await desc()).toBe("Description finale");
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
+  // changer de recette referme le mode édition
+  await page.locator("#redit").click();
+  await page.locator("#rsel").selectOption({ index: 1 });
+  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
+  await expect(page.locator("#reform")).toBeHidden();
 });
