@@ -1005,18 +1005,19 @@ th.num,
 
 /* Catalogue de prix : modification d'un ingrédient */
 .ced td {
-  background: #eef5ef;
+  background: color-mix(in srgb, var(--ac) 14%, var(--card));
 }
 
 /* Liste de courses groupée par rayon */
 #list tr.grp td {
-  background: #eef5ef;
+  background: color-mix(in srgb, var(--ac) 14%, var(--card));
+  color: var(--tx);
   padding-top: 8px;
 }
 
 /* Import d'une recette : une carte par ligne d'ingrédient */
 .rimpl {
-  border-top: 1px solid #d9e2da;
+  border-top: 1px solid var(--bd);
   padding: 8px 0;
 }
 .rimpr {

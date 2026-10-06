@@ -1814,3 +1814,40 @@ test("thème : un bouton à côté de la configuration bascule entre clair et so
   expect(await theme()).toBe("light");
   expect(await fond()).toBe("rgb(234, 244, 236)");
 });
+
+test("thème sombre : titres de rayon et ligne d'édition restent lisibles (fond sombre, pas de bandeau blanc)", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await ouvrir(page);
+  const lum = (css) => {
+    // « rgb(20, 32, 25) » (0 à 255) ou « color(srgb 0.08 0.12 0.1) » (0 à 1), selon que la couleur est mélangée ou non
+    const [r, g, b] = css
+        .match(/[\d.]+/g)
+        .slice(0, 3)
+        .map(Number),
+      max = css.startsWith("color(") ? 1 : 255;
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / max;
+  };
+  await aller(page, "list");
+  const titre = await page
+    .locator("#list tr.grp td")
+    .first()
+    .evaluate((e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).color]);
+  expect(lum(titre[0])).toBeLessThan(0.35); // fond sombre
+  expect(lum(titre[1])).toBeGreaterThan(0.6); // texte clair
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  const edition = await page
+    .locator("#ct tr.ced td")
+    .evaluate((e) => getComputedStyle(e).backgroundColor);
+  expect(lum(edition)).toBeLessThan(0.35);
+  // en clair, le fond reste un bandeau vert très clair
+  await page.emulateMedia({ colorScheme: "light" });
+  await aller(page, "list");
+  const clair = await page
+    .locator("#list tr.grp td")
+    .first()
+    .evaluate((e) => getComputedStyle(e).backgroundColor);
+  expect(lum(clair)).toBeGreaterThan(0.8);
+});
