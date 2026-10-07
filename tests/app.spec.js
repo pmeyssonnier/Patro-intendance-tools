@@ -2684,6 +2684,7 @@ test("menu : la poignée ⠿ d'un repas le déplace (clavier et glisser)", async
   await page.keyboard.press("ArrowUp");
   expect(await ordre()).toBe(avant);
   // glisser le premier repas sur le dernier du même jour
+  await page.setViewportSize({ width: 412, height: 2000 }); // tout le jour visible malgré le panneau ouvert
   const zones = page.locator('.dcard[data-dj="0"] .zone');
   const n = await zones.count();
   const src = await zones.first().locator(".zh").boundingBox();
@@ -2693,4 +2694,55 @@ test("menu : la poignée ⠿ d'un repas le déplace (clavier et glisser)", async
   await page.mouse.move(dst.x + 100, dst.y + dst.height / 2, { steps: 8 });
   await page.mouse.up();
   expect(await ordre()).not.toBe(avant);
+});
+
+test("menu : effectif réduit à un repas, à un jour ou à un repas tous les jours (quantités au prorata)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "menu");
+  const N = await page.evaluate(() => nn());
+  expect(N).toBeGreaterThan(3);
+  const total = () => page.evaluate(() => LAST.sum);
+  const avant = await total();
+  // jour 0, repas du soir : la moitié de la troupe seulement
+  const zone = page.locator('.dcard[data-dj="0"] .zone[data-slot="s"]');
+  await zone.locator(".zn").click();
+  const moitie = Math.floor(N / 2);
+  await page.locator(".zpan [data-pr]").fill(String(moitie));
+  await page.locator(".zpan [data-pra]").click();
+  await expect(zone.locator(".zp")).toContainText(`${moitie}/${N}`);
+  const apres = await total();
+  expect(apres).toBeLessThan(avant);
+  expect(await page.evaluate(() => C.pres["0|s"])).toBe(moitie);
+  // le coût du repas concerné diminue au prorata
+  const ratio = await page.evaluate(() => {
+    const l = LAST.pm.find((x) => /pers\./.test(x[0]));
+    return l ? l[0] : "";
+  });
+  expect(ratio).toContain(`${moitie} pers.`);
+  // survit au rechargement
+  await page.reload();
+  expect(await page.evaluate(() => C.pres["0|s"])).toBe(moitie);
+  // tous les repas de ce jour
+  await aller(page, "menu");
+  await page.locator('.dcard[data-dj="0"] .zone[data-slot="m"] .zn').click();
+  await page.locator(".zpan [data-pr]").fill(String(moitie));
+  await page.locator(".zpan [data-prs]").selectOption("jour");
+  await page.locator(".zpan [data-pra]").click();
+  expect(
+    await page.evaluate(() => Object.keys(C.pres).filter((k) => k.startsWith("0|")).length)
+  ).toBe(await page.evaluate(() => dtypes(0).length));
+  // ce repas, tous les jours ; puis « toute la troupe » rétablit les quantités
+  await page.locator(".zpan [data-prs]").selectOption("tous");
+  await page.locator(".zpan [data-pr]").fill("");
+  await page.locator(".zpan [data-pra]").click();
+  expect(
+    await page.evaluate(() => Object.keys(C.pres).filter((k) => k.endsWith("|m")).length)
+  ).toBe(0);
+  // une valeur ≥ à l'effectif total vaut « tout le monde »
+  await page.locator('.dcard[data-dj="0"] .zone[data-slot="s"] .zn').click();
+  await page.locator(".zpan [data-pr]").fill(String(N + 5));
+  await page.locator(".zpan [data-pra]").click();
+  expect(await page.evaluate(() => C.pres["0|s"])).toBeUndefined();
 });

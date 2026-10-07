@@ -1,7 +1,8 @@
 /* Intendance PSS – Calcul des quantités d'un plat (effectifs, marge, régimes, quantités uniques).
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
-function meal(d) {
+/** Quantités et adaptations d’un plat ; f = part de l’effectif présente à ce repas (1 = tout le monde). */
+function meal(d, f = 1) {
   const R = S.rec[d],
     out = {},
     adapt = [];
@@ -37,7 +38,9 @@ function meal(d) {
         (k) => k in DIETS[dk].ex && !(R.fx && k in R.fx && (!nn() || (R.fa && R.fa[k] === 0)))
       )
       .map((k) => ING[k][0] + " → " + (DIETS[dk].ex[k] ? ING[DIETS[dk].ex[k]][0] : "retirer"));
-    if (t.length) adapt.push(DIETS[dk].n + " ×" + P + " : " + t.join(", "));
+    if (t.length)
+      adapt.push(DIETS[dk].n + " ×" + Math.max(1, Math.round(P * f)) + " : " + t.join(", "));
   }
+  if (f !== 1) for (const k in out) out[k] *= f;
   return { out, adapt };
 }

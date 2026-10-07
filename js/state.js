@@ -60,6 +60,7 @@ function mkCamp(name, o) {
       extra: {},
       types: DEFT(),
       off: {},
+      pres: {},
       col: { ...SCOL },
       mt: "Menu du camp",
     },
@@ -127,11 +128,27 @@ const hid = (i, k) => ((C.off || {})[i] || []).includes(k),
 
 const slotArr = (i, k) => (C.menu[i] || {})[k] || [];
 
+/** Nombre de présents à un repas (jour i, type k) quand toute la troupe n'est pas là ; 0 = tout le monde. */
+const presents = (i, k) => {
+  const p = +((C.pres || {})[i + "|" + k] || 0);
+  return p > 0 && p < nn() ? Math.round(p) : 0;
+};
+
+/** Part de l'effectif présente à un repas (1 = tout le monde) : multiplie les quantités du repas. */
+const facteurPres = (i, k) => (presents(i, k) ? presents(i, k) / nn() : 1);
+
 function mealList() {
   const o = [];
   days().forEach((d, i) =>
     dtypes(i).forEach((t) =>
-      slotArr(i, t.k).forEach((r) => o.push([dlab(d) + " · " + t.n, r, i, t.k]))
+      slotArr(i, t.k).forEach((r) =>
+        o.push([
+          dlab(d) + " · " + t.n + (presents(i, t.k) ? " (" + presents(i, t.k) + " pers.)" : ""),
+          r,
+          i,
+          t.k,
+        ])
+      )
     )
   );
   return o;
@@ -278,6 +295,11 @@ if (S.dd && typeof S.dd === "object") DIETS = S.dd;
       c.off[j] = Array.isArray(c.off[j])
         ? c.off[j].filter((k) => c.types.some((t) => t.k === k))
         : [];
+    if (!c.pres || typeof c.pres !== "object") c.pres = {};
+    for (const pk of Object.keys(c.pres)) {
+      const [, tk] = pk.split("|");
+      if (!(+c.pres[pk] > 0) || !c.types.some((t) => t.k === tk)) delete c.pres[pk];
+    }
     if (!c.menu || typeof c.menu !== "object") c.menu = {};
     for (const dk of Object.keys(c.menu)) {
       const dm = c.menu[dk];

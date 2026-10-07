@@ -120,6 +120,7 @@ $("mcpb").onclick = () => {
   C.types = o.types || DEFT();
   C.col = o.col || { ...SCOL };
   C.off = o.off || {};
+  C.pres = o.pres || {};
   drawMenu();
   calc();
 };
