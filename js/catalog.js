@@ -39,8 +39,9 @@ function regimeActuel(k) {
 }
 
 /** Choix « Attention régime » : mêmes options que le formulaire d'ajout de la page Recettes (+ « Personnalisé » si les règles actuelles n'en font pas partie). */
+const OPTIONS_REGIME = $("ingg").innerHTML;
 const optionsRegime = (cle) =>
-  $("idiet").innerHTML.replace(`value="${cle}"`, `value="${cle}" selected`) +
+  OPTIONS_REGIME.replace(`value="${cle}"`, `value="${cle}" selected`) +
   (cle === "perso" ? '<option value="perso" selected>Personnalisé (voir Régimes)</option>' : "");
 
 /** Texte d'avertissement affiché pendant la modification d'un ingrédient (nouvelle unité et nouvelle attention régime choisies ou non). */
@@ -86,10 +87,9 @@ function editIng(k, nom, unite, dg, cat) {
   if (!nom) return "Le nom ne peut pas être vide.";
   if (nom.length > 100) return "Nom trop long (100 caractères au plus).";
   const ancien = ING[k][0],
-    u0 = ING[k][1],
-    cle = (t) => [...motsNom(t)].sort().join(" ") || plain(t);
-  if (cle(nom) !== cle(ancien)) {
-    const dbl = Object.keys(ING).find((x) => x !== k && cle(ING[x][0]) === cle(nom));
+    u0 = ING[k][1];
+  if (cleNom(nom) !== cleNom(ancien)) {
+    const dbl = Object.keys(ING).find((x) => x !== k && cleNom(ING[x][0]) === cleNom(nom));
     if (dbl)
       return `Un ingrédient s'appelle déjà « ${ING[dbl][0]} » (majuscules, accents et pluriel comptent pour pareil).`;
   }
@@ -170,7 +170,7 @@ function lignesCat(keys) {
         (catEdit === k
           ? `<tr class="ced"><td colspan="4"><div class="g"><div><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div><label>Rayon</label><select data-ec="${esc(k)}" aria-label="Rayon de l'ingrédient">${optionsCat(catOf(k))}</select></div><div style="align-self:end"><button data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></td></tr>`
           : "") +
-        `<tr><td>${esc(ING[k][0])}<div class="s manq" style="color:#d33"${price(k) ? " hidden" : ""}>⚠ prix manquant</div>${produitLien(k)}${etiquettePromo(k)}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
+        `<tr><td>${esc(ING[k][0])}<div class="s manq" style="color:#d33"${price(k) ? " hidden" : ""}>⚠ prix manquant</div>${produitLien(k)}${etiquettePromo(k)}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-cmg="${esc(k)}" title="Fusionner avec un autre ingrédient (doublon)" aria-label="Fusionner ${esc(ING[k][0])} avec un autre ingrédient">⇄</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
     )
     .join("");
 }
@@ -230,6 +230,7 @@ $("ct").addEventListener("click", (e) => {
     else refreshIng();
     return;
   }
+  if (e.target.dataset.cmg) return ouvrirFusion(e.target.dataset.cmg);
   const k = e.target.dataset.chd;
   if (!k) return;
   const rec = recettesDe(k);
@@ -299,6 +300,21 @@ const motsNom = (t) =>
       .filter((m) => m.length > 2 && !["des", "les", "aux", "une", "pour"].includes(m))
       .map((m) => (m.length > 3 ? m.replace(/[sx]$/, "") : m))
   );
+
+/** Clé de comparaison d'un nom d'ingrédient : « Pâtes », « pate » et « PÂTE » donnent la même. */
+const cleNom = (t) => [...motsNom(t)].sort().join(" ") || plain(t);
+
+/** Ingrédients visibles de même nom (accents, majuscules et pluriel ignorés) : `exact` ont aussi la même unité, `autre` une unité différente. */
+function doublonsNom(nom, unite) {
+  const c = cleNom(nom),
+    memeNom = Object.keys(ING).filter(
+      (k) => !S.hid.includes(k) && !ING[k][4] && cleNom(ING[k][0]) === c
+    );
+  return {
+    exact: memeNom.filter((k) => ING[k][1] === unite),
+    autre: memeNom.filter((k) => ING[k][1] !== unite),
+  };
+}
 
 /** Ingrédient du catalogue qui correspond à un nom (« poivron rouge » → « Poivrons »), ou null si aucun ou si plusieurs se valent. */
 function ingParNom(nom, exclus, unite) {
@@ -675,34 +691,204 @@ $("imp").onclick = () => {
   calc();
 };
 
-/* Insérer un ingrédient depuis le catalogue (sans l'ajouter à une recette) */
-$("cins").onclick = () => {
-  $("cinf").style.display = "grid";
-  $("cinn").value = "";
-  $("cinp").value = "";
-  $("cing").innerHTML = optionsRegime("");
-  $("cinc").value = "aut";
-  $("cinn").focus();
-};
+/* Nouvel ingrédient : une seule fenêtre, ouverte depuis le catalogue (« Insérer ») ou depuis une recette (« Nouvel ingrédient ») */
+const uniteTexte = { g: "en poids (g)", ml: "en liquide (ml)", pc: "à la pièce" };
 
-$("cinno").onclick = () => {
-  $("cinf").style.display = "none";
-};
+/** true : la fenêtre a été ouverte depuis la page Recettes, l'ingrédient créé est aussi ajouté à la recette affichée. */
+let ingVersRecette = false;
 
-$("cinok").onclick = () => {
-  const nom = $("cinn").value.trim().replace(/\s+/g, " "),
-    cle = (t) => [...motsNom(t)].sort().join(" ") || plain(t);
-  if (!nom) return ($("cinm").textContent = "Donne un nom à l'ingrédient.");
-  const dbl = Object.keys(ING).find((x) => cle(ING[x][0]) === cle(nom));
-  if (dbl) return ($("cinm").textContent = `Un ingrédient s'appelle déjà « ${ING[dbl][0]} ».`);
-  const k = createIng(nom, $("cinu").value, $("cing").value, $("cinc").value),
-    p = +$("cinp").value;
+function ouvrirIngredient(versRecette) {
+  ingVersRecette = !!versRecette && !!S.rec[S.cur];
+  $("ingn").value = "";
+  $("ingp").value = "";
+  $("ingu").value = "g";
+  $("ingg").innerHTML = OPTIONS_REGIME;
+  $("ingc").value = "aut";
+  $("ingctx").textContent = ingVersRecette
+    ? `Il sera aussi ajouté à la recette « ${S.cur} ».`
+    : "Il sera ajouté au catalogue, sans être mis dans une recette.";
+  $("ingm").textContent = "";
+  $("ingdup").hidden = true;
+  if (!$("ingdlg").open) $("ingdlg").showModal();
+  $("ingn").focus();
+}
+
+function fermerIngredient() {
+  if ($("ingdlg").open) $("ingdlg").close();
+}
+
+/** Crée l'ingrédient saisi (prix facultatif) et, depuis une recette, l'y ajoute. */
+function creerDepuisFenetre(nom, unite) {
+  const k = createIng(nom, unite, $("ingg").value, $("ingc").value),
+    p = +$("ingp").value;
   if (p > 0) S.prices[k] = p;
-  $("cinf").style.display = "none";
+  if (ingVersRecette) S.rec[S.cur].ing[k] = SEC.map(() => 0);
+  fermerIngredient();
   $("cinm").textContent = "« " + nom + " » ajouté.";
   setTimeout(() => ($("cinm").textContent = ""), 2500);
   refreshIng();
+}
+
+/** Contrôle le nom (et l'unité) puis crée l'ingrédient ; `confirme` = l'utilisateur a accepté de créer un doublon. */
+function validerIngredient(confirme) {
+  const nom = $("ingn").value.trim().replace(/\s+/g, " "),
+    unite = $("ingu").value;
+  if (!nom) return ($("ingm").textContent = "Donne un nom à l'ingrédient.");
+  $("ingm").textContent = "";
+  const d = doublonsNom(nom, unite);
+  if (!confirme && (d.exact.length || d.autre.length)) {
+    const k = d.exact[0] || d.autre[0];
+    $("ingdupt").textContent = d.exact.length
+      ? `« ${ING[k][0]} » existe déjà (${uniteTexte[unite]}). Créer quand même un ingrédient en double ?`
+      : `« ${ING[k][0]} » existe déjà, mais ${uniteTexte[ING[k][1]]} (toi : ${uniteTexte[unite]}). Créer quand même un deuxième ingrédient ?`;
+    $("inguse").hidden = !(ingVersRecette && d.exact.length);
+    $("inguse").dataset.k = d.exact[0] || "";
+    $("inguse").textContent = d.exact.length ? `Utiliser « ${ING[d.exact[0]][0]} »` : "";
+    $("ingdup").hidden = false;
+    return;
+  }
+  creerDepuisFenetre(nom, unite);
+}
+
+$("cins").onclick = () => ouvrirIngredient(false);
+$("inew").onclick = () => ouvrirIngredient(true);
+$("ingno").onclick = fermerIngredient;
+$("ingok").onclick = () => validerIngredient(false);
+$("ingforce").onclick = () => validerIngredient(true);
+$("ingback").onclick = () => {
+  $("ingdup").hidden = true;
+  $("ingn").focus();
+};
+$("inguse").onclick = () => {
+  const k = $("inguse").dataset.k;
+  if (k && ingVersRecette && !(k in S.rec[S.cur].ing)) S.rec[S.cur].ing[k] = SEC.map(() => 0);
+  fermerIngredient();
+  refreshIng();
+};
+// changer le nom ou l'unité annule l'avertissement de doublon
+["ingn", "ingu"].forEach((i) => $(i).addEventListener("input", () => ($("ingdup").hidden = true)));
+$("ingn").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("ingok").click();
+});
+$("ingdlg").addEventListener("click", (e) => {
+  const r = $("ingdlg").getBoundingClientRect();
+  if (
+    e.target === $("ingdlg") &&
+    (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
+  )
+    fermerIngredient();
+});
+
+/* Fusion de deux ingrédients (doublons déjà utilisés dans des recettes) */
+
+/** Fusionne `src` dans `dst` : quantités des recettes additionnées, prix repris si `dst` n'en a pas, `src` supprimé. Renvoie un message d'erreur, ou "" si c'est fait. */
+function fusionnerIng(src, dst) {
+  if (!ING[src] || !ING[dst] || src === dst) return "Choisis deux ingrédients différents.";
+  if (ING[src][1] !== ING[dst][1])
+    return "Les deux ingrédients n'ont pas la même unité : change l'unité de l'un d'eux avant de les fusionner.";
+  const fixe = (r, k) => !!r.fx && k in r.fx,
+    total = (r, k) => (fixe(r, k) ? r.fx[k] : r.ing[k].reduce((a, q, i) => a + q * C.n[i], 0)),
+    ar = (x) => Math.round(x * 1e6) / 1e6;
+  const melange = Object.values(S.rec).some(
+    (r) => src in r.ing && dst in r.ing && fixe(r, src) !== fixe(r, dst)
+  );
+  if (melange && !nn())
+    return "Une recette mélange quantité unique et quantité par personne : renseigne d'abord les effectifs (page Camps).";
+  for (const r of Object.values(S.rec)) {
+    if (!(src in r.ing)) continue;
+    if (!(dst in r.ing)) {
+      r.ing[dst] = r.ing[src];
+      if (fixe(r, src)) {
+        r.fx[dst] = r.fx[src];
+        if (r.fa && src in r.fa) r.fa[dst] = r.fa[src];
+      }
+    } else if (!fixe(r, src) && !fixe(r, dst)) {
+      r.ing[dst] = r.ing[dst].map((v, i) => ar(v + r.ing[src][i]));
+    } else {
+      r.fx = r.fx || {};
+      r.fx[dst] = Math.round((total(r, src) + total(r, dst)) * 100) / 100;
+    }
+  }
+  if (!price(dst) && price(src)) {
+    S.prices[dst] = price(src);
+    for (const m of [S.pn, S.promo, S.url]) if (src in m) m[dst] = m[src];
+  }
+  for (const d in DIETS) {
+    const ex = DIETS[d].ex;
+    for (const x in ex) if (ex[x] === src) ex[x] = x === dst ? null : dst;
+  }
+  rmIng(src);
+  return "";
+}
+
+/** Ingrédient en cours de fusion (celui dont on a cliqué sur ⇄). */
+let fusionDepuis = null;
+
+/** Ingrédients proposés pour la fusion : même unité, les noms identiques (doublons probables) en premier. */
+function candidatsFusion(k) {
+  return Object.keys(ING)
+    .filter((x) => x !== k && !S.hid.includes(x) && !ING[x][4] && ING[x][1] === ING[k][1])
+    .sort(
+      (a, b) =>
+        (cleNom(ING[b][0]) === cleNom(ING[k][0])) - (cleNom(ING[a][0]) === cleNom(ING[k][0])) ||
+        ING[a][0].localeCompare(ING[b][0], "fr")
+    );
+}
+
+/** Texte de la fenêtre de fusion selon l'autre ingrédient et le sens choisis. */
+function majFusion() {
+  const a = fusionDepuis,
+    b = $("mgb").value;
+  if (!ING[a] || !ING[b]) return;
+  const sens = $("mgs2").checked ? "ba" : "ab",
+    src = sens === "ab" ? a : b,
+    dst = sens === "ab" ? b : a,
+    rec = recettesDe(src);
+  $("mgl1").textContent = `Garder « ${ING[b][0]} » (« ${ING[a][0]} » est supprimé)`;
+  $("mgl2").textContent = `Garder « ${ING[a][0]} » (« ${ING[b][0]} » est supprimé)`;
+  $("mgp").textContent =
+    `« ${ING[src][0]} » ${rec.length ? "est utilisé dans " + rec.join(", ") + " : ses quantités vont dans" : "n'est dans aucune recette ; il sera supprimé et"} « ${ING[dst][0]} »${rec.length ? "" : " est conservé"}.`;
+  $("mgm").textContent = "";
+}
+
+function ouvrirFusion(k) {
+  const cand = candidatsFusion(k);
+  fusionDepuis = k;
+  $("mga").textContent = ING[k][0];
+  $("mgb").innerHTML = cand
+    .map(
+      (x) =>
+        `<option value="${esc(x)}">${esc(ING[x][0])}${cleNom(ING[x][0]) === cleNom(ING[k][0]) ? " — doublon probable" : ""}</option>`
+    )
+    .join("");
+  $("mgs1").checked = true;
+  $("mgok").disabled = !cand.length;
+  if (cand.length) majFusion();
+  else {
+    $("mgl1").textContent = $("mgl2").textContent = "";
+    $("mgp").textContent = "";
+    $("mgm").textContent = "Aucun autre ingrédient n'a la même unité.";
+  }
+  if (!$("mgdlg").open) $("mgdlg").showModal();
+}
+
+$("mgb").onchange = majFusion;
+$("mgs1").onchange = $("mgs2").onchange = majFusion;
+$("mgno").onclick = () => $("mgdlg").close();
+$("mgok").onclick = () => {
+  const a = fusionDepuis,
+    b = $("mgb").value,
+    sens = $("mgs2").checked ? "ba" : "ab",
+    src = sens === "ab" ? a : b,
+    dst = sens === "ab" ? b : a,
+    nomSrc = ING[src][0],
+    nomDst = ING[dst][0],
+    err = fusionnerIng(src, dst);
+  if (err) return ($("mgm").textContent = err);
+  $("mgdlg").close();
+  $("cinm").textContent = `« ${nomSrc} » fusionné dans « ${nomDst} ».`;
+  setTimeout(() => ($("cinm").textContent = ""), 3500);
+  refreshIng();
 };
 
-$("cinc").innerHTML = optionsCat("aut");
-$("icat").innerHTML = optionsCat("aut");
+$("ingc").innerHTML = optionsCat("aut");

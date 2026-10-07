@@ -235,7 +235,7 @@ ${RI.desc ? `<p class="s">${esc(RI.desc)}</p>` : ""}
 
 /** Les lignes d'ingrédients de l'aperçu (seule partie redessinée quand on change un choix). */
 function drawLignes() {
-  const regimes = $("idiet").innerHTML;
+  const regimes = OPTIONS_REGIME;
   const cand = Object.keys(ING)
     .filter((k) => !ING[k][4] && !S.hid.includes(k))
     .sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr"));
