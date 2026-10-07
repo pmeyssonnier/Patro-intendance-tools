@@ -46,7 +46,6 @@ function setCamp(id) {
   C = S.camps[id];
   fillCamp();
   drawCamps();
-  drawSw();
   drawDiets();
   drawMenu();
   calc();
@@ -121,7 +120,6 @@ $("mcpb").onclick = () => {
   C.types = o.types || DEFT();
   C.col = o.col || { ...SCOL };
   C.off = o.off || {};
-  drawSw();
   drawMenu();
   calc();
 };

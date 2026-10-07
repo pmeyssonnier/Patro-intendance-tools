@@ -2629,3 +2629,65 @@ test("import des prix : les boutons Importer / Annuler restent visibles malgré 
   await expect(page.locator("#imp")).toBeInViewport({ ratio: 1 });
   await expect(page.locator("#impno")).toBeInViewport({ ratio: 1 });
 });
+
+test("menu : le nom d'un repas ouvre un panneau (nom, couleur, ordre, retrait) sans section séparée", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "menu");
+  await expect(page.locator("#types")).toHaveCount(0);
+  const zone = () => page.locator('.dcard[data-dj="0"] .zone[data-slot="m"]');
+  await zone().locator(".zn").click();
+  const pan = page.locator(".zpan");
+  await expect(pan).toHaveCount(1);
+  await expect(pan.locator("[data-tn]")).toHaveValue("Matin");
+  await expect(pan).toContainText("Ce jour seulement");
+  await expect(pan).toContainText("Tous les jours");
+  // renommer : le champ garde le focus et le nom change dans tous les jours
+  await pan.locator("[data-tn]").fill("Petit matin");
+  await expect(pan.locator("[data-tn]")).toBeFocused();
+  await expect(
+    page.locator('.zone[data-slot="m"] .zn', { hasText: "Petit matin" }).first()
+  ).toBeVisible();
+  expect(await page.evaluate(() => C.types.find((t) => t.k === "m").n)).toBe("Petit matin");
+  // couleur : une pastille change la couleur du repas
+  await pan.locator(".sw").nth(1).click();
+  expect(await page.evaluate(() => C.col.m)).toBe("#c0392b");
+  await expect(pan.locator(".sw.on")).toHaveCount(1);
+  // ordre : « ▼ » descend le repas, « ▲ » le remonte
+  const ordre = () => page.evaluate(() => C.types.map((t) => t.k).join(","));
+  const avant = await ordre();
+  await page.locator(".zpan [data-td]").click();
+  const apres = await ordre();
+  expect(apres).not.toBe(avant);
+  await page.locator(".zpan [data-tu]").click();
+  expect(await ordre()).toBe(avant);
+  // le nom d'un repas rouvre/ferme le panneau
+  await zone().locator(".zn").click();
+  await expect(page.locator(".zpan")).toHaveCount(0);
+});
+
+test("menu : la poignée ⠿ d'un repas le déplace (clavier et glisser)", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "menu");
+  const ordre = () => page.evaluate(() => C.types.map((t) => t.k).join(","));
+  const avant = await ordre();
+  const h = page.locator('.dcard[data-dj="0"] .zh[data-zk="m"]');
+  await h.focus();
+  await page.keyboard.press("ArrowDown");
+  const apres = await ordre();
+  expect(apres).not.toBe(avant);
+  await page.locator('.dcard[data-dj="0"] .zh[data-zk="m"]').focus();
+  await page.keyboard.press("ArrowUp");
+  expect(await ordre()).toBe(avant);
+  // glisser le premier repas sur le dernier du même jour
+  const zones = page.locator('.dcard[data-dj="0"] .zone');
+  const n = await zones.count();
+  const src = await zones.first().locator(".zh").boundingBox();
+  const dst = await zones.nth(n - 1).boundingBox();
+  await page.mouse.move(src.x + src.width / 2, src.y + src.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dst.x + 100, dst.y + dst.height / 2, { steps: 8 });
+  await page.mouse.up();
+  expect(await ordre()).not.toBe(avant);
+});
