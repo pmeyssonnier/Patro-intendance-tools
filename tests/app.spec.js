@@ -2545,3 +2545,62 @@ test("catalogue : « Vérifier les doublons » liste les doublons et fusionne da
   await page.locator(`#dpl [data-dsrc="${d1}"]`).click();
   expect(await page.evaluate(([x, y]) => [!!ING[x], !!ING[y]], [d1, d2])).toEqual([true, true]);
 });
+
+test("import de prix : l'aperçu compare les anciens et nouveaux prix (hausses, baisses, nouveaux, promos, liens) et le budget", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const ancien = await page.evaluate(() => ({ pain: price("pain"), riz: price("riz") }));
+  await page.locator("#iopen").click();
+  await page.locator("#file").setInputFiles({
+    name: "p.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        source: "Colruyt",
+        date_maj: "2026-10-07",
+        ingredients: {
+          pain: {
+            unite: "kg",
+            prix_unitaire: +(ancien.pain * 1.5).toFixed(2),
+            lien: "https://www.colruyt.be/fr/produits/14502",
+            produit: { nom: "Pain gris" },
+            categorie: "boul",
+          },
+          riz: { unite: "kg", prix_unitaire: ancien.riz },
+          pates: {
+            unite: "kg",
+            prix_unitaire: 0.5,
+            promo: { prix_unitaire: 0.4, texte: "2+1" },
+          },
+        },
+      })
+    ),
+  });
+  const cmp = page.locator("#cmp");
+  await expect(cmp).toBeVisible();
+  await expect(page.locator("#csv")).toBeHidden();
+  await expect(cmp.locator(".cmpc")).toContainText("1 hausse");
+  await expect(cmp.locator(".cmpc")).toContainText("1 baisse");
+  await expect(cmp.locator(".cmpc")).toContainText("1 inchangé");
+  await expect(cmp.locator(".cmpc")).toContainText("1 promo");
+  await expect(cmp.locator(".cmpc")).toContainText("1 lien produit");
+  await expect(cmp).toContainText("Budget de la liste de courses");
+  // le lien du produit est cliquable (nouvel onglet) vers colruyt.be
+  const lien = cmp.locator('a[href="https://www.colruyt.be/fr/produits/14502"]');
+  await expect(lien).toHaveAttribute("target", "_blank");
+  await expect(lien).toContainText("Pain gris");
+  // « voir seulement ce qui change » masque les inchangés
+  await expect(cmp.locator(".cmpi.egal")).toBeVisible();
+  await page.locator("#cmpseul").check();
+  await expect(cmp.locator(".cmpi.egal")).toBeHidden();
+  // rien n'est appliqué avant « Importer »
+  expect(await page.evaluate(() => price("pain"))).toBe(ancien.pain);
+  await page.locator("#imp").click();
+  expect(await page.evaluate(() => price("pain"))).toBe(+(ancien.pain * 1.5).toFixed(2));
+  // la fenêtre se referme et repart de la zone de texte
+  await page.locator("#iopen").click();
+  await expect(page.locator("#csv")).toBeVisible();
+  await expect(cmp).toBeHidden();
+});

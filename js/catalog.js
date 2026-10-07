@@ -452,7 +452,7 @@ function drawInconnus() {
       liste
         .map(
           (u, i) =>
-            `<label><input type="checkbox" data-pn="${i}" checked> ${esc(u.nom)} — ${u.prix.toFixed(2)} €/${u.unite === "pc" ? "pièce" : u.unite === "g" ? "kg" : "L"}</label>`
+            `<label><input type="checkbox" data-pn="${i}" checked> ${esc(u.nom)} — ${u.prix.toFixed(2)} €/${u.unite === "pc" ? "pièce" : u.unite === "g" ? "kg" : "L"}</label>${u.lien ? ` <a href="${esc(u.lien)}" target="_blank" rel="noopener noreferrer" title="Ouvrir la fiche du produit sur colruyt.be">🔗</a>` : ""}`
         )
         .join("<br>") +
       `<p><button id="padd"></button></p>`
@@ -509,13 +509,128 @@ $("pnew").addEventListener("change", majBoutonAjout);
 $("csv").addEventListener("input", () => {
   pendingJson = null;
   pendingInconnus = [];
+  masquerComparaison();
   drawInconnus();
 });
+
+/** Aperçu détaillé d'un fichier de prix JSON : ce qui change (prix, produit, rayon, promo, lien) par rapport au catalogue actuel. */
+function drawComparaison(pj) {
+  const nouveau = {},
+    pct = (x) => (x > 0 ? "+" : "") + x.toFixed(1).replace(".", ",") + " %",
+    unite = (k) => (ING[k][1] === "pc" ? "pièce" : ul(k)),
+    rangs = { hausse: 0, baisse: 0, nouveau: 1, egal: 2 };
+  const lignes = pj.lignes
+    .map(([k, p, n, , cat, promo, lien]) => {
+      nouveau[k] = p;
+      const avant = price(k),
+        delta = p - avant,
+        etat = !(avant > 0)
+          ? "nouveau"
+          : delta > 0.004
+            ? "hausse"
+            : delta < -0.004
+              ? "baisse"
+              : "egal";
+      return {
+        k,
+        avant,
+        p,
+        etat,
+        pct: avant > 0 ? (delta / avant) * 100 : 0,
+        produit: n,
+        produitAvant: S.pn[k] || "",
+        rayon: cat && !S.cat[k] && !CAT0[k] ? cat : "",
+        promo,
+        lien: lien || lienColruyt(S.url[k]),
+      };
+    })
+    .sort(
+      (a, b) =>
+        rangs[a.etat] - rangs[b.etat] ||
+        Math.abs(b.pct) - Math.abs(a.pct) ||
+        ING[a.k][0].localeCompare(ING[b.k][0], "fr")
+    );
+  const n = (f) => lignes.filter(f).length,
+    puces = [
+      ["🔺", n((l) => l.etat === "hausse"), "hausse", "hausses"],
+      ["🔻", n((l) => l.etat === "baisse"), "baisse", "baisses"],
+      ["＝", n((l) => l.etat === "egal"), "inchangé", "inchangés"],
+      ["🆕", n((l) => l.etat === "nouveau"), "prix renseigné", "prix renseignés"],
+      ["🏷️", n((l) => l.promo), "promo", "promos"],
+      ["📂", n((l) => l.rayon), "rayon renseigné", "rayons renseignés"],
+      ["🔗", n((l) => l.lien), "lien produit", "liens produit"],
+      [
+        "🛒",
+        n((l) => l.produit && l.produitAvant && l.produit !== l.produitAvant),
+        "produit changé",
+        "produits changés",
+      ],
+    ]
+      .filter(([, c]) => c)
+      .map(([i, c, un, pl]) => `<span>${i} ${c} ${c > 1 ? pl : un}</span>`)
+      .join("");
+  const avantB = LAST.sum,
+    apresB = LAST.keys.reduce(
+      (a, k) => a + (LAST.tot[k] / per(k)) * (k in nouveau ? nouveau[k] : price(k)),
+      0
+    ),
+    budget =
+      Math.abs(apresB - avantB) > 0.004
+        ? `<p class="s">Budget de la liste de courses : ${eur(avantB)} → <b>${eur(apresB)}</b> (${apresB > avantB ? "+" : "−"}${eur(Math.abs(apresB - avantB))})</p>`
+        : "";
+  const nom = (l) => esc(ING[l.k][0]);
+  $("cmp").innerHTML =
+    `<div class="cmpc">${puces}</div>${budget}` +
+    `<label class="s" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cmpseul" style="width:auto"${$("cmp").classList.contains("seul") ? " checked" : ""}> Voir seulement ce qui change</label>` +
+    `<div class="cmpl">${lignes
+      .map((l) => {
+        const badge =
+          l.etat === "egal"
+            ? "inchangé"
+            : l.etat === "nouveau"
+              ? "nouveau prix"
+              : `${l.etat === "hausse" ? "🔺" : "🔻"} ${pct(l.pct)}`;
+        const prod = l.produit
+          ? l.lien
+            ? `<a href="${esc(l.lien)}" target="_blank" rel="noopener noreferrer">↳ ${esc(l.produit)} 🔗</a>`
+            : `↳ ${esc(l.produit)}`
+          : l.lien
+            ? `<a href="${esc(l.lien)}" target="_blank" rel="noopener noreferrer">🔗 Fiche produit</a>`
+            : "";
+        const plus = [
+          l.produit && l.produitAvant && l.produit !== l.produitAvant
+            ? `produit changé (avant : ${esc(l.produitAvant)})`
+            : "",
+          l.rayon ? `rayon : ${esc(CATS.find((c) => c[0] === l.rayon)[1])}` : "",
+          l.promo
+            ? `🏷️ promo ${eur(l.promo.p)}/${unite(l.k)}${l.promo.t ? " (" + esc(l.promo.t) + ")" : ""}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        return `<div class="cmpi ${l.etat}"><div class="cmph"><b>${nom(l)}</b><span class="cmpd">${badge}</span></div><div class="s">${l.avant > 0 ? eur(l.avant) + " → " : ""}<b>${eur(l.p)}</b>/${unite(l.k)}</div>${prod ? `<div class="s">${prod}</div>` : ""}${plus ? `<div class="s">${plus}</div>` : ""}</div>`;
+      })
+      .join("")}</div>`;
+  $("cmp").hidden = false;
+  $("csv").hidden = true;
+}
+
+$("cmp").addEventListener("change", (e) => {
+  if (e.target.id === "cmpseul") $("cmp").classList.toggle("seul", e.target.checked);
+});
+
+/** Revient à la zone de texte (CSV / liste collée) : l'aperçu détaillé du JSON est masqué. */
+function masquerComparaison() {
+  $("cmp").hidden = true;
+  $("cmp").innerHTML = "";
+  $("csv").hidden = false;
+}
 
 /** Charge le contenu d'un fichier de prix (CSV, texte ou JSON) dans l'aperçu ; le JSON n'est appliqué qu'au clic sur « Importer ». */
 function chargerPrix(nom, texte) {
   pendingJson = null;
   pendingInconnus = [];
+  masquerComparaison();
   drawInconnus();
   const json = /\.json$/i.test(nom);
   const pj = json ? parsePrixJson(texte) : null;
@@ -531,6 +646,7 @@ function chargerPrix(nom, texte) {
   pendingJson = pj;
   pendingInconnus = pj.inconnus;
   drawInconnus();
+  drawComparaison(pj);
   $("csv").value = pj.lignes
     .map(
       (l) =>
@@ -564,6 +680,7 @@ function fermerImportPrix() {
 $("impdlg").addEventListener("close", () => {
   pendingJson = null;
   pendingInconnus = [];
+  masquerComparaison();
   $("csv").value = "";
   $("file").value = "";
   $("fname").textContent = "Aucun fichier choisi";
@@ -647,6 +764,7 @@ $("imp").onclick = () => {
   if (pendingJson) {
     const pj = pendingJson;
     pendingJson = null;
+    masquerComparaison();
     pj.lignes.forEach(([k, p, n, , cat, promo, lien]) => {
       if (promo) S.promo[k] = promo;
       else delete S.promo[k];
