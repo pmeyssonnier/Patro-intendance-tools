@@ -60,6 +60,7 @@ function mkCamp(name, o) {
       extra: {},
       types: DEFT(),
       off: {},
+      pres: {},
       col: { ...SCOL },
       mt: "Menu du camp",
     },
@@ -127,11 +128,32 @@ const hid = (i, k) => ((C.off || {})[i] || []).includes(k),
 
 const slotArr = (i, k) => (C.menu[i] || {})[k] || [];
 
+/** Présents par section à un repas (jour i, type k) quand toute la troupe n'est pas là (jamais plus que l'effectif de la section) ; null = tout le monde. */
+const presents = (i, k) => {
+  const a = (C.pres || {})[i + "|" + k];
+  if (!Array.isArray(a)) return null;
+  const p = C.n.map((n, s) => Math.min(Math.max(Math.round(+a[s]) || 0, 0), n));
+  return p.some((v, s) => v < C.n[s]) ? p : null;
+};
+
+/** Nombre total de présents à un repas (toute la troupe s'il n'est pas réduit). */
+const nbPres = (i, k) => {
+  const p = presents(i, k);
+  return p ? p.reduce((a, b) => a + b, 0) : nn();
+};
+
 function mealList() {
   const o = [];
   days().forEach((d, i) =>
     dtypes(i).forEach((t) =>
-      slotArr(i, t.k).forEach((r) => o.push([dlab(d) + " · " + t.n, r, i, t.k]))
+      slotArr(i, t.k).forEach((r) =>
+        o.push([
+          dlab(d) + " · " + t.n + (presents(i, t.k) ? " (" + nbPres(i, t.k) + " pers.)" : ""),
+          r,
+          i,
+          t.k,
+        ])
+      )
     )
   );
   return o;
@@ -278,6 +300,11 @@ if (S.dd && typeof S.dd === "object") DIETS = S.dd;
       c.off[j] = Array.isArray(c.off[j])
         ? c.off[j].filter((k) => c.types.some((t) => t.k === k))
         : [];
+    if (!c.pres || typeof c.pres !== "object") c.pres = {};
+    for (const pk of Object.keys(c.pres)) {
+      const [, tk] = pk.split("|");
+      if (!Array.isArray(c.pres[pk]) || !c.types.some((t) => t.k === tk)) delete c.pres[pk];
+    }
     if (!c.menu || typeof c.menu !== "object") c.menu = {};
     for (const dk of Object.keys(c.menu)) {
       const dm = c.menu[dk];

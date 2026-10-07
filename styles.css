@@ -209,12 +209,6 @@ button.x {
   padding: 2px 8px;
   margin-top: 3px;
 }
-.trow {
-  border: 1px solid var(--bd);
-  border-radius: 10px;
-  padding: 8px;
-  margin: 8px 0;
-}
 .tl {
   display: flex;
   gap: 6px;
@@ -262,6 +256,41 @@ button.x {
   flex-direction: column;
   align-items: center;
   gap: 2px;
+}
+.zn {
+  background: transparent;
+  color: inherit;
+  border: 0;
+  padding: 0 2px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.zh {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 0 8px;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  opacity: 0.85;
+}
+.zone.drag {
+  opacity: 0.5;
+}
+.zpan {
+  padding: 8px 12px;
+  background: var(--card);
+  border-top: 1px solid var(--bd);
+  border-left: 6px solid var(--bd);
+}
+.zpan .zdel {
+  padding: 8px 0 0;
+  background: none;
+  border-top: 1px solid var(--bd);
+  margin-top: 6px;
 }
 .zx {
   background: transparent;
@@ -1131,6 +1160,18 @@ th.num,
 #dpdlg::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
+/* Boutons Importer / Annuler : toujours visibles en bas de la fenêtre, même quand l'aperçu est long */
+#impdlg {
+  padding-bottom: 0;
+}
+#impdlg .impb {
+  position: sticky;
+  bottom: 0;
+  margin: 10px -14px 0;
+  padding: 10px 14px 14px;
+  background: var(--card);
+  border-top: 1px solid var(--bd);
+}
 #impdlg textarea,
 #ingdlg input,
 #ingdlg select,
@@ -1190,4 +1231,41 @@ th.num,
 #cmp .cmpi a {
   display: inline-block;
   padding: 4px 0;
+}
+
+/* Effectif réduit d'un repas */
+.zp {
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.zeff {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--bd);
+}
+.zsec {
+  display: flex;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+}
+.zsec label {
+  display: grid;
+  gap: 2px;
+  font-size: 0.8rem;
+  margin: 0;
+}
+.zeff input {
+  width: 72px;
+}
+.zeff select {
+  max-width: 230px;
+}
+.zeff > .s:last-child {
+  flex-basis: 100%;
 }

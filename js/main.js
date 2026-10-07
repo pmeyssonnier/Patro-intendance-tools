@@ -20,8 +20,6 @@ fillCamp();
 
 drawCamps();
 
-drawSw();
-
 drawSecEd();
 
 drawBrand();

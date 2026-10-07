@@ -16,12 +16,20 @@ const resumeJour = (i) => {
 
 const ALLD = () => [...Array(31).keys()];
 
+/** Panneau d'un repas (clic sur son nom) : nom, ordre, couleur, suppression du type, et retrait de ce jour ou de tous les jours. */
 const delPanel = (i, k, lab) => {
   const n1 = slotArr(i, k).length,
     n2 = days().reduce((a, d, j) => a + slotArr(j, k).length, 0),
-    f = (n) => (n ? ` (${n} plat${n > 1 ? "s" : ""} supprimé${n > 1 ? "s" : ""})` : "");
-  return `<div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${esc(k)}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${esc(k)}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div>`;
+    f = (n) => (n ? ` (${n} plat${n > 1 ? "s" : ""} supprimé${n > 1 ? "s" : ""})` : ""),
+    vis = dtypes(i).map((x) => x.k),
+    p = vis.indexOf(k),
+    col = String(C.col[k]).toLowerCase(),
+    pr = presents(i, k),
+    ek = esc(k);
+  return `<div class="zpan"><div class="tl"><input class="tn" value="${esc(lab)}" data-tn="${ek}" maxlength="30" aria-label="Nom du repas"><button class="x" data-tu="${ek}" data-day="${i}" title="Monter ce repas" aria-label="Monter ${esc(lab)}"${p > 0 ? "" : " disabled"}>▲</button><button class="x" data-td="${ek}" data-day="${i}" title="Descendre ce repas" aria-label="Descendre ${esc(lab)}"${p < vis.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-tx="${ek}" title="Supprimer ce type de repas de tous les jours" aria-label="Supprimer le type de repas ${esc(lab)}">🗑</button></div><div class="crow"><span class="sws">${COLS.map((c) => `<button class="sw${c.toLowerCase() === col ? " on" : ""}" style="background:${c}" data-c="${c}" data-ck="${ek}" title="${CN[c] || c}" aria-label="Couleur ${CN[c] || c} pour ${esc(lab)}" aria-pressed="${c.toLowerCase() === col}"></button>`).join("")}</span><input type="color" data-ci="${ek}" value="${esc(C.col[k])}" title="Autre couleur" aria-label="Autre couleur pour ${esc(lab)}"><span class="s cw" style="color:#d33">${lowc(C.col[k]) ? "⚠ contraste faible" : ""}</span></div><div class="zeff"><b>Effectif de ce repas</b><div class="zsec">${SEC.map((sc, j) => `<label>${esc(sc[0])}<input type="number" min="0" max="${C.n[j] || 0}" step="1" data-pr="${j}" value="${pr ? pr[j] : C.n[j] || 0}" aria-label="Présents ${esc(sc[0])} (sur ${C.n[j] || 0})"><span class="s">sur ${C.n[j] || 0}</span></label>`).join("")}</div><select data-prs aria-label="Portée de l’effectif"><option value="un">Ce repas seulement</option><option value="jour">Tous les repas de ce jour</option><option value="tous">Ce repas, tous les jours</option></select> <button class="x" data-pra="1">Appliquer</button> <button class="x" data-pra="0">Toute la troupe</button><div class="s">Présents par section : les quantités de ce repas sont calculées avec cet effectif (régimes compris).</div></div><div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${ek}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${ek}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div></div>`;
 };
+
+const ouvert = (i, k) => !!delSl && delSl.day === i && delSl.k === k;
 
 const addPanel = () => {
   const nw = addT === "__new",
@@ -38,7 +46,7 @@ function drawMenu() {
       )
         .map(
           ({ k, n: lab }) =>
-            `<div class="zone" data-day="${i}" data-slot="${esc(k)}" style="${cvars(C.col[k])}"><div class="zl"><span>${esc(lab)}</span><button class="zx" data-ds="1" data-day="${i}" data-slot="${esc(k)}" title="Retirer ce repas de ce jour" aria-label="Retirer ${esc(lab)} de ce jour">✕</button></div><div class="zc">${slotArr(
+            `<div class="zone" data-day="${i}" data-slot="${esc(k)}" style="${cvars(C.col[k])}"><div class="zl">${ouvert(i, k) ? `<span class="zh" role="button" tabindex="0" data-day="${i}" data-zk="${esc(k)}" aria-label="Déplacer le repas ${esc(lab)} avec les flèches du clavier" title="Glisser pour changer l’ordre des repas (flèches haut/bas au clavier)">⠿</span>` : ""}<button class="zn" data-ds="1" data-day="${i}" data-slot="${esc(k)}" title="Modifier ce repas : nom, couleur, ordre, retrait" aria-label="Modifier le repas ${esc(lab)}" aria-expanded="${ouvert(i, k)}"><span class="znt">${esc(lab)}</span> <span aria-hidden="true">${ouvert(i, k) ? "▴" : "✎"}</span></button>${presents(i, k) ? `<span class="zp" title="Effectif réduit : ${nbPres(i, k)} présents sur ${nn()}">👥 ${nbPres(i, k)}/${nn()}</span>` : ""}</div><div class="zc">${slotArr(
               i,
               k
             )
@@ -127,7 +135,6 @@ function addSlot(i, scope, name) {
   });
   addDay = -1;
   addT = "";
-  drawSw();
   drawMenu();
   calc();
 }
@@ -193,7 +200,7 @@ $("menu").addEventListener("keydown", (e) => {
 });
 
 $("menu").addEventListener("click", (e) => {
-  const t = e.target;
+  const t = e.target.closest("[data-ds]") || e.target;
   if (t.dataset.nok !== undefined) {
     addGo(t);
     return;
@@ -205,7 +212,8 @@ $("menu").addEventListener("click", (e) => {
     return;
   }
   if (t.dataset.ds) {
-    delSl = { day: +t.dataset.day, k: t.dataset.slot };
+    const same = delSl && delSl.day === +t.dataset.day && delSl.k === t.dataset.slot;
+    delSl = same ? null : { day: +t.dataset.day, k: t.dataset.slot };
     addDay = -1;
     addT = "";
     drawMenu();
@@ -220,11 +228,213 @@ $("menu").addEventListener("click", (e) => {
     drawMenu();
     return;
   }
+  if (t.dataset.pra !== undefined && delSl) {
+    const pan = t.closest(".zpan"),
+      v =
+        t.dataset.pra === "0"
+          ? null
+          : SEC.map((_, j) => +pan.querySelector(`[data-pr="${j}"]`).value || 0),
+      portee = pan.querySelector("[data-prs]").value;
+    poserEffectif(delSl.day, delSl.k, portee, v);
+    drawMenu();
+    calc();
+    say(v ? "Effectif du repas réglé" : "Toute la troupe");
+    return;
+  }
+  if (t.dataset.ck) {
+    C.col[t.dataset.ck] = t.dataset.c;
+    majCouleur(t.dataset.ck, true);
+    return;
+  }
+  if (t.dataset.tu || t.dataset.td) {
+    const k = t.dataset.tu || t.dataset.td;
+    if (monterRepas(+t.dataset.day, k, t.dataset.tu ? -1 : 1)) {
+      drawMenu();
+      calc();
+      const b = $("menu").querySelector(
+        `[data-${t.dataset.tu ? "tu" : "td"}="${k}"]:not([disabled])`
+      );
+      if (b) b.focus();
+    }
+    return;
+  }
+  if (t.dataset.tx) {
+    const ty = C.types.find((x) => x.k === t.dataset.tx);
+    if (!ty) return;
+    if (C.types.length < 2) {
+      alert("Il faut garder au moins un type de repas.");
+      return;
+    }
+    if (!confirm("Supprimer « " + ty.n + " » de tous les jours (et les plats qu'il contient) ?"))
+      return;
+    C.types = C.types.filter((x) => x.k !== ty.k);
+    delete C.col[ty.k];
+    Object.values(C.menu).forEach((dm) => delete dm[ty.k]);
+    Object.keys(C.off).forEach((j) => (C.off[j] = C.off[j].filter((k) => k !== ty.k)));
+    delSl = null;
+    drawMenu();
+    calc();
+    return;
+  }
   if (!t.dataset.rm) return;
   marr(+t.dataset.day, t.dataset.slot).splice(+t.dataset.j, 1);
   drawMenu();
   calc();
 });
+
+/** Fixe les présents par section (v = tableau) ou rétablit toute la troupe (v = null) : à ce repas, à tous les repas du jour, ou à ce repas tous les jours. */
+function poserEffectif(i, k, portee, v) {
+  C.pres = C.pres || {};
+  const cles =
+      portee === "jour"
+        ? dtypes(i).map((t) => i + "|" + t.k)
+        : portee === "tous"
+          ? ALLD()
+              .filter((j) => !hid(j, k))
+              .map((j) => j + "|" + k)
+          : [i + "|" + k],
+    tous = !v || v.every((x, j) => x >= (C.n[j] || 0));
+  cles.forEach((c) => {
+    if (tous) delete C.pres[c];
+    else C.pres[c] = v.map((x, j) => Math.min(Math.max(Math.round(x), 0), C.n[j] || 0));
+  });
+}
+
+/** Place le repas k à la position du repas tk (pour tous les jours : l'ordre des types est commun). */
+function deplacerRepas(k, tk) {
+  const T = C.types,
+    oi = T.findIndex((x) => x.k === k),
+    oj = T.findIndex((x) => x.k === tk);
+  if (oi < 0 || oj < 0 || oi === oj) return false;
+  const [ty] = T.splice(oi, 1),
+    at = T.findIndex((x) => x.k === tk);
+  T.splice(oj > oi ? at + 1 : at, 0, ty);
+  return true;
+}
+
+/** Monte (-1) ou descend (+1) un repas par rapport à son voisin visible ce jour-là. */
+function monterRepas(i, k, sens) {
+  const vis = dtypes(i).map((x) => x.k),
+    v = vis[vis.indexOf(k) + sens];
+  return v ? deplacerRepas(k, v) : false;
+}
+
+/** Couleur d'un repas modifiée : met à jour les zones, les pastilles et l'aperçu sans refermer le panneau ni le sélecteur de couleur. */
+function majCouleur(k, pastilles) {
+  $("menu")
+    .querySelectorAll(".zone")
+    .forEach((z) => {
+      if (z.dataset.slot === k) z.style.cssText = cvars(C.col[k]);
+    });
+  const pan = $("menu").querySelector(".zpan");
+  if (pan && pastilles)
+    pan.querySelectorAll(".sw").forEach((b) => {
+      const on = b.dataset.c.toLowerCase() === String(C.col[k]).toLowerCase();
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", on);
+    });
+  if (pan) {
+    const ci = pan.querySelector("[data-ci]");
+    if (ci && ci.value.toLowerCase() !== String(C.col[k]).toLowerCase()) ci.value = C.col[k];
+    pan.querySelector(".cw").textContent = lowc(C.col[k]) ? "⚠ contraste faible" : "";
+  }
+  calc();
+}
+
+$("menu").addEventListener("input", (e) => {
+  const d = e.target.dataset;
+  if (d.tn) {
+    const ty = C.types.find((x) => x.k === d.tn);
+    if (!ty) return;
+    ty.n = e.target.value;
+    // le nom change dans toutes les zones sans redessiner (le champ garde le focus)
+    $("menu")
+      .querySelectorAll(".zone")
+      .forEach((z) => {
+        if (z.dataset.slot === ty.k) z.querySelector(".znt").textContent = ty.n;
+      });
+    calc();
+  } else if (d.ci) {
+    C.col[d.ci] = e.target.value;
+    majCouleur(d.ci, true);
+  }
+});
+
+$("menu").addEventListener("change", (e) => {
+  const ty = e.target.dataset.tn && C.types.find((x) => x.k === e.target.dataset.tn);
+  if (ty && !ty.n.trim()) {
+    ty.n = "Repas";
+    drawMenu();
+    calc();
+  }
+});
+
+$("menu").addEventListener("keydown", (e) => {
+  const h = e.target.closest && e.target.closest(".zh");
+  if (!h || !["ArrowUp", "ArrowDown"].includes(e.key)) return;
+  e.preventDefault();
+  if (!monterRepas(+h.dataset.day, h.dataset.zk, e.key === "ArrowUp" ? -1 : 1)) return;
+  drawMenu();
+  calc();
+  const f = $("menu").querySelector(`.zh[data-day="${h.dataset.day}"][data-zk="${h.dataset.zk}"]`);
+  if (f) f.focus();
+  say("Repas déplacé");
+});
+
+let dz = null,
+  rz = 0;
+
+const zoneSous = () => {
+  const el = document.elementFromPoint(px, py),
+    z = el && el.closest && el.closest(".zone");
+  return z && dz && $("menu").contains(z) && +z.dataset.day === dz.day ? z : null;
+};
+
+function zloop() {
+  if (!dz) return;
+  if (py < 90) scrollBy(0, -14);
+  else if (py > innerHeight - 90) scrollBy(0, 14);
+  const z = zoneSous();
+  $("menu")
+    .querySelectorAll(".zone")
+    .forEach((x) => x.classList.toggle("over", !!z && x === z && x.dataset.slot !== dz.k));
+  rz = requestAnimationFrame(zloop);
+}
+
+$("menu").addEventListener("pointerdown", (e) => {
+  const h = e.target.closest(".zh");
+  if (!h) return;
+  e.preventDefault();
+  dz = { day: +h.dataset.day, k: h.dataset.zk };
+  px = e.clientX;
+  py = e.clientY;
+  try {
+    h.setPointerCapture(e.pointerId);
+  } catch (_) {}
+  h.closest(".zone").classList.add("drag");
+  rz = requestAnimationFrame(zloop);
+});
+
+function zend(ok) {
+  if (!dz) return;
+  cancelAnimationFrame(rz);
+  const g = dz,
+    z = ok ? zoneSous() : null;
+  dz = null;
+  if (z && z.dataset.slot !== g.k) {
+    deplacerRepas(g.k, z.dataset.slot);
+    calc();
+  }
+  drawMenu();
+}
+
+$("menu").addEventListener("pointerup", (e) => {
+  px = e.clientX;
+  py = e.clientY;
+  zend(true);
+});
+
+$("menu").addEventListener("pointercancel", () => zend(false));
 
 let dg = null,
   px = 0,
@@ -300,93 +510,6 @@ $("menu").addEventListener("pointerup", (e) => {
 });
 
 $("menu").addEventListener("pointercancel", () => dend(false));
-
-function drawSw() {
-  $("types").innerHTML = C.types
-    .map(
-      (t, i) =>
-        `<div class="trow"><div class="tl"><input class="tn" value="${esc(t.n)}" data-tn="${esc(t.k)}" maxlength="30" aria-label="Nom du repas"><button class="x" data-tu="${esc(t.k)}" title="Monter" aria-label="Monter ${esc(t.n)}"${i ? "" : " disabled"}>▲</button><button class="x" data-td="${esc(t.k)}" title="Descendre" aria-label="Descendre ${esc(t.n)}"${i < C.types.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-tx="${esc(t.k)}" title="Supprimer ce type de repas" aria-label="Supprimer ${esc(t.n)}">🗑</button></div><div class="crow"><span class="sws">${COLS.map((c) => `<button class="sw${c.toLowerCase() === String(C.col[t.k]).toLowerCase() ? " on" : ""}" style="background:${c}" data-c="${c}" data-ck="${esc(t.k)}" title="${CN[c] || c}" aria-label="Couleur ${CN[c] || c} pour ${esc(t.n)}" aria-pressed="${c.toLowerCase() === String(C.col[t.k]).toLowerCase()}"></button>`).join("")}</span><input type="color" data-ci="${esc(t.k)}" value="${esc(C.col[t.k])}" title="Autre couleur" aria-label="Autre couleur pour ${esc(t.n)}"><span class="s cw" style="color:#d33">${lowc(C.col[t.k]) ? "⚠ contraste faible" : ""}</span></div></div>`
-    )
-    .join("");
-}
-
-$("types").addEventListener("input", (e) => {
-  const d = e.target.dataset;
-  if (d.tn) {
-    const t = C.types.find((x) => x.k === d.tn);
-    if (t) {
-      t.n = e.target.value;
-      drawMenu();
-      calc();
-    }
-  } else if (d.ci) {
-    C.col[d.ci] = e.target.value;
-    e.target
-      .closest(".trow")
-      .querySelectorAll(".sw")
-      .forEach((b) =>
-        b.classList.toggle("on", b.dataset.c.toLowerCase() === e.target.value.toLowerCase())
-      );
-    e.target.closest(".trow").querySelector(".cw").textContent = lowc(e.target.value)
-      ? "⚠ contraste faible"
-      : "";
-    drawMenu();
-    calc();
-  }
-});
-
-$("types").addEventListener("change", (e) => {
-  const d = e.target.dataset;
-  if (d.tn) {
-    const t = C.types.find((x) => x.k === d.tn);
-    if (t && !t.n.trim()) {
-      t.n = "Repas";
-      drawSw();
-      drawMenu();
-      calc();
-    }
-  }
-});
-
-$("types").addEventListener("click", (e) => {
-  const d = e.target.dataset,
-    T = C.types;
-  if (d.ck) {
-    C.col[d.ck] = d.c;
-    drawSw();
-    drawMenu();
-    calc();
-    return;
-  }
-  const mv = (k, s) => {
-    const i = T.findIndex((x) => x.k === k),
-      j = i + s;
-    if (i < 0 || j < 0 || j >= T.length) return;
-    [T[i], T[j]] = [T[j], T[i]];
-    drawSw();
-    drawMenu();
-    calc();
-  };
-  if (d.tu) mv(d.tu, -1);
-  else if (d.td) mv(d.td, 1);
-  else if (d.tx) {
-    const t = T.find((x) => x.k === d.tx);
-    if (!t) return;
-    if (T.length < 2) {
-      alert("Il faut garder au moins un type de repas.");
-      return;
-    }
-    if (!confirm("Supprimer « " + t.n + " » de tous les jours (et les plats qu'il contient) ?"))
-      return;
-    C.types = T.filter((x) => x.k !== d.tx);
-    delete C.col[d.tx];
-    Object.values(C.menu).forEach((dm) => delete dm[d.tx]);
-    Object.keys(C.off).forEach((j) => (C.off[j] = C.off[j].filter((k) => k !== d.tx)));
-    drawSw();
-    drawMenu();
-    calc();
-  }
-});
 
 $("mtitle").addEventListener("input", () => {
   C.mt = $("mtitle").value;
