@@ -3115,3 +3115,49 @@ test("rayons : un rayon par défaut supprimé transfère ses produits, et l'ordr
   });
   expect(ok).toEqual(["x1,aut", "x1", undefined]);
 });
+
+test("régimes : les règles, les ingrédients et les substituts sont triés par ordre alphabétique", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "reg");
+  const r = await page.evaluate(() => {
+    const noms = Object.keys(ING).map((k) => ING[k][0]);
+    const tries = (l) => l.every((x, i) => !i || l[i - 1].localeCompare(x, "fr") <= 0);
+    // règles ajoutées dans le désordre
+    const cles = Object.keys(ING)
+      .filter((k) => !ING[k][4])
+      .reverse()
+      .slice(0, 4);
+    DIETS.d_tri = { n: "Tri", ex: Object.fromEntries(cles.map((k) => [k, null])) };
+    dcur = "d_tri";
+    drawDietEd();
+    const lignes = [...document.querySelectorAll("#drules tr")];
+    const ingr = lignes.map((l) => l.querySelector("[data-ro] option:checked").textContent);
+    const opts = (s) => [...s.options].map((o) => o.textContent).filter((t) => !t.startsWith("—"));
+    return {
+      nb: lignes.length,
+      reglesTriees: tries(ingr),
+      ingredientsTries: lignes.every((l) => tries(opts(l.querySelector("[data-ro]")))),
+      substitutsTries: lignes.every((l) => tries(opts(l.querySelector("[data-rs]")))),
+      retirerEnPremier: lignes[0].querySelector("[data-rs] option").textContent.startsWith("—"),
+      total: noms.length,
+    };
+  });
+  expect(r.nb).toBe(4);
+  expect(r.reglesTriees).toBe(true);
+  expect(r.ingredientsTries).toBe(true);
+  expect(r.substitutsTries).toBe(true);
+  expect(r.retirerEnPremier).toBe(true);
+  // « + Ajouter une règle » : la règle apparaît à sa place alphabétique
+  await page.evaluate(() => $("dradd").click());
+  expect(
+    await page.evaluate(() => {
+      const l = [...document.querySelectorAll("#drules [data-ro] option:checked")].map(
+        (o) => o.textContent
+      );
+      return l.every((x, i) => !i || l[i - 1].localeCompare(x, "fr") <= 0);
+    })
+  ).toBe(true);
+  expect(erreurs).toEqual([]);
+});

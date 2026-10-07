@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.24.1",
+    d: "2026-10-07",
+    t: "Régimes triés par ordre alphabétique",
+    l: [
+      "Régimes : les règles de remplacement et les listes d'ingrédients et de substituts sont triées par ordre alphabétique.",
+    ],
+  },
+  {
     v: "1.24.0",
     d: "2026-10-07",
     t: "Gérer les rayons",
