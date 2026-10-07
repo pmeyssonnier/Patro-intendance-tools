@@ -42,7 +42,23 @@ async function importer(page, fichier) {
   await Promise.all([page.waitForEvent("load"), page.locator("#jin").setInputFiles(fichier)]);
 }
 
+/** Bascule « quantité unique » / « par personne » d'un ingrédient de recette (le bouton est dans sa fiche : on l'ouvre d'abord). `ligne` : la ligne de l'ingrédient dans #rb. */
+async function basculerQuantite(page, ligne) {
+  const k = await ligne.getAttribute("data-rk");
+  if (!(await page.locator(`#rb [data-tg="${k}"]`).count())) await ligne.locator(".ib").click();
+  await page.locator(`#rb [data-tg="${k}"]`).click();
+}
+
 /** Montant affiché en euros (« 198,21 € ») → nombre. */
 const montant = (txt) => parseFloat(txt.replace(/[^\d,]/g, "").replace(",", "."));
 
-module.exports = { ouvrir, aller, telecharger, importer, montant, URL, deplierRegime };
+module.exports = {
+  basculerQuantite,
+  ouvrir,
+  aller,
+  telecharger,
+  importer,
+  montant,
+  URL,
+  deplierRegime,
+};
