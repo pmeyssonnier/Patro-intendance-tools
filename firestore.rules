@@ -3,6 +3,14 @@ rules_version = '2';
 // Règles de sécurité Firestore – version test.
 // Tout ce qui n'est pas autorisé ci-dessous est refusé.
 // Rôles d'un groupe : admin (gère les membres), editeur (modifie), lecteur (consulte).
+//
+// Collections :
+//   prix/{doc}                        prix communs (super-administrateur)
+//   groupes/{g}                       un groupe (nom)
+//   groupes/{g}/membres/{uid}         membres du groupe et leur rôle
+//   groupes/{g}/catalogue|camps/{id}  données du groupe, avec un numéro de version
+//   invitations/{g|e-mail}            invitation d'une adresse à rejoindre un groupe
+//   utilisateurs/{uid}/groupes/{g}    copie du rôle, pour retrouver « mes groupes »
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -10,8 +18,12 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email_verified == true;
     }
 
+    function monMail() {
+      return request.auth.token.email.lower();
+    }
+
     function superAdmin() {
-      return connecte() && request.auth.token.email == 'pmeyssonnier@gmail.com';
+      return connecte() && monMail() == 'pmeyssonnier@gmail.com';
     }
 
     function roleDans(g) {
@@ -32,6 +44,19 @@ service cloud.firestore {
       return connecte() && roleDans(g) == 'admin';
     }
 
+    function roleValide(r) {
+      return r in ['admin', 'editeur', 'lecteur'];
+    }
+
+    // Invitation adressée à l'utilisateur connecté pour le groupe g (identifiant : « g|adresse »).
+    function invitationPour(g) {
+      return exists(/databases/$(database)/documents/invitations/$(g + '|' + monMail()));
+    }
+
+    function roleInvite(g) {
+      return get(/databases/$(database)/documents/invitations/$(g + '|' + monMail())).data.role;
+    }
+
     // Prix communs (import Colruyt) : lisibles par tout utilisateur connecté, écrits par le super-administrateur seul.
     match /prix/{doc} {
       allow read: if connecte();
@@ -40,15 +65,26 @@ service cloud.firestore {
 
     match /groupes/{g} {
       allow read: if membre(g) || superAdmin();
-      allow create, delete: if superAdmin();
+      allow create: if superAdmin()
+        && request.resource.data.nom is string
+        && request.resource.data.nom.size() > 0
+        && request.resource.data.nom.size() <= 80;
+      allow delete: if superAdmin();
       allow update: if (admin(g) || superAdmin())
         && request.resource.data.nom is string
+        && request.resource.data.nom.size() > 0
         && request.resource.data.nom.size() <= 80;
 
       match /membres/{uid} {
         allow read: if membre(g) || superAdmin() || (connecte() && request.auth.uid == uid);
-        allow create, update: if (admin(g) || superAdmin())
-          && request.resource.data.role in ['admin', 'editeur', 'lecteur'];
+        // un administrateur (ou le super-administrateur) ajoute et modifie ; l'invité s'ajoute lui-même, avec le rôle de son invitation
+        allow create: if roleValide(request.resource.data.role)
+          && ((admin(g) || superAdmin())
+            || (connecte() && request.auth.uid == uid
+              && invitationPour(g)
+              && request.resource.data.role == roleInvite(g)
+              && request.resource.data.email == monMail()));
+        allow update: if (admin(g) || superAdmin()) && roleValide(request.resource.data.role);
         allow delete: if admin(g) || superAdmin();
       }
 
@@ -61,6 +97,32 @@ service cloud.firestore {
           && request.resource.data.version == resource.data.version + 1;
         allow delete: if (type == 'catalogue' || type == 'camps') && admin(g);
       }
+    }
+
+    match /invitations/{id} {
+      allow read: if connecte()
+        && (resource.data.email == monMail() || admin(resource.data.groupe) || superAdmin());
+      allow create: if connecte()
+        && (admin(request.resource.data.groupe) || superAdmin())
+        && roleValide(request.resource.data.role)
+        && request.resource.data.email is string
+        && request.resource.data.email == request.resource.data.email.lower()
+        && request.resource.data.nomGroupe is string
+        && id == request.resource.data.groupe + '|' + request.resource.data.email;
+      allow delete: if connecte()
+        && (resource.data.email == monMail() || admin(resource.data.groupe) || superAdmin());
+    }
+
+    match /utilisateurs/{uid}/groupes/{g} {
+      allow read: if connecte() && request.auth.uid == uid;
+      allow create: if roleValide(request.resource.data.role)
+        && (superAdmin()
+          || admin(g)
+          || (connecte() && request.auth.uid == uid
+            && invitationPour(g)
+            && request.resource.data.role == roleInvite(g)));
+      allow update: if roleValide(request.resource.data.role) && (admin(g) || superAdmin());
+      allow delete: if admin(g) || superAdmin();
     }
   }
 }

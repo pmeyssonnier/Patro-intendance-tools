@@ -27,6 +27,8 @@ const FILES = [
   "js/recipe-import.js",
   "js/changelog.js",
   "js/config.js",
+  "js/groupes.js",
+  "js/cloud-groups.js",
   "js/cloud.js",
   "js/pwa.js",
   "js/main.js",

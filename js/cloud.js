@@ -5,6 +5,8 @@
 const CLOUD = {
   // true sur le site de test : bandeau « version test » affiché
   test: true,
+  // adresse du super-administrateur : sert seulement à afficher « Nouveau groupe » (les règles de sécurité font foi)
+  superAdmin: "pmeyssonnier@gmail.com",
   sdk: "https://www.gstatic.com/firebasejs/11.0.2/",
   config: {
     apiKey: "AIzaSyDpYkEFDV2KYi3jHq8m40TNon-IKCKQnZw",
@@ -20,6 +22,7 @@ const CLOUD_MAIL = "pss-cloud-email",
   CLOUD_ACTIF = "pss-cloud-connecte";
 
 let cloudSdk = null,
+  cloudFs = null,
   cloudUser = null;
 
 /** Lecture / écriture du stockage local sans jamais lever d'erreur (navigation privée, stockage bloqué). */
@@ -61,6 +64,18 @@ function cloudCharger() {
   return cloudSdk;
 }
 
+/** Charge aussi la base Firestore (une seule fois) : { fs: module, db: base }. */
+function cloudBase() {
+  if (!cloudFs)
+    cloudFs = Promise.all([cloudCharger(), import(CLOUD.sdk + "firebase-firestore.js")]).then(
+      ([{ a }, fs]) => ({ fs, db: fs.getFirestore(a.app) })
+    );
+  cloudFs.catch(() => {
+    cloudFs = null;
+  });
+  return cloudFs;
+}
+
 /** Affiche un message sous le formulaire de connexion. */
 function cloudMessage(texte, erreur) {
   const m = $("cloudmsg");
@@ -78,6 +93,7 @@ function drawCloud() {
     : "Non connecté : tes données restent sur cet appareil. Entre ton adresse e-mail pour recevoir un lien de connexion (pas de mot de passe).";
   $("cloudf").hidden = $("cmailok").hidden = !!cloudUser;
   $("cout").hidden = !cloudUser;
+  drawGroupes();
 }
 
 const MAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

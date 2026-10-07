@@ -1392,3 +1392,26 @@ th.num,
 #cloudmsg.err {
   color: var(--bad, #b91c1c);
 }
+
+#grc h3 {
+  margin: 14px 0 6px;
+  font-size: 1rem;
+}
+
+#grmsg.err {
+  color: var(--bad, #b91c1c);
+}
+
+.mbr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.mbr > span:first-child {
+  flex: 1 1 180px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

@@ -60,7 +60,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(26);
+  expect(liens.length).toBe(28);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -3255,5 +3255,88 @@ test("Compte en ligne : bandeau test, aucun kit chargé au démarrage, e-mail in
   await page.click("#cmailok");
   await expect(page.locator("#cloudmsg")).toHaveText("Adresse e-mail invalide.");
   expect(externes).toEqual([]);
+  expect(erreurs).toEqual([]);
+});
+
+test("groupes : invitation, dernier administrateur et contenu de la carte « Mon groupe »", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const membres = [
+      { uid: "a", email: "a@x.be", role: "admin" },
+      { uid: "e", email: "e@x.be", role: "editeur" },
+    ];
+    const base = {
+      groupes: [{ id: "g1", nom: "Sainte-Suzanne", role: "admin" }],
+      courant: "g1",
+      invitations: [],
+      membres,
+      attente: [{ id: "g1|n@x.be", email: "n@x.be", role: "lecteur" }],
+      moi: "a",
+      superAdmin: false,
+      url: "https://site.test/",
+    };
+    return {
+      id: idInvitation("g1", "  Nom@Exemple.BE "),
+      erreurs: [
+        erreurInvitation("pas-une-adresse", "editeur", membres, []),
+        erreurInvitation("E@X.be", "editeur", membres, []),
+        erreurInvitation("n@x.be", "editeur", membres, base.attente),
+        erreurInvitation("n2@x.be", "chef", membres, []),
+        erreurInvitation("n2@x.be", "editeur", membres, []),
+      ],
+      dernier: [erreurDernierAdmin(membres, "a"), erreurDernierAdmin(membres, "e")],
+      deux: erreurDernierAdmin([...membres, { uid: "b", role: "admin" }], "a"),
+      nom: [erreurNomGroupe("  "), erreurNomGroupe("x".repeat(81)), erreurNomGroupe("Uccle")],
+      admin: htmlGroupes(base),
+      lecteur: htmlGroupes({
+        ...base,
+        groupes: [{ id: "g1", nom: "Sainte-Suzanne", role: "lecteur" }],
+      }),
+      aucun: htmlGroupes({
+        ...base,
+        groupes: [],
+        courant: null,
+        invitations: [{ id: "g2|a@x.be", nomGroupe: "Uccle <b>", role: "editeur" }],
+        superAdmin: true,
+      }),
+      mail: lienMailInvitation("N@x.be", "Sainte-Suzanne", "https://site.test/"),
+    };
+  });
+  expect(r.id).toBe("g1|nom@exemple.be");
+  expect(r.erreurs).toEqual([
+    "Adresse e-mail invalide.",
+    "Cette personne est déjà membre.",
+    "Cette adresse est déjà invitée.",
+    "Rôle inconnu.",
+    "",
+  ]);
+  expect(r.dernier).toEqual(["Il faut au moins un administrateur dans le groupe.", ""]);
+  expect(r.deux).toBe("");
+  expect(r.nom[0]).toContain("vide");
+  expect(r.nom[1]).toContain("trop long");
+  expect(r.nom[2]).toBe("");
+  // l'administrateur voit les membres avec leurs commandes, l'invitation à envoyer et le formulaire ; le dernier administrateur est verrouillé
+  expect(r.admin).toContain('data-gr="inviter"');
+  expect(r.admin).toContain('data-grrole="e"');
+  expect(r.admin).toMatch(/data-grrole="a"[^>]*disabled/);
+  expect(r.admin).not.toMatch(/data-grrole="e"[^>]*disabled/);
+  expect(r.admin).toContain("En attente : n@x.be");
+  expect(r.admin).toContain("mailto:n%40x.be");
+  expect(r.admin).not.toContain('data-gr="creer"');
+  // un lecteur voit les membres sans pouvoir rien changer
+  expect(r.lecteur).toContain("e@x.be");
+  expect(r.lecteur).not.toContain("data-grrole");
+  expect(r.lecteur).not.toContain('data-gr="inviter"');
+  // sans groupe : texte d'aide, invitation reçue (échappée) et création réservée au super-administrateur
+  expect(r.aucun).toContain("membre d'aucun groupe");
+  expect(r.aucun).toContain("Uccle &lt;b&gt;");
+  expect(r.aucun).toContain('data-gr="rejoindre"');
+  expect(r.aucun).toContain('data-gr="creer"');
+  expect(r.mail).toContain("subject=");
+  expect(r.mail).toContain("Sainte-Suzanne".replace(/-/g, "-"));
+  await aller(page, "cfg");
+  await expect(page.locator("#grc")).toBeHidden();
   expect(erreurs).toEqual([]);
 });

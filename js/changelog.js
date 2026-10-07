@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.27.0",
+    d: "2026-10-07",
+    t: "Version test : groupes, membres et invitations",
+    l: [
+      "Configuration : nouvelle carte « Mon groupe » une fois connecté. Un administrateur invite des personnes par adresse e-mail, choisit leur rôle (administrateur, éditeur ou lecteur) et peut les retirer.",
+      "Les règles de sécurité sont renforcées : on ne lit et n'écrit que dans son groupe, et les rôles sont contrôlés côté serveur. Les camps restent sur l'appareil pour l'instant.",
+    ],
+  },
+  {
     v: "1.26.0",
     d: "2026-10-07",
     t: "Version test : compte en ligne (préparation)",
