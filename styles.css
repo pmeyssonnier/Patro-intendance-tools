@@ -139,7 +139,7 @@ button.x {
 }
 .zone {
   display: grid;
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: 104px 1fr;
   gap: 4px 10px;
   align-items: start;
   padding: 8px 12px;
@@ -241,6 +241,13 @@ button.x {
   align-items: center;
   gap: 2px;
 }
+.zr {
+  display: flex;
+  align-items: center;
+}
+.zl .zh {
+  padding: 0 2px 0 0;
+}
 .zn {
   background: transparent;
   color: inherit;
@@ -249,7 +256,7 @@ button.x {
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .zh,
 .ih {
@@ -340,7 +347,7 @@ table.fit {
 .fit td {
   padding: 4px 3px;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .fit th {
   font-size: 0.72rem;

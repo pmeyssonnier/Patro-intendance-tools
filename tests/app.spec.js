@@ -2680,8 +2680,8 @@ test("menu : la poignée ⠿ d'un repas le déplace (clavier et glisser)", async
   await aller(page, "menu");
   const ordre = () => page.evaluate(() => C.types.map((t) => t.k).join(","));
   const avant = await ordre();
-  // la poignée n'apparaît que lorsque le repas est en modification
-  await expect(page.locator(".zh")).toHaveCount(0);
+  // la poignée est visible sans ouvrir le panneau de modification
+  await expect(page.locator('.dcard[data-dj="0"] .zh[data-zk="m"]')).toBeVisible();
   await page.locator('.dcard[data-dj="0"] .zone[data-slot="m"] .zn').click();
   const h = page.locator('.dcard[data-dj="0"] .zh[data-zk="m"]');
   await h.focus();
