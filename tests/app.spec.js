@@ -2696,53 +2696,57 @@ test("menu : la poignée ⠿ d'un repas le déplace (clavier et glisser)", async
   expect(await ordre()).not.toBe(avant);
 });
 
-test("menu : effectif réduit à un repas, à un jour ou à un repas tous les jours (quantités au prorata)", async ({
+test("menu : effectif réglé section par section pour un repas, un jour ou un repas tous les jours", async ({
   page,
 }) => {
   await ouvrir(page);
   await aller(page, "menu");
-  const N = await page.evaluate(() => nn());
-  expect(N).toBeGreaterThan(3);
+  const info = await page.evaluate(() => ({ n: [...C.n], nb: SEC.length }));
+  const j = info.n.findIndex((v) => v > 1);
+  expect(j).toBeGreaterThanOrEqual(0);
   const total = () => page.evaluate(() => LAST.sum);
   const avant = await total();
-  // jour 0, repas du soir : la moitié de la troupe seulement
   const zone = page.locator('.dcard[data-dj="0"] .zone[data-slot="s"]');
   await zone.locator(".zn").click();
-  const moitie = Math.floor(N / 2);
-  await page.locator(".zpan [data-pr]").fill(String(moitie));
-  await page.locator(".zpan [data-pra]").click();
-  await expect(zone.locator(".zp")).toContainText(`${moitie}/${N}`);
+  await expect(page.locator(".zpan [data-pr]")).toHaveCount(info.nb);
+  // la section j vient à moitié
+  const moitie = Math.floor(info.n[j] / 2);
+  await page.locator(`.zpan [data-pr="${j}"]`).fill(String(moitie));
+  await page.locator('.zpan [data-pra="1"]').click();
+  const nbPres = info.n.reduce((a, v) => a + v, 0) - (info.n[j] - moitie);
+  await expect(zone.locator(".zp")).toContainText(`${nbPres}/${info.n.reduce((a, v) => a + v, 0)}`);
   const apres = await total();
   expect(apres).toBeLessThan(avant);
-  expect(await page.evaluate(() => C.pres["0|s"])).toBe(moitie);
-  // le coût du repas concerné diminue au prorata
-  const ratio = await page.evaluate(() => {
-    const l = LAST.pm.find((x) => /pers\./.test(x[0]));
-    return l ? l[0] : "";
-  });
-  expect(ratio).toContain(`${moitie} pers.`);
+  expect(await page.evaluate(() => C.pres["0|s"])).toEqual(
+    info.n.map((v, s) => (s === j ? moitie : v))
+  );
+  expect(await page.evaluate(() => LAST.pm.some((x) => /pers\./.test(x[0])))).toBe(true);
+  // section à zéro : encore moins de quantités
+  await page.locator(`.zpan [data-pr="${j}"]`).fill("0");
+  await page.locator('.zpan [data-pra="1"]').click();
+  expect(await total()).toBeLessThan(apres);
   // survit au rechargement
   await page.reload();
-  expect(await page.evaluate(() => C.pres["0|s"])).toBe(moitie);
+  expect((await page.evaluate(() => C.pres["0|s"]))[j]).toBe(0);
   // tous les repas de ce jour
   await aller(page, "menu");
   await page.locator('.dcard[data-dj="0"] .zone[data-slot="m"] .zn').click();
-  await page.locator(".zpan [data-pr]").fill(String(moitie));
+  await page.locator(`.zpan [data-pr="${j}"]`).fill("1");
   await page.locator(".zpan [data-prs]").selectOption("jour");
-  await page.locator(".zpan [data-pra]").click();
+  await page.locator('.zpan [data-pra="1"]').click();
   expect(
     await page.evaluate(() => Object.keys(C.pres).filter((k) => k.startsWith("0|")).length)
   ).toBe(await page.evaluate(() => dtypes(0).length));
-  // ce repas, tous les jours ; puis « toute la troupe » rétablit les quantités
+  // ce repas, tous les jours, puis « Toute la troupe » rétablit
   await page.locator(".zpan [data-prs]").selectOption("tous");
-  await page.locator(".zpan [data-pr]").fill("");
-  await page.locator(".zpan [data-pra]").click();
+  await page.locator('.zpan [data-pra="0"]').click();
   expect(
     await page.evaluate(() => Object.keys(C.pres).filter((k) => k.endsWith("|m")).length)
   ).toBe(0);
-  // une valeur ≥ à l'effectif total vaut « tout le monde »
+  // des valeurs égales à l'effectif complet valent « tout le monde »
   await page.locator('.dcard[data-dj="0"] .zone[data-slot="s"] .zn').click();
-  await page.locator(".zpan [data-pr]").fill(String(N + 5));
-  await page.locator(".zpan [data-pra]").click();
+  for (let s = 0; s < info.nb; s++)
+    await page.locator(`.zpan [data-pr="${s}"]`).fill(String(info.n[s] + 5));
+  await page.locator('.zpan [data-pra="1"]').click();
   expect(await page.evaluate(() => C.pres["0|s"])).toBeUndefined();
 });

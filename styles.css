@@ -1248,12 +1248,24 @@ th.num,
   padding-top: 8px;
   border-top: 1px solid var(--bd);
 }
+.zsec {
+  display: flex;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+}
+.zsec label {
+  display: grid;
+  gap: 2px;
+  font-size: 0.8rem;
+  margin: 0;
+}
 .zeff input {
-  width: 80px;
+  width: 72px;
 }
 .zeff select {
   max-width: 230px;
 }
-.zeff .s:last-child {
+.zeff > .s:last-child {
   flex-basis: 100%;
 }

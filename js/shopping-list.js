@@ -32,7 +32,7 @@ function calc() {
   const tot = {},
     pm = [];
   mealList().forEach(([l, d, i, sk]) => {
-    const r = meal(d, facteurPres(i, sk));
+    const r = meal(d, presents(i, sk));
     let c = 0;
     for (const k in r.out) {
       tot[k] = (tot[k] || 0) + r.out[k];

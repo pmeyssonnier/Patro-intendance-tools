@@ -24,8 +24,9 @@ const delPanel = (i, k, lab) => {
     vis = dtypes(i).map((x) => x.k),
     p = vis.indexOf(k),
     col = String(C.col[k]).toLowerCase(),
+    pr = presents(i, k),
     ek = esc(k);
-  return `<div class="zpan"><div class="tl"><input class="tn" value="${esc(lab)}" data-tn="${ek}" maxlength="30" aria-label="Nom du repas"><button class="x" data-tu="${ek}" data-day="${i}" title="Monter ce repas" aria-label="Monter ${esc(lab)}"${p > 0 ? "" : " disabled"}>▲</button><button class="x" data-td="${ek}" data-day="${i}" title="Descendre ce repas" aria-label="Descendre ${esc(lab)}"${p < vis.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-tx="${ek}" title="Supprimer ce type de repas de tous les jours" aria-label="Supprimer le type de repas ${esc(lab)}">🗑</button></div><div class="crow"><span class="sws">${COLS.map((c) => `<button class="sw${c.toLowerCase() === col ? " on" : ""}" style="background:${c}" data-c="${c}" data-ck="${ek}" title="${CN[c] || c}" aria-label="Couleur ${CN[c] || c} pour ${esc(lab)}" aria-pressed="${c.toLowerCase() === col}"></button>`).join("")}</span><input type="color" data-ci="${ek}" value="${esc(C.col[k])}" title="Autre couleur" aria-label="Autre couleur pour ${esc(lab)}"><span class="s cw" style="color:#d33">${lowc(C.col[k]) ? "⚠ contraste faible" : ""}</span></div><div class="zeff"><b>Effectif</b> <input type="number" min="1" max="${nn()}" step="1" data-pr value="${presents(i, k) || ""}" placeholder="${nn()}" aria-label="Nombre de présents à ce repas"> <span class="s">présents sur ${nn()}</span> <select data-prs aria-label="Portée de l’effectif"><option value="un">Ce repas seulement</option><option value="jour">Tous les repas de ce jour</option><option value="tous">Ce repas, tous les jours</option></select> <button class="x" data-pra="1">Appliquer</button><div class="s">Laisse vide pour toute la troupe : les quantités de ce repas sont réduites au prorata (régimes compris).</div></div><div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${ek}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${ek}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div></div>`;
+  return `<div class="zpan"><div class="tl"><input class="tn" value="${esc(lab)}" data-tn="${ek}" maxlength="30" aria-label="Nom du repas"><button class="x" data-tu="${ek}" data-day="${i}" title="Monter ce repas" aria-label="Monter ${esc(lab)}"${p > 0 ? "" : " disabled"}>▲</button><button class="x" data-td="${ek}" data-day="${i}" title="Descendre ce repas" aria-label="Descendre ${esc(lab)}"${p < vis.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-tx="${ek}" title="Supprimer ce type de repas de tous les jours" aria-label="Supprimer le type de repas ${esc(lab)}">🗑</button></div><div class="crow"><span class="sws">${COLS.map((c) => `<button class="sw${c.toLowerCase() === col ? " on" : ""}" style="background:${c}" data-c="${c}" data-ck="${ek}" title="${CN[c] || c}" aria-label="Couleur ${CN[c] || c} pour ${esc(lab)}" aria-pressed="${c.toLowerCase() === col}"></button>`).join("")}</span><input type="color" data-ci="${ek}" value="${esc(C.col[k])}" title="Autre couleur" aria-label="Autre couleur pour ${esc(lab)}"><span class="s cw" style="color:#d33">${lowc(C.col[k]) ? "⚠ contraste faible" : ""}</span></div><div class="zeff"><b>Effectif de ce repas</b><div class="zsec">${SEC.map((sc, j) => `<label>${esc(sc[0])}<input type="number" min="0" max="${C.n[j] || 0}" step="1" data-pr="${j}" value="${pr ? pr[j] : C.n[j] || 0}" aria-label="Présents ${esc(sc[0])} (sur ${C.n[j] || 0})"><span class="s">sur ${C.n[j] || 0}</span></label>`).join("")}</div><select data-prs aria-label="Portée de l’effectif"><option value="un">Ce repas seulement</option><option value="jour">Tous les repas de ce jour</option><option value="tous">Ce repas, tous les jours</option></select> <button class="x" data-pra="1">Appliquer</button> <button class="x" data-pra="0">Toute la troupe</button><div class="s">Présents par section : les quantités de ce repas sont calculées avec cet effectif (régimes compris).</div></div><div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${ek}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${ek}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div></div>`;
 };
 
 const ouvert = (i, k) => !!delSl && delSl.day === i && delSl.k === k;
@@ -45,7 +46,7 @@ function drawMenu() {
       )
         .map(
           ({ k, n: lab }) =>
-            `<div class="zone" data-day="${i}" data-slot="${esc(k)}" style="${cvars(C.col[k])}"><div class="zl">${ouvert(i, k) ? `<span class="zh" role="button" tabindex="0" data-day="${i}" data-zk="${esc(k)}" aria-label="Déplacer le repas ${esc(lab)} avec les flèches du clavier" title="Glisser pour changer l’ordre des repas (flèches haut/bas au clavier)">⠿</span>` : ""}<button class="zn" data-ds="1" data-day="${i}" data-slot="${esc(k)}" title="Modifier ce repas : nom, couleur, ordre, retrait" aria-label="Modifier le repas ${esc(lab)}" aria-expanded="${ouvert(i, k)}"><span class="znt">${esc(lab)}</span> <span aria-hidden="true">${ouvert(i, k) ? "▴" : "✎"}</span></button>${presents(i, k) ? `<span class="zp" title="Effectif réduit : ${presents(i, k)} présents sur ${nn()}">👥 ${presents(i, k)}/${nn()}</span>` : ""}</div><div class="zc">${slotArr(
+            `<div class="zone" data-day="${i}" data-slot="${esc(k)}" style="${cvars(C.col[k])}"><div class="zl">${ouvert(i, k) ? `<span class="zh" role="button" tabindex="0" data-day="${i}" data-zk="${esc(k)}" aria-label="Déplacer le repas ${esc(lab)} avec les flèches du clavier" title="Glisser pour changer l’ordre des repas (flèches haut/bas au clavier)">⠿</span>` : ""}<button class="zn" data-ds="1" data-day="${i}" data-slot="${esc(k)}" title="Modifier ce repas : nom, couleur, ordre, retrait" aria-label="Modifier le repas ${esc(lab)}" aria-expanded="${ouvert(i, k)}"><span class="znt">${esc(lab)}</span> <span aria-hidden="true">${ouvert(i, k) ? "▴" : "✎"}</span></button>${presents(i, k) ? `<span class="zp" title="Effectif réduit : ${nbPres(i, k)} présents sur ${nn()}">👥 ${nbPres(i, k)}/${nn()}</span>` : ""}</div><div class="zc">${slotArr(
               i,
               k
             )
@@ -229,12 +230,15 @@ $("menu").addEventListener("click", (e) => {
   }
   if (t.dataset.pra !== undefined && delSl) {
     const pan = t.closest(".zpan"),
-      v = Math.round(+pan.querySelector("[data-pr]").value) || 0,
+      v =
+        t.dataset.pra === "0"
+          ? null
+          : SEC.map((_, j) => +pan.querySelector(`[data-pr="${j}"]`).value || 0),
       portee = pan.querySelector("[data-prs]").value;
     poserEffectif(delSl.day, delSl.k, portee, v);
     drawMenu();
     calc();
-    say(v > 0 && v < nn() ? "Effectif réduit à " + v + " personnes" : "Toute la troupe");
+    say(v ? "Effectif du repas réglé" : "Toute la troupe");
     return;
   }
   if (t.dataset.ck) {
@@ -278,20 +282,21 @@ $("menu").addEventListener("click", (e) => {
   calc();
 });
 
-/** Fixe (v > 0) ou retire (v = 0) le nombre de présents : à ce repas, à tous les repas du jour, ou à ce repas tous les jours. */
+/** Fixe les présents par section (v = tableau) ou rétablit toute la troupe (v = null) : à ce repas, à tous les repas du jour, ou à ce repas tous les jours. */
 function poserEffectif(i, k, portee, v) {
   C.pres = C.pres || {};
   const cles =
-    portee === "jour"
-      ? dtypes(i).map((t) => i + "|" + t.k)
-      : portee === "tous"
-        ? ALLD()
-            .filter((j) => !hid(j, k))
-            .map((j) => j + "|" + k)
-        : [i + "|" + k];
+      portee === "jour"
+        ? dtypes(i).map((t) => i + "|" + t.k)
+        : portee === "tous"
+          ? ALLD()
+              .filter((j) => !hid(j, k))
+              .map((j) => j + "|" + k)
+          : [i + "|" + k],
+    tous = !v || v.every((x, j) => x >= (C.n[j] || 0));
   cles.forEach((c) => {
-    if (v > 0 && v < nn()) C.pres[c] = v;
-    else delete C.pres[c];
+    if (tous) delete C.pres[c];
+    else C.pres[c] = v.map((x, j) => Math.min(Math.max(Math.round(x), 0), C.n[j] || 0));
   });
 }
 

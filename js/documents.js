@@ -12,7 +12,7 @@ function menuHTML() {
       const dishes = rs.length
         ? rs
             .map((r) => {
-              const ad = adp ? meal(r, facteurPres(i, k)).adapt : [];
+              const ad = adp ? meal(r, presents(i, k)).adapt : [];
               return `<div><b>${esc(r)}</b>${ad.length ? `<div class="ad">${esc(ad.join(" · "))}</div>` : ""}</div>`;
             })
             .join("")
@@ -23,7 +23,7 @@ function menuHTML() {
             .filter(Boolean)
             .join("<br>")}</td>`
         : "";
-      rows += `<tr class="sl" style="${cvars(C.col[k])}"><td class="sn">${esc(lab)}${presents(i, k) ? `<div class="ad">${presents(i, k)} pers.</div>` : ""}</td><td>${dishes}</td>${ds}</tr>`;
+      rows += `<tr class="sl" style="${cvars(C.col[k])}"><td class="sn">${esc(lab)}${presents(i, k) ? `<div class="ad">${nbPres(i, k)} pers.</div>` : ""}</td><td>${dishes}</td>${ds}</tr>`;
     });
   });
   return `<div class="mp pvx"><h2>${esc(C.mt || "Menu")}</h2><div class="s">${esc(C.name)} · ${fdate(C.start)} → ${fdate(C.end)} · ${nn()} personnes · ${esc(troop())}</div><table class="mt"><thead><tr><th>Repas</th><th>Au menu</th>${dsc ? "<th>Description</th>" : ""}</tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -260,7 +260,7 @@ function csvMenu() {
           t.n,
           x,
           R ? R.desc : "",
-          meal(x, facteurPres(i, t.k)).adapt.join(" | "),
+          meal(x, presents(i, t.k)).adapt.join(" | "),
         ]);
       })
     )

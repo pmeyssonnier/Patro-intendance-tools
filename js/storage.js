@@ -65,10 +65,10 @@ function cleanCamp(c, N) {
   for (const [j, a] of ent(c.off))
     if (/^\d{1,2}$/.test(j) && Array.isArray(a))
       o.off[j] = a.filter((k) => typeof k === "string" && okid(k)).slice(0, 40);
-  // effectif réduit à certains repas : « jour|type » -> nombre de présents
+  // effectif réduit à certains repas : « jour|type » -> présents par section
   for (const [pk, v] of ent(c.pres))
-    if (/^\d{1,2}\|[A-Za-z0-9_-]{1,30}$/.test(pk) && +v > 0)
-      o.pres[pk] = Math.min(Math.round(+v), 1e4);
+    if (/^\d{1,2}\|[A-Za-z0-9_-]{1,30}$/.test(pk) && Array.isArray(v))
+      o.pres[pk] = qn(v, N).map((x) => Math.min(Math.round(x), 1e4));
   return o;
 }
 
