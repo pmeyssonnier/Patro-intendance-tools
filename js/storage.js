@@ -201,8 +201,14 @@ function cleanProject(x) {
 let S = JSON.parse(JSON.stringify(DEF)),
   badStore = false;
 
+/** Texte enregistré que cet onglet a lu ou écrit en dernier : s'il change ailleurs, un autre onglet a enregistré entre-temps. */
+let dernierTexte = null;
+/** true : un autre onglet a modifié les données ; cet onglet n'enregistre plus tant que l'utilisateur n'a pas choisi. */
+let conflitOnglet = false;
+
 try {
   const x = localStorage.getItem("intendance2");
+  dernierTexte = x;
   if (x) {
     try {
       S = Object.assign(S, cleanProject(JSON.parse(x)));
@@ -221,10 +227,36 @@ const showWarn = (t) => {
     $("warnt").textContent = t;
     $("warn").hidden = !t;
   },
-  save = () => {
+  /** Le texte enregistré a-t-il vraiment changé depuis notre dernière lecture ? Une réécriture du même projet (nettoyage au démarrage d'un autre onglet) n'est pas un changement. */
+  autreOngletAEcrit = (actuel) => {
+    if (actuel === dernierTexte) return false;
     try {
+      const norme = (t) => JSON.stringify(cleanProject(JSON.parse(t)));
+      if (norme(actuel) === norme(dernierTexte)) {
+        dernierTexte = actuel;
+        return false;
+      }
+    } catch (_) {}
+    return true;
+  },
+  signalerConflit = () => {
+    conflitOnglet = true;
+    showWarn(
+      "Un autre onglet a modifié les données. Les changements faits ici depuis ne sont pas enregistrés : recharge pour reprendre ceux de l'autre onglet, ou garde cet onglet pour remplacer les siens."
+    );
+    $("warnx").hidden = $("warnc").hidden = true;
+    $("warnr").hidden = $("warnk").hidden = false;
+  },
+  save = () => {
+    if (conflitOnglet) return;
+    try {
+      // un autre onglet a enregistré depuis notre dernière lecture : on n'écrase pas son travail
+      const actuel = localStorage.getItem("intendance2");
+      if (autreOngletAEcrit(actuel)) return signalerConflit();
       S.dd = DIETS;
-      localStorage.setItem("intendance2", JSON.stringify(S));
+      const texte = JSON.stringify(S);
+      localStorage.setItem("intendance2", texte);
+      dernierTexte = texte;
       if (sfail) {
         sfail = 0;
         showWarn("");
@@ -244,6 +276,29 @@ const showWarn = (t) => {
 $("warnx").onclick = () => $("exp").click();
 
 $("warnc").onclick = () => showWarn("");
+
+$("warnr").onclick = () => location.reload();
+
+$("warnk").onclick = () => {
+  try {
+    dernierTexte = localStorage.getItem("intendance2");
+  } catch (_) {}
+  conflitOnglet = false;
+  $("warnr").hidden = $("warnk").hidden = true;
+  $("warnx").hidden = $("warnc").hidden = false;
+  showWarn("");
+  save();
+};
+
+// un autre onglet enregistre : on le sait tout de suite, sans attendre notre prochaine modification
+addEventListener("storage", (e) => {
+  if (
+    (e.key === "intendance2" || e.key === null) &&
+    !conflitOnglet &&
+    autreOngletAEcrit(e.newValue)
+  )
+    signalerConflit();
+});
 
 if (badStore)
   showWarn(

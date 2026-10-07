@@ -1,5 +1,13 @@
 const { test, expect } = require("@playwright/test");
-const { ouvrir, aller, telecharger, importer, montant, deplierRegime } = require("./helpers");
+const {
+  ouvrir,
+  aller,
+  telecharger,
+  importer,
+  montant,
+  deplierRegime,
+  URL: URL_APPLI,
+} = require("./helpers");
 
 test("la page s'ouvre sans erreur avec le camp d'exemple", async ({ page }) => {
   const erreurs = await ouvrir(page);
@@ -2672,8 +2680,8 @@ test("menu : la poignée ⠿ d'un repas le déplace (clavier et glisser)", async
   await aller(page, "menu");
   const ordre = () => page.evaluate(() => C.types.map((t) => t.k).join(","));
   const avant = await ordre();
-  // la poignée n'apparaît que lorsque le repas est en modification
-  await expect(page.locator(".zh")).toHaveCount(0);
+  // la poignée est visible sans ouvrir le panneau de modification
+  await expect(page.locator('.dcard[data-dj="0"] .zh[data-zk="m"]')).toBeVisible();
   await page.locator('.dcard[data-dj="0"] .zone[data-slot="m"] .zn').click();
   const h = page.locator('.dcard[data-dj="0"] .zh[data-zk="m"]');
   await h.focus();
@@ -2714,7 +2722,8 @@ test("menu : effectif réglé section par section pour un repas, un jour ou un r
   await page.locator(`.zpan [data-pr="${j}"]`).fill(String(moitie));
   await page.locator('.zpan [data-pra="1"]').click();
   const nbPres = info.n.reduce((a, v) => a + v, 0) - (info.n[j] - moitie);
-  await expect(zone.locator(".zp")).toContainText(`${nbPres}/${info.n.reduce((a, v) => a + v, 0)}`);
+  await expect(zone.locator(".zp")).toHaveText(`(${nbPres} pers.)`);
+  await expect(zone.locator(".zp")).toHaveClass(/red/);
   const apres = await total();
   expect(apres).toBeLessThan(avant);
   expect(await page.evaluate(() => C.pres["0|s"])).toEqual(
@@ -2833,4 +2842,92 @@ test("catalogue : la fusion refuse un ingrédient en quantité unique avec un au
   expect(r.a).toBe(true);
   expect(r.b).toBe(true);
   expect(r.fx).toBe(500);
+});
+
+test("deux onglets : le second à enregistrer ne remplace pas le travail du premier sans prévenir", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const B = await page.context().newPage();
+  B.on("dialog", (d) => d.accept());
+  await B.goto(URL_APPLI);
+  const nomEnregistre = () =>
+    page.evaluate(() => {
+      const p = JSON.parse(localStorage.getItem("intendance2"));
+      return p.camps[p.ccur].name;
+    });
+  // l'onglet A renomme le camp, enregistré tout de suite
+  await page.locator("#cname").fill("Camp A");
+  expect(await nomEnregistre()).toBe("Camp A");
+  // B (qui ne le sait pas) est prévenu sans rien faire, et n'écrase pas
+  await expect(B.locator("#warn")).toBeVisible();
+  await expect(B.locator("#warnr")).toBeVisible();
+  await B.locator("#cname").fill("Camp B");
+  expect(await nomEnregistre()).toBe("Camp A");
+  // « Recharger » reprend le travail de A
+  await B.locator("#warnr").click();
+  await expect(B.locator("#cname")).toHaveValue("Camp A");
+  await expect(B.locator("#warn")).toBeHidden();
+  // B enregistre normalement ensuite, et A est alors prévenu à son tour
+  await B.locator("#cname").fill("Camp B");
+  expect(await nomEnregistre()).toBe("Camp B");
+  await expect(page.locator("#warn")).toBeVisible();
+  // « Garder cet onglet » : A remplace ce que B avait écrit
+  await page.locator("#warnk").click();
+  await expect(page.locator("#warn")).toBeHidden();
+  expect(await nomEnregistre()).toBe("Camp A");
+  expect(erreurs).toEqual([]);
+});
+
+test("recettes : la poignée ⠿ d'un ingrédient change son ordre (clavier et glisser), et l'ordre est conservé", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "rec");
+  const ordre = () => page.evaluate(() => Object.keys(S.rec[S.cur].ing).join(","));
+  const stocke = () =>
+    page.evaluate(() => {
+      const p = JSON.parse(localStorage.getItem("intendance2"));
+      return Object.keys(p.rec[S.cur].ing).join(",");
+    });
+  const avant = await ordre();
+  const cles = avant.split(",");
+  expect(cles.length).toBeGreaterThan(2);
+  // clavier : le premier descend d'un cran, puis remonte
+  await page.locator(`#rb .ih[data-ih="${cles[0]}"]`).focus();
+  await page.keyboard.press("ArrowDown");
+  expect((await ordre()).split(",").slice(0, 2)).toEqual([cles[1], cles[0]]);
+  await page.locator(`#rb .ih[data-ih="${cles[0]}"]`).focus();
+  await page.keyboard.press("ArrowUp");
+  expect(await ordre()).toBe(avant);
+  // glisser : le premier ingrédient prend la place du dernier
+  await page.setViewportSize({ width: 1200, height: 2000 });
+  const lignes = page.locator("#rb tr[data-rk]");
+  const n = await lignes.count();
+  const src = await lignes.first().locator(".ih").boundingBox();
+  const dst = await lignes.nth(n - 1).boundingBox();
+  await page.mouse.move(src.x + src.width / 2, src.y + src.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dst.x + 100, dst.y + dst.height / 2, { steps: 8 });
+  await page.mouse.up();
+  const apres = (await ordre()).split(",");
+  expect(apres[n - 1]).toBe(cles[0]);
+  expect(apres.slice(0, n - 1)).toEqual(cles.slice(1));
+  // permanent : enregistré, relu après rechargement, et dans les documents
+  expect(await stocke()).toBe(apres.join(","));
+  await page.reload();
+  expect(await ordre()).toBe(apres.join(","));
+  expect(erreurs).toEqual([]);
+});
+
+test("menu : chaque repas indique son effectif « (N pers.) », réduit ou non", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "menu");
+  const total = await page.evaluate(() => nn());
+  const zones = page.locator(".dcard .zone");
+  const n = await zones.count();
+  expect(n).toBeGreaterThan(0);
+  for (let i = 0; i < n; i++)
+    await expect(zones.nth(i).locator(".zp")).toHaveText(`(${total} pers.)`);
+  await expect(page.locator(".zp.red")).toHaveCount(0);
 });

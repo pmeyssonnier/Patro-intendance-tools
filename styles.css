@@ -139,7 +139,7 @@ button.x {
 }
 .zone {
   display: grid;
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: 104px 1fr;
   gap: 4px 10px;
   align-items: start;
   padding: 8px 12px;
@@ -241,6 +241,13 @@ button.x {
   align-items: center;
   gap: 2px;
 }
+.zr {
+  display: flex;
+  align-items: center;
+}
+.zl .zh {
+  padding: 0 2px 0 0;
+}
 .zn {
   background: transparent;
   color: inherit;
@@ -249,9 +256,10 @@ button.x {
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
-.zh {
+.zh,
+.ih {
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -260,6 +268,17 @@ button.x {
   font-size: 1.1rem;
   line-height: 1.2;
   opacity: 0.85;
+}
+#rb .ih {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 6px 8px 6px 0;
+}
+#rb tr.drag {
+  opacity: 0.5;
+}
+#rb tr.over td {
+  box-shadow: inset 0 2px 0 var(--ac);
 }
 .zone.drag {
   opacity: 0.5;
@@ -328,7 +347,7 @@ table.fit {
 .fit td {
   padding: 4px 3px;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .fit th {
   font-size: 0.72rem;
@@ -1181,8 +1200,12 @@ th.num,
 /* Effectif réduit d'un repas */
 .zp {
   font-size: 0.72rem;
-  font-weight: 700;
   white-space: nowrap;
+  opacity: 0.8;
+}
+.zp.red {
+  font-weight: 700;
+  opacity: 1;
 }
 .zeff {
   display: flex;

@@ -57,7 +57,7 @@ function drawRec() {
     ? Object.entries(R.ing)
         .map(([k, q]) => {
           const fx = R.fx && k in R.fx;
-          return `<tr><td>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${esc(k)}">${fx ? "→ par personne" : "→ quantité unique"}</button></div></td>${fx ? `<td colspan="${SEC.length}"><input type="number" min="0" step="any" value="${+(R.fx[k] / fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span>${ratioForm(k)}<label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa && R.fa[k] === 0 ? "" : " checked"} style="width:auto"> adapter aux régimes</label></td>` : q.map((v, i) => `<td><input type="number" min="0" step="any" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${esc(SEC[i][0])}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>`;
+          return `<tr data-rk="${esc(k)}"><td><span class="ih" role="button" tabindex="0" data-ih="${esc(k)}" aria-label="Déplacer ${esc(ING[k][0])} avec les flèches du clavier" title="Glisser pour changer l’ordre des ingrédients (flèches haut/bas au clavier)">⠿</span>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${esc(k)}">${fx ? "→ par personne" : "→ quantité unique"}</button></div></td>${fx ? `<td colspan="${SEC.length}"><input type="number" min="0" step="any" value="${+(R.fx[k] / fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span>${ratioForm(k)}<label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa && R.fa[k] === 0 ? "" : " checked"} style="width:auto"> adapter aux régimes</label></td>` : q.map((v, i) => `<td><input type="number" min="0" step="any" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${esc(SEC[i][0])}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>`;
         })
         .join("")
     : "";
@@ -152,6 +152,100 @@ $("rename").addEventListener("keydown", (e) => {
   if (e.key === "Enter") $("reok").click();
   else if (e.key === "Escape") $("reno").click();
 });
+
+/** Place l'ingrédient `k` à la place de `cible` dans la recette `R` (l'ordre des clés de `R.ing` est celui de l'affichage et il est enregistré). */
+function deplacerIngredient(R, k, cible) {
+  const cles = Object.keys(R.ing),
+    de = cles.indexOf(k),
+    vers = cles.indexOf(cible);
+  if (de < 0 || vers < 0 || de === vers) return false;
+  cles.splice(de, 1);
+  cles.splice(vers, 0, k);
+  const q = { ...R.ing };
+  for (const c of Object.keys(R.ing)) delete R.ing[c];
+  for (const c of cles) R.ing[c] = q[c];
+  return true;
+}
+
+/** Ingrédient voisin (haut: -1, bas: +1) dans la recette affichée, ou undefined. */
+const voisinIngredient = (k, sens) => {
+  const cles = Object.keys(S.rec[S.cur].ing);
+  return cles[cles.indexOf(k) + sens];
+};
+
+$("rb").addEventListener("keydown", (e) => {
+  const h = e.target.closest && e.target.closest(".ih");
+  if (!h || (e.key !== "ArrowUp" && e.key !== "ArrowDown") || !S.rec[S.cur]) return;
+  e.preventDefault();
+  const k = h.dataset.ih,
+    v = voisinIngredient(k, e.key === "ArrowUp" ? -1 : 1);
+  if (!v || !deplacerIngredient(S.rec[S.cur], k, v)) return;
+  save();
+  drawRec();
+  const f = $("rb").querySelector(`.ih[data-ih="${CSS.escape(k)}"]`);
+  if (f) f.focus();
+  say("Ingrédient déplacé");
+});
+
+/** Glisser une poignée ⠿ : l'ingrédient prend la place de la ligne sous le doigt ou le curseur. */
+let di = null,
+  dix = 0,
+  diy = 0,
+  dir = 0;
+
+const ligneSous = () => {
+  const el = document.elementFromPoint(dix, diy),
+    tr = el && el.closest && el.closest("#rb tr[data-rk]");
+  return tr && di ? tr : null;
+};
+
+function iloop() {
+  if (!di) return;
+  if (diy < 90) scrollBy(0, -14);
+  else if (diy > innerHeight - 90) scrollBy(0, 14);
+  const tr = ligneSous();
+  $("rb")
+    .querySelectorAll("tr")
+    .forEach((x) => x.classList.toggle("over", !!tr && x === tr && x.dataset.rk !== di.k));
+  dir = requestAnimationFrame(iloop);
+}
+
+$("rb").addEventListener("pointerdown", (e) => {
+  const h = e.target.closest(".ih");
+  if (!h) return;
+  e.preventDefault();
+  di = { k: h.dataset.ih };
+  dix = e.clientX;
+  diy = e.clientY;
+  try {
+    h.setPointerCapture(e.pointerId);
+  } catch (_) {}
+  h.closest("tr").classList.add("drag");
+  dir = requestAnimationFrame(iloop);
+});
+
+function iend(ok) {
+  if (!di) return;
+  cancelAnimationFrame(dir);
+  const g = di,
+    tr = ok ? ligneSous() : null;
+  di = null;
+  if (tr && S.rec[S.cur] && deplacerIngredient(S.rec[S.cur], g.k, tr.dataset.rk)) save();
+  drawRec();
+}
+
+$("rb").addEventListener("pointermove", (e) => {
+  dix = e.clientX;
+  diy = e.clientY;
+});
+
+$("rb").addEventListener("pointerup", (e) => {
+  dix = e.clientX;
+  diy = e.clientY;
+  iend(true);
+});
+
+$("rb").addEventListener("pointercancel", () => iend(false));
 
 $("rb").addEventListener("change", (e) => {
   const d = e.target.dataset,
