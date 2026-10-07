@@ -1193,8 +1193,12 @@ th.num,
 /* Effectif réduit d'un repas */
 .zp {
   font-size: 0.72rem;
-  font-weight: 700;
   white-space: nowrap;
+  opacity: 0.8;
+}
+.zp.red {
+  font-weight: 700;
+  opacity: 1;
 }
 .zeff {
   display: flex;

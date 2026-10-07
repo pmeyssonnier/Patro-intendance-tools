@@ -2722,7 +2722,8 @@ test("menu : effectif réglé section par section pour un repas, un jour ou un r
   await page.locator(`.zpan [data-pr="${j}"]`).fill(String(moitie));
   await page.locator('.zpan [data-pra="1"]').click();
   const nbPres = info.n.reduce((a, v) => a + v, 0) - (info.n[j] - moitie);
-  await expect(zone.locator(".zp")).toContainText(`${nbPres}/${info.n.reduce((a, v) => a + v, 0)}`);
+  await expect(zone.locator(".zp")).toHaveText(`(${nbPres} pers.)`);
+  await expect(zone.locator(".zp")).toHaveClass(/red/);
   const apres = await total();
   expect(apres).toBeLessThan(avant);
   expect(await page.evaluate(() => C.pres["0|s"])).toEqual(
@@ -2917,4 +2918,16 @@ test("recettes : la poignée ⠿ d'un ingrédient change son ordre (clavier et g
   await page.reload();
   expect(await ordre()).toBe(apres.join(","));
   expect(erreurs).toEqual([]);
+});
+
+test("menu : chaque repas indique son effectif « (N pers.) », réduit ou non", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "menu");
+  const total = await page.evaluate(() => nn());
+  const zones = page.locator(".dcard .zone");
+  const n = await zones.count();
+  expect(n).toBeGreaterThan(0);
+  for (let i = 0; i < n; i++)
+    await expect(zones.nth(i).locator(".zp")).toHaveText(`(${total} pers.)`);
+  await expect(page.locator(".zp.red")).toHaveCount(0);
 });
