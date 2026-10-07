@@ -215,7 +215,12 @@ RAYONS = [
 # Rayon imposé pour une catégorie Colruyt précise (texte exact, accents et majuscules sans importance), prioritaire sur RAYONS.
 # Clés de rayon : fl, bou, fri, lai, boul, epi, sur, boi, aut. Ex. : {"Charcuterie Colruyt": "fri"}. La cellule
 # « Catégories Colruyt rencontrées » (après la collecte) propose les lignes à compléter.
-RAYONS_PERSO = {}
+RAYONS_PERSO = {
+    "Crémerie": "lai",
+    "Préparations/Charcuterie/Poissons/Veggi": "fri",
+    "Santé": "aut",
+    "Soins pour le corps/Parfumerie": "aut",
+}
 
 
 def texte_categorie(categorie):
