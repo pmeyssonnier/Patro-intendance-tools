@@ -178,7 +178,10 @@ function cleanProject(x) {
       if (cc) o.camps[k] = cc;
     }
     if (!Object.keys(o.camps).length) throw new Error("aucun camp valide dans ce fichier.");
-    o.ccur = typeof x.ccur === "string" && o.camps[x.ccur] ? x.ccur : Object.keys(o.camps)[0];
+    o.ccur =
+      typeof x.ccur === "string" && Object.hasOwn(o.camps, x.ccur)
+        ? x.ccur
+        : Object.keys(o.camps)[0];
   } else {
     o.n = qn(x.n, N).map((v) => Math.min(v, 1e4));
     o.wa = num(x.wa, 0, 500, 10);

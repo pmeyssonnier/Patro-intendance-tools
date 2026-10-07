@@ -84,7 +84,7 @@ $("crayon").onchange = () => {
 $("ct").addEventListener("change", (e) => {
   const k = e.target.dataset.cp;
   if (k) {
-    poserPrix(k, +e.target.value || 0);
+    poserPrix(k, saisie(e.target.value, 1e5));
     e.target.classList.toggle("nop", !price(k));
     e.target.closest("tr").querySelector(".manq").hidden = !!price(k);
     calc();
@@ -126,8 +126,7 @@ $("ct").addEventListener("click", (e) => {
     if (err) ligne.querySelector("[data-ei]").textContent = "⚠ " + err;
     else {
       // prix modifié dans la fenêtre de modification (comme dans le tableau : il remplace le produit retenu)
-      if (!d.ers && champP.value !== champP.defaultValue)
-        poserPrix(k, Math.max(0, +champP.value || 0));
+      if (!d.ers && champP.value !== champP.defaultValue) poserPrix(k, saisie(champP.value, 1e5));
       refreshIng();
     }
     return;
@@ -465,7 +464,7 @@ function creerDepuisFenetre(nom, unite) {
     unite,
     $("ingg").value,
     $("ingc").value,
-    +$("ingp").value,
+    saisie($("ingp").value, 1e5),
     ingVersRecette ? S.cur : null
   );
   fermerIngredient();

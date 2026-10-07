@@ -101,7 +101,7 @@ $("lgrp").onchange = () => {
 $("list").addEventListener("change", (e) => {
   const k = e.target.dataset.p;
   if (k) {
-    S.prices[k] = +e.target.value || 0;
+    S.prices[k] = saisie(e.target.value, 1e5);
     delete S.pn[k];
     delete S.promo[k];
     delete S.url[k];
@@ -131,8 +131,8 @@ function drawExtras() {
 $("xok").onclick = () => {
   const nom = $("xn").value.trim().replace(/\s+/g, " "),
     unite = $("xu").value,
-    q = +$("xq").value,
-    p = +$("xp").value,
+    q = saisie($("xq").value),
+    p = saisie($("xp").value, 1e5),
     msg = (t) => ($("xm").textContent = t);
   if (!nom) return msg("Donne un nom à l'article.");
   if (!(q > 0)) return msg("Indique une quantité supérieure à 0.");
@@ -148,7 +148,7 @@ $("xok").onclick = () => {
     delete S.promo[k];
     delete S.url[k];
   }
-  C.extra[k] = Math.round((C.extra[k] || 0) + q * fxu(k) * 1000) / 1000;
+  C.extra[k] = Math.round(((C.extra[k] || 0) + q * fxu(k)) * 1000) / 1000;
   $("xn").value = "";
   $("xq").value = "1";
   $("xp").value = "";
@@ -164,7 +164,7 @@ $("xn").addEventListener("keydown", (e) => {
 $("xl").addEventListener("change", (e) => {
   const k = e.target.dataset.xq;
   if (!k) return;
-  const v = Math.max(0, +e.target.value || 0) * fxu(k);
+  const v = saisie(e.target.value) * fxu(k);
   if (v > 0) C.extra[k] = Math.round(v * 1000) / 1000;
   else delete C.extra[k];
   calc();

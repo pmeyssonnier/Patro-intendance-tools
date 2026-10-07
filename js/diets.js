@@ -95,7 +95,7 @@ mqRg.addEventListener("change", drawDiets);
 function saisieRegime(e) {
   const d = e.target.dataset;
   if (d.d) {
-    (C.dt[d.d] = C.dt[d.d] || SEC.map(() => 0))[+d.s] = +e.target.value || 0;
+    (C.dt[d.d] = C.dt[d.d] || SEC.map(() => 0))[+d.s] = saisie(e.target.value, 1e4);
     const n = document.querySelector(`[data-rn="${CSS.escape(d.d)}"]`);
     if (n) {
       n.textContent = `(${nbDt(d.d)})`;

@@ -58,8 +58,11 @@ self.addEventListener("fetch", (e) => {
     // no-cache : on redemande toujours au serveur, sans se contenter de la copie gardée par le navigateur
     fetch(r, { cache: "no-cache" })
       .then((res) => {
-        const copy = res.clone();
-        caches.open(V).then((c) => c.put(r, copy));
+        // seules les réponses valides remplacent la copie gardée : une erreur 404 ou 500 ne doit pas l'écraser
+        if (res.ok) {
+          const copy = res.clone();
+          e.waitUntil(caches.open(V).then((c) => c.put(r, copy)));
+        }
         return res;
       })
       .catch(() =>

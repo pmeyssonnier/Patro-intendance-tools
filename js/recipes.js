@@ -32,7 +32,7 @@ let EDIT = null;
 
 function drawRec() {
   const names = Object.keys(S.rec);
-  if (!S.rec[S.cur]) S.cur = names[0] || "";
+  if (!Object.hasOwn(S.rec, S.cur)) S.cur = names[0] || "";
   // changer de recette ou en supprimer une referme le mode édition
   if (EDIT && EDIT.nom !== S.cur) {
     EDIT = null;
@@ -158,10 +158,10 @@ $("rb").addEventListener("change", (e) => {
     R = S.rec[S.cur];
   if (!R) return;
   if (d.k) {
-    R.ing[d.k][+d.s] = +e.target.value || 0;
+    R.ing[d.k][+d.s] = saisie(e.target.value);
     calc();
   } else if (d.fx && R.fx) {
-    R.fx[d.fx] = Math.round(Math.max(0, +e.target.value || 0) * fxu(d.fx) * 1000) / 1000;
+    R.fx[d.fx] = Math.round(saisie(e.target.value) * fxu(d.fx) * 1000) / 1000;
     calc();
   } else if (d.fa !== undefined && R.fx) {
     R.fa = R.fa || {};
@@ -243,6 +243,11 @@ $("rno").onclick = () => {
 $("rok").onclick = () => {
   const n = $("rname").value.trim();
   if (!n) return;
+  if (n.length > 100) {
+    $("rname").value = "";
+    $("rname").placeholder = "Nom trop long (100 caractères au plus)";
+    return;
+  }
   if (S.rec[n]) {
     $("rname").value = "";
     $("rname").placeholder = "Ce nom existe déjà";
