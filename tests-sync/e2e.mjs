@@ -445,6 +445,45 @@ try {
     cx && !cx.supprime && JSON.parse(cx.data).notes === "précieux",
     cx && [cx.version, cx.supprime]
   );
+
+  // 13. renommer le groupe, puis le quitter
+  verifier(
+    "synchronisation : la date du dernier envoi est mémorisée",
+    await A.page.evaluate(() => typeof syncLien().dernier === "number")
+  );
+  await attendre(A.page, () => !!$("grren"));
+  await A.page.evaluate(() => {
+    $("grren").value = "Test renommé";
+    return grRenommer();
+  });
+  const grp = await distant("groupes/g1");
+  verifier("renommer : le groupe porte son nouveau nom", grp.nom === "Test renommé", grp.nom);
+  const miroirB = await distant(`groupes/g1/membres/${B.uid}`);
+  const copieB = await adm(async (db) =>
+    (await getDoc(doc(db, `utilisateurs/${B.uid}/groupes/g1`))).data()
+  );
+  verifier(
+    "renommer : la copie « mes groupes » d'un membre suit",
+    copieB.nom === "Test renommé" && miroirB.role === "editeur",
+    copieB
+  );
+  await A.page.evaluate(() => grQuitter());
+  verifier(
+    "quitter : le seul administrateur ne peut pas partir",
+    (await A.page.evaluate(() => $("grmsg").textContent.includes("au moins un administrateur"))) &&
+      !!(await distant(`groupes/g1/membres/${A.uid}`))
+  );
+  await L.page.evaluate(() => grQuitter());
+  await attendre(L.page, () => grEtat.groupes.length === 0);
+  verifier(
+    "quitter : la fiche du membre et sa copie sont supprimées",
+    !(await distant(`groupes/g1/membres/${L.uid}`)) &&
+      !(await distant(`utilisateurs/${L.uid}/groupes/g1`))
+  );
+  verifier(
+    "quitter : la synchronisation de cet appareil s'arrête",
+    await L.page.evaluate(() => syncLien() === null && syncStatut === "off")
+  );
   for (const u of [A, B, L]) {
     const e = u.erreurs.filter((x) => !/net::ERR|favicon/.test(x));
     if (e.length) console.log("erreurs page:", e);

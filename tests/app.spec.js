@@ -3464,3 +3464,50 @@ test("historique : une version toutes les 10 minutes, 20 au plus, et contenu de 
   await expect(page.locator("#grc")).toBeHidden();
   expect(erreurs).toEqual([]);
 });
+
+test("groupes : renommer (administrateur) et quitter le groupe, sauf pour le dernier administrateur", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const membres = [
+      { uid: "a", email: "a@x.be", role: "admin" },
+      { uid: "e", email: "e@x.be", role: "editeur" },
+    ];
+    const base = (role, moi, mb) => ({
+      groupes: [{ id: "g1", nom: 'Sainte-Suzanne "A"', role }],
+      courant: "g1",
+      invitations: [],
+      membres: mb,
+      attente: [],
+      moi,
+      superAdmin: false,
+      url: "",
+      sync: { liee: true, autre: false, ecriture: true, texte: "synchronisé", dernier: 1.7e12 },
+      hist: null,
+    });
+    return {
+      admin: htmlGroupes(base("admin", "a", membres)),
+      adminDeux: htmlGroupes(
+        base("admin", "a", [...membres, { uid: "b", email: "b@x.be", role: "admin" }])
+      ),
+      editeur: htmlGroupes(base("editeur", "e", membres)),
+    };
+  });
+  // l'administrateur renomme ; le nom est échappé dans le champ
+  expect(r.admin).toContain('data-gr="renommer"');
+  expect(r.admin).toContain('value="Sainte-Suzanne &quot;A&quot;"');
+  // seul administrateur : « Quitter » est verrouillé ; avec un second administrateur, il est libre
+  expect(r.admin).toMatch(/data-gr="quitter" disabled/);
+  expect(r.adminDeux).toMatch(/data-gr="quitter">/);
+  // l'administrateur retire les autres (✕) mais pas lui-même
+  expect(r.admin).toContain('data-gr="retirer" data-u="e"');
+  expect(r.admin).not.toContain('data-gr="retirer" data-u="a"');
+  // un éditeur ne renomme pas, mais peut quitter
+  expect(r.editeur).not.toContain('data-gr="renommer"');
+  expect(r.editeur).toMatch(/data-gr="quitter">/);
+  expect(r.editeur).not.toContain('data-gr="retirer"');
+  // la date du dernier envoi est affichée
+  expect(r.admin).toContain("Dernier envoi :");
+  expect(erreurs).toEqual([]);
+});

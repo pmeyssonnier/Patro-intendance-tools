@@ -109,7 +109,8 @@ service cloud.firestore {
               && request.resource.data.role == roleInvite(g)
               && request.resource.data.email == monMail()));
         allow update: if (admin(g) || superAdmin()) && roleValide(request.resource.data.role);
-        allow delete: if admin(g) || superAdmin();
+        // un administrateur retire n'importe qui ; chacun peut se retirer lui-même (le client refuse de laisser le groupe sans administrateur)
+        allow delete: if admin(g) || superAdmin() || (connecte() && request.auth.uid == uid);
       }
 
       // Historique : les membres consultent, les éditeurs ajoutent une version et suppriment les plus anciennes.
@@ -155,7 +156,7 @@ service cloud.firestore {
             && invitationPour(g)
             && request.resource.data.role == roleInvite(g)));
       allow update: if roleValide(request.resource.data.role) && (admin(g) || superAdmin());
-      allow delete: if admin(g) || superAdmin();
+      allow delete: if admin(g) || superAdmin() || (connecte() && request.auth.uid == uid);
     }
   }
 }

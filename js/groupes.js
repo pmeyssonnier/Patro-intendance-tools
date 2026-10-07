@@ -63,7 +63,7 @@ function htmlSync(s) {
   if (!s) return "";
   let h = `<h3>Synchronisation</h3>`;
   if (s.liee)
-    h += `<p class="s">Cet appareil est synchronisé avec ce groupe (${esc(s.texte)}). Les camps, recettes, prix et réglages du groupe sont partagés ; le logo reste sur l'appareil.</p><p><button class="x" data-gr="sync-stop">Arrêter la synchronisation</button></p>`;
+    h += `<p class="s">Cet appareil est synchronisé avec ce groupe (${esc(s.texte)}).${s.dernier ? ` Dernier envoi : ${new Date(s.dernier).toLocaleString("fr-BE", { dateStyle: "short", timeStyle: "short" })}.` : ""} Les camps, recettes, prix et réglages du groupe sont partagés ; le logo reste sur l'appareil.</p><p><button class="x" data-gr="sync-stop">Arrêter la synchronisation</button></p>`;
   else if (s.autre)
     h += `<p class="s">Cet appareil est déjà synchronisé avec un autre groupe. Arrête d'abord cette synchronisation pour en choisir un autre.</p>`;
   else {
@@ -114,13 +114,17 @@ function htmlGroupes(e) {
     const admin = g.role === "admin";
     h += htmlSync(e.sync);
     if (e.sync && e.sync.liee) h += htmlHistorique(e.hist);
+    if (admin)
+      h += `<h3>Nom du groupe</h3><div class="g"><div><label for="grren">Nom</label><input id="grren" maxlength="${GROUPE_NOM_MAX}" value="${esc(g.nom)}" aria-label="Nom du groupe"></div></div><p><button class="x" data-gr="renommer">Renommer</button></p>`;
     h += `<h3>Membres</h3>`;
     for (const m of e.membres) {
-      const verrou = erreurDernierAdmin(e.membres, m.uid) !== "";
-      h += `<div class="mbr"><span>${esc(m.email || m.uid)}${m.uid === e.moi ? " (moi)" : ""}</span>`;
+      const verrou = erreurDernierAdmin(e.membres, m.uid) !== "",
+        moi = m.uid === e.moi,
+        quitter = `<button class="x" data-gr="quitter"${verrou ? " disabled" : ""}>Quitter le groupe</button>`;
+      h += `<div class="mbr"><span>${esc(m.email || m.uid)}${moi ? " (moi)" : ""}</span>`;
       if (admin)
-        h += `<select data-grrole="${esc(m.uid)}" aria-label="Rôle de ${esc(m.email || m.uid)}"${verrou ? " disabled" : ""}>${rolesHtml(m.role)}</select><button class="x" data-gr="retirer" data-u="${esc(m.uid)}" aria-label="Retirer ${esc(m.email || m.uid)}"${verrou ? " disabled" : ""}>✕</button>`;
-      else h += `<span class="s">${roleNom(m.role)}</span>`;
+        h += `<select data-grrole="${esc(m.uid)}" aria-label="Rôle de ${esc(m.email || m.uid)}"${verrou ? " disabled" : ""}>${rolesHtml(m.role)}</select>${moi ? quitter : `<button class="x" data-gr="retirer" data-u="${esc(m.uid)}" aria-label="Retirer ${esc(m.email || m.uid)}">✕</button>`}`;
+      else h += `<span class="s">${roleNom(m.role)}</span>${moi ? quitter : ""}`;
       h += `</div>`;
     }
     if (admin) {

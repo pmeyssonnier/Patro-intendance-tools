@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.30.0",
+    d: "2026-10-07",
+    t: "Version test : renommer et quitter un groupe",
+    l: [
+      "Mon groupe : un administrateur peut renommer le groupe ; chaque membre peut le quitter (sauf le dernier administrateur, qui doit d'abord en nommer un autre).",
+      "La synchronisation affiche la date et l'heure du dernier envoi au groupe.",
+    ],
+  },
+  {
     v: "1.29.0",
     d: "2026-10-07",
     t: "Version test : historique et retour arrière",

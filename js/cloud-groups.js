@@ -170,6 +170,60 @@ async function grInviter() {
   }
 }
 
+/** Renomme le groupe (administrateur) : sa fiche et la copie « mes groupes » de chaque membre. */
+async function grRenommer() {
+  const g = grEtat.groupes.find((x) => x.id === grEtat.courant),
+    nom = $("grren").value.trim().replace(/\s+/g, " "),
+    err = erreurNomGroupe(nom);
+  if (!g) return;
+  if (err) return grMessage(err, true);
+  if (nom === g.nom) return;
+  try {
+    const { fs, db } = await cloudBase(),
+      b = fs.writeBatch(db);
+    b.update(fs.doc(db, "groupes", g.id), { nom });
+    for (const m of grEtat.membres)
+      b.set(fs.doc(db, "utilisateurs", m.uid, "groupes", g.id), { role: m.role, nom });
+    await b.commit();
+    grMessage("Groupe renommé en « " + nom + " ».");
+    await grCharger(g.id);
+  } catch (e) {
+    grErreur(e);
+  }
+}
+
+/** Quitte le groupe : la personne perd l'accès à ses camps (ils restent sur cet appareil). */
+async function grQuitter() {
+  const g = grEtat.groupes.find((x) => x.id === grEtat.courant),
+    err = erreurDernierAdmin(grEtat.membres, cloudUser.uid);
+  if (!g) return;
+  if (err) return grMessage(err + " Nomme d'abord un autre administrateur.", true);
+  if (
+    !confirm(
+      "Quitter le groupe « " +
+        g.nom +
+        " » ? Tu perdras l'accès à ses camps ; ceux de cet appareil restent."
+    )
+  )
+    return;
+  try {
+    const { fs, db } = await cloudBase(),
+      b = fs.writeBatch(db);
+    b.delete(fs.doc(db, "groupes", g.id, "membres", cloudUser.uid));
+    b.delete(fs.doc(db, "utilisateurs", cloudUser.uid, "groupes", g.id));
+    await b.commit();
+    const l = syncLien();
+    if (l && l.g === g.id) {
+      syncArreter();
+      syncPoser(null);
+    }
+    grMessage("Tu as quitté « " + g.nom + " ».");
+    await grCharger();
+  } catch (e) {
+    grErreur(e);
+  }
+}
+
 async function grAnnuler(idInv) {
   try {
     const { fs, db } = await cloudBase();
@@ -231,6 +285,8 @@ $("grc").onclick = (ev) => {
   else if (a === "rejoindre") grRejoindre(b.dataset.i);
   else if (a === "inviter") grInviter();
   else if (a === "annuler") grAnnuler(b.dataset.i);
+  else if (a === "renommer") grRenommer();
+  else if (a === "quitter") grQuitter();
   else if (a === "retirer") grRetirer(b.dataset.u);
   else if (a === "sync-envoyer" || a === "sync-charger") {
     const g = grEtat.groupes.find((x) => x.id === grEtat.courant);

@@ -302,3 +302,29 @@ test("historique : les membres lisent, les éditeurs ajoutent leur propre versio
   const r = await assertSucceeds(getDocs(q));
   if (r.size !== 1) throw new Error("une version « avant suppression » attendue");
 });
+
+test("quitter un groupe : chacun retire sa propre fiche, personne ne retire celle d'un autre sans être administrateur", async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "utilisateurs/e/groupes/g1"), { role: "editeur", nom: "S" });
+    await setDoc(doc(ctx.firestore(), "utilisateurs/l/groupes/g1"), { role: "lecteur", nom: "S" });
+  });
+  const e = moi("e", "e@x.be");
+  await assertFails(deleteDoc(doc(e, "groupes/g1/membres/l"))); // un éditeur ne retire pas un autre
+  await assertFails(deleteDoc(doc(e, "utilisateurs/l/groupes/g1")));
+  const b = writeBatch(e);
+  b.delete(doc(e, "groupes/g1/membres/e"));
+  b.delete(doc(e, "utilisateurs/e/groupes/g1"));
+  await assertSucceeds(b.commit());
+  await assertFails(getDoc(doc(e, "groupes/g1/camps/c1"))); // plus membre : plus d'accès
+  await assertFails(deleteDoc(doc(moi("z", "z@x.be"), "groupes/g1/membres/l"))); // administrateur d'un autre groupe
+});
+
+test("renommer un groupe : l'administrateur seulement, avec un nom valide, et la copie de chaque membre suit", async () => {
+  const a = moi("a", "a@x.be");
+  await assertSucceeds(updateDoc(doc(a, "groupes/g1"), { nom: "Nouveau nom" }));
+  await assertFails(updateDoc(doc(a, "groupes/g1"), { nom: "" }));
+  await assertFails(updateDoc(doc(moi("e", "e@x.be"), "groupes/g1"), { nom: "Pirate" }));
+  const b = writeBatch(a);
+  b.set(doc(a, "utilisateurs/e/groupes/g1"), { role: "editeur", nom: "Nouveau nom" });
+  await assertSucceeds(b.commit());
+});

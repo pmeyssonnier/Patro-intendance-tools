@@ -134,6 +134,7 @@ function syncResume() {
       (x) => x.id === g && (x.role === "admin" || x.role === "editeur")
     ),
     texte: (SYNC_ETATS[syncStatut] || SYNC_ETATS.ok)[2],
+    dernier: l && l.g === g ? l.dernier : undefined,
   };
 }
 
@@ -223,6 +224,8 @@ async function syncPousser() {
       else l.h[cle] = empreinte(morceaux[cle]);
       syncPoser(l);
     }
+    l.dernier = Date.now();
+    syncPoser(l);
     syncSale = gen !== syncGen;
   } catch (e) {
     syncEnCours = false;
