@@ -28,6 +28,8 @@ const delPanel = (i, k, lab) => {
   return `<div class="zpan"><div class="tl"><input class="tn" value="${esc(lab)}" data-tn="${ek}" maxlength="30" aria-label="Nom du repas"><button class="x" data-tu="${ek}" data-day="${i}" title="Monter ce repas" aria-label="Monter ${esc(lab)}"${p > 0 ? "" : " disabled"}>▲</button><button class="x" data-td="${ek}" data-day="${i}" title="Descendre ce repas" aria-label="Descendre ${esc(lab)}"${p < vis.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-tx="${ek}" title="Supprimer ce type de repas de tous les jours" aria-label="Supprimer le type de repas ${esc(lab)}">🗑</button></div><div class="crow"><span class="sws">${COLS.map((c) => `<button class="sw${c.toLowerCase() === col ? " on" : ""}" style="background:${c}" data-c="${c}" data-ck="${ek}" title="${CN[c] || c}" aria-label="Couleur ${CN[c] || c} pour ${esc(lab)}" aria-pressed="${c.toLowerCase() === col}"></button>`).join("")}</span><input type="color" data-ci="${ek}" value="${esc(C.col[k])}" title="Autre couleur" aria-label="Autre couleur pour ${esc(lab)}"><span class="s cw" style="color:#d33">${lowc(C.col[k]) ? "⚠ contraste faible" : ""}</span></div><div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${ek}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${ek}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div></div>`;
 };
 
+const ouvert = (i, k) => !!delSl && delSl.day === i && delSl.k === k;
+
 const addPanel = () => {
   const nw = addT === "__new",
     t = C.types.find((x) => x.k === addT);
@@ -43,7 +45,7 @@ function drawMenu() {
       )
         .map(
           ({ k, n: lab }) =>
-            `<div class="zone" data-day="${i}" data-slot="${esc(k)}" style="${cvars(C.col[k])}"><div class="zl"><span class="zh" role="button" tabindex="0" data-day="${i}" data-zk="${esc(k)}" aria-label="Déplacer le repas ${esc(lab)} avec les flèches du clavier" title="Glisser pour changer l’ordre des repas (flèches haut/bas au clavier)">⠿</span><button class="zn" data-ds="1" data-day="${i}" data-slot="${esc(k)}" title="Modifier ce repas : nom, couleur, ordre, retrait" aria-label="Modifier le repas ${esc(lab)}">${esc(lab)}</button><button class="zx" data-ds="1" data-day="${i}" data-slot="${esc(k)}" title="Retirer ce repas de ce jour" aria-label="Retirer ${esc(lab)} de ce jour">✕</button></div><div class="zc">${slotArr(
+            `<div class="zone" data-day="${i}" data-slot="${esc(k)}" style="${cvars(C.col[k])}"><div class="zl">${ouvert(i, k) ? `<span class="zh" role="button" tabindex="0" data-day="${i}" data-zk="${esc(k)}" aria-label="Déplacer le repas ${esc(lab)} avec les flèches du clavier" title="Glisser pour changer l’ordre des repas (flèches haut/bas au clavier)">⠿</span>` : ""}<button class="zn" data-ds="1" data-day="${i}" data-slot="${esc(k)}" title="Modifier ce repas : nom, couleur, ordre, retrait" aria-label="Modifier le repas ${esc(lab)}" aria-expanded="${ouvert(i, k)}"><span class="znt">${esc(lab)}</span> <span aria-hidden="true">${ouvert(i, k) ? "▴" : "✎"}</span></button></div><div class="zc">${slotArr(
               i,
               k
             )
@@ -197,7 +199,7 @@ $("menu").addEventListener("keydown", (e) => {
 });
 
 $("menu").addEventListener("click", (e) => {
-  const t = e.target;
+  const t = e.target.closest("[data-ds]") || e.target;
   if (t.dataset.nok !== undefined) {
     addGo(t);
     return;
@@ -317,7 +319,7 @@ $("menu").addEventListener("input", (e) => {
     $("menu")
       .querySelectorAll(".zone")
       .forEach((z) => {
-        if (z.dataset.slot === ty.k) z.querySelector(".zn").textContent = ty.n;
+        if (z.dataset.slot === ty.k) z.querySelector(".znt").textContent = ty.n;
       });
     calc();
   } else if (d.ci) {

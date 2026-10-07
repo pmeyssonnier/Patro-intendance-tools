@@ -264,8 +264,6 @@ button.x {
   padding: 0 2px;
   font: inherit;
   font-weight: 700;
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
   cursor: pointer;
   overflow-wrap: anywhere;
 }
