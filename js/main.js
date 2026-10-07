@@ -32,4 +32,6 @@ drawMenu();
 
 drawRec();
 
+drawNouveautes();
+
 calc();

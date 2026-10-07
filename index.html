@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.22.0">
+<link rel="stylesheet" href="styles.css?v=1.24.0">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -33,6 +33,7 @@
 <button class="ni" data-g="sh"><span>📤</span>Partager / imprimer</button>
 <div class="dsec">Projet</div>
 <div class="nirow"><button class="ni" data-g="cfg"><span>⚙️</span>Configuration</button><button class="ni" id="theme2" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button></div>
+<button class="ni" data-g="nv"><span>🆕</span>Nouveautés</button>
 <button class="ni" data-g="pj"><span>💾</span>Sauvegarde</button>
 <div class="s dfoot">Outil fait par le Patro Sainte-Suzanne pour les patros ⛺</div>
 <button id="inst" class="x" style="display:none;margin:12px 6px 0">📲 Installer l'application</button>
@@ -107,7 +108,7 @@
 <p class="impb"><button id="imp">Importer</button> <button id="impno" class="x">Annuler</button></p>
 </dialog>
 <h2 style="margin-top:14px">Prix des ingrédients</h2>
-<div class="row" style="grid-template-columns:1fr"><select id="crayon" aria-label="Filtrer les ingrédients par rayon"></select></div>
+<div class="row rayrow"><select id="crayon" aria-label="Filtrer les ingrédients par rayon"></select><button id="rygere" class="x">⚙️ Gérer les rayons</button></div>
 <input type="search" id="cfilt" aria-label="Filtrer les ingrédients par nom ou nom de produit" placeholder="🔍 Filtrer par ingrédient ou produit…" autocomplete="off" style="margin-bottom:8px">
 <div class="w st"><table class="fit"><thead><tr><th>Ingrédient</th><th>Unité</th><th class="num">Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
 <p><button id="cins" class="x">➕ Insérer un ingrédient</button> <span class="s" id="cinm" role="status"></span></p>
@@ -147,6 +148,10 @@
 <p class="s">Nom et âges de chaque section, dans l'ordre d'affichage (▲ ▼ pour trier). Supprimer une section efface ses effectifs et ses quantités dans les recettes. 12 sections au maximum.</p>
 <div id="secl"></div>
 <p><button id="secadd" class="x">+ Ajouter une section</button></p></section>
+</div><div class="pg" id="g-nv">
+<section class="card np"><h2>Nouveautés</h2>
+<p class="s">Les changements de l'application, de la plus récente version à la première. Touche une version pour voir le détail.</p>
+<div id="nvl"></div></section>
 </div><div class="pg" id="g-pj">
 <section class="card np"><h2>Sauvegarde du projet</h2>
 <p class="s">Sauvegarde tout (recettes, menu, effectifs, régimes, prix) dans un fichier <b>.json</b> pour le retrouver ou le passer à un autre animateur.</p>
@@ -191,26 +196,36 @@
 <p class="s" id="mgm" role="status" style="color:#d33"></p>
 <p><button id="mgok">Fusionner</button> <button id="mgno" class="x">Annuler</button></p>
 </dialog>
-<script src="js/data-defaults.js?v=1.22.0"></script>
-<script src="js/utils.js?v=1.22.0"></script>
-<script src="js/storage.js?v=1.22.0"></script>
-<script src="js/state.js?v=1.22.0"></script>
-<script src="js/calculations.js?v=1.22.0"></script>
-<script src="js/shopping-list.js?v=1.22.0"></script>
-<script src="js/documents.js?v=1.22.0"></script>
-<script src="js/share-print.js?v=1.22.0"></script>
-<script src="js/navigation.js?v=1.22.0"></script>
-<script src="js/camps.js?v=1.22.0"></script>
-<script src="js/diets.js?v=1.22.0"></script>
-<script src="js/menu.js?v=1.22.0"></script>
-<script src="js/recipes.js?v=1.22.0"></script>
-<script src="js/ingredient-matching.js?v=1.22.0"></script>
-<script src="js/ingredients.js?v=1.22.0"></script>
-<script src="js/ingredient-merge.js?v=1.22.0"></script>
-<script src="js/price-import.js?v=1.22.0"></script>
-<script src="js/catalog-ui.js?v=1.22.0"></script>
-<script src="js/recipe-import.js?v=1.22.0"></script>
-<script src="js/config.js?v=1.22.0"></script>
-<script src="js/pwa.js?v=1.22.0"></script>
-<script src="js/main.js?v=1.22.0"></script>
+<dialog id="rydlg" class="np" aria-labelledby="ryt">
+<h2 id="ryt" style="margin-top:0">Gérer les rayons</h2>
+<p class="s">Les rayons sont les mêmes pour tous les camps. Renommer un rayon garde ses produits. L'ordre est celui de la liste de courses et des exports. « Autre » est le rayon de secours : il reste toujours.</p>
+<div id="ryl"></div>
+<p class="ryadd"><input id="ryn" maxlength="40" placeholder="Nom du nouveau rayon" aria-label="Nom du nouveau rayon" autocomplete="off"><button id="ryok">+ Ajouter</button></p>
+<p class="s" id="rym" role="status" style="color:#d33"></p>
+<p><button id="ryno" class="x">Fermer</button></p>
+</dialog>
+<script src="js/data-defaults.js?v=1.24.0"></script>
+<script src="js/utils.js?v=1.24.0"></script>
+<script src="js/storage.js?v=1.24.0"></script>
+<script src="js/state.js?v=1.24.0"></script>
+<script src="js/calculations.js?v=1.24.0"></script>
+<script src="js/shopping-list.js?v=1.24.0"></script>
+<script src="js/documents.js?v=1.24.0"></script>
+<script src="js/share-print.js?v=1.24.0"></script>
+<script src="js/navigation.js?v=1.24.0"></script>
+<script src="js/camps.js?v=1.24.0"></script>
+<script src="js/diets.js?v=1.24.0"></script>
+<script src="js/menu.js?v=1.24.0"></script>
+<script src="js/recipes.js?v=1.24.0"></script>
+<script src="js/ingredient-matching.js?v=1.24.0"></script>
+<script src="js/ingredients.js?v=1.24.0"></script>
+<script src="js/ingredient-merge.js?v=1.24.0"></script>
+<script src="js/price-import.js?v=1.24.0"></script>
+<script src="js/rayons.js?v=1.24.0"></script>
+<script src="js/catalog-ui.js?v=1.24.0"></script>
+<script src="js/recipe-import.js?v=1.24.0"></script>
+<script src="js/changelog.js?v=1.24.0"></script>
+<script src="js/config.js?v=1.24.0"></script>
+<script src="js/pwa.js?v=1.24.0"></script>
+<script src="js/main.js?v=1.24.0"></script>
 </body></html>

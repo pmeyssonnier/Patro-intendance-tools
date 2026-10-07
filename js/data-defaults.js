@@ -2,7 +2,7 @@
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
 // Numéro de version affiché dans le menu : à mettre à jour à chaque release (avec "version" dans package.json).
-const APP_VERSION = "1.22.0";
+const APP_VERSION = "1.24.0";
 
 // Nom de la troupe par défaut (modifiable dans Configuration).
 const TROOP0 = "Patro Sainte-Suzanne";
@@ -63,8 +63,8 @@ const ING = {
   pain_sg: ["Pain sans gluten", "g", 8, "pain.*sans gluten|sans gluten.*pain", 1],
 };
 
-// Rayons de la liste de courses, dans l'ordre du magasin : [clé, nom]. « aut » (Autre) est la catégorie par défaut.
-const CATS = [
+// Rayons d'origine de la liste de courses, dans l'ordre du magasin : [clé, nom]. « aut » (Autre) est la catégorie par défaut.
+const CATS0 = [
   ["fl", "Fruits & légumes"],
   ["bou", "Boucherie & poisson"],
   ["fri", "Frigo (charcuterie, plats préparés)"],
@@ -75,6 +75,9 @@ const CATS = [
   ["boi", "Boissons"],
   ["aut", "Autre"],
 ];
+
+/** Rayons en usage (modifiables dans le catalogue, enregistrés dans S.rayons) : tableau modifié sur place, départ = rayons d'origine. */
+const CATS = CATS0.map((c) => [...c]);
 
 // Rayon par défaut des ingrédients de base (modifiable dans le catalogue : S.cat).
 const CAT0 = {

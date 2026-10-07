@@ -167,7 +167,8 @@ function categorieProbable(nom) {
       /pate|riz|farine|sucre|\bsel\b|poivre|huile|vinaigre|conserve|sauce|moutarde|ketchup|mayonnaise|chocolat|biscuit|cereale|confiture|miel|epice|muscade|chapelure|semoule|couscous|lentille|haricot|pois chiche|mais|noix|amande|cacahu|tartiner|bouillon|concentre|levure/,
     ],
   ];
-  return (regles.find(([, re]) => re.test(t)) || ["aut"])[0];
+  const c = (regles.find(([, re]) => re.test(t)) || ["aut"])[0];
+  return CATS.some((r) => r[0] === c) ? c : "aut"; // le rayon deviné a pu être supprimé
 }
 
 /** Mots-clés d'attention régime (mêmes clés que « Attention régime » d'un ingrédient ajouté à la main) pour un nouvel ingrédient. */

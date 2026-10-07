@@ -28,6 +28,23 @@ function cleanSec(a) {
   return l.length ? l : null;
 }
 
+/** Liste de rayons [[identifiant, nom], …] vérifiée (« aut » toujours présent), ou null si elle est absente, invalide ou identique à celle d'origine. */
+function cleanRayons(a) {
+  if (!Array.isArray(a)) return null;
+  const vus = new Set(),
+    l = [];
+  for (const r of a.slice(0, 30)) {
+    if (!Array.isArray(r) || typeof r[0] !== "string" || !okid(r[0]) || vus.has(r[0])) continue;
+    const nom = str(r[1], 40).trim();
+    if (!nom) continue;
+    vus.add(r[0]);
+    l.push([r[0], nom]);
+  }
+  if (!l.length) return null;
+  if (!vus.has("aut")) l.push(["aut", "Autre"]);
+  return JSON.stringify(l) === JSON.stringify(CATS0) ? null : l;
+}
+
 function cleanCamp(c, N) {
   if (!obj(c)) return null;
   const o = {
@@ -141,8 +158,12 @@ function cleanProject(x) {
       ["g", "ml", "pc"].includes(v.u)
     )
       o.ov[k] = { n: v.n.trim().slice(0, 100), u: v.u };
-  // rayons choisis (identifiant -> clé de CATS) et regroupement de la liste par rayon
-  for (const [k, v] of ent(x.cat)) if (okid(k) && CATS.some((c) => c[0] === v)) o.cat[k] = v;
+  // rayons personnalisés (liste [identifiant, nom]) ; sans liste valide, ce sont ceux d'origine
+  const rayons = cleanRayons(x.rayons);
+  if (rayons) o.rayons = rayons;
+  // rayons choisis (identifiant -> identifiant de rayon) et regroupement de la liste par rayon
+  const idsRayons = (o.rayons || CATS0).map((c) => c[0]);
+  for (const [k, v] of ent(x.cat)) if (okid(k) && idsRayons.includes(v)) o.cat[k] = v;
   if (x.gl === false) o.gl = false;
   // articles hors recettes (identifiant -> 1)
   for (const [k, v] of ent(x.art)) if (okid(k) && v) o.art[k] = 1;
