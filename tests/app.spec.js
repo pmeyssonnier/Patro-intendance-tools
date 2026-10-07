@@ -1999,7 +1999,8 @@ test("recettes : la description est verrouillée hors du mode édition (✎), et
   const avant = await desc();
   // verrouillée par défaut
   await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
-  await page.locator("#rdesc").click();
+  await expect(page.locator("#rdesc")).toBeHidden();
+  await page.locator("#rdv").click();
   await page.keyboard.type("XYZ");
   expect(await desc()).toBe(avant);
   // mode édition : modifiable
@@ -3160,4 +3161,80 @@ test("régimes : les règles, les ingrédients et les substituts sont triés par
     })
   ).toBe(true);
   expect(erreurs).toEqual([]);
+});
+
+test("recettes : mettre des mots de la description en gras ou souligné (boutons G et S, Ctrl+B / Ctrl+U)", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "rec");
+  const desc = () => page.evaluate(() => S.rec[S.cur].desc);
+  // la barre de mise en forme n'existe qu'en mode édition
+  await expect(page.locator("#rtb")).toBeHidden();
+  await page.locator("#redit").click();
+  await expect(page.locator("#rtb")).toBeVisible();
+  await page.locator("#rdesc").fill("Cuire les pâtes 10 minutes puis servir");
+  const selectionner = (mot) =>
+    page.locator("#rdesc").evaluate((t, m) => {
+      const i = t.value.indexOf(m);
+      t.focus();
+      t.setSelectionRange(i, i + m.length);
+    }, mot);
+  // gras avec le bouton G
+  await selectionner("pâtes");
+  await page.locator('#rtb [data-fmt="b"]').click();
+  expect(await desc()).toBe("Cuire les **pâtes** 10 minutes puis servir");
+  // souligné avec Ctrl+U
+  await selectionner("10 minutes");
+  await page.keyboard.press("Control+u");
+  expect(await desc()).toBe("Cuire les **pâtes** __10 minutes__ puis servir");
+  // refaire le geste retire la mise en forme
+  await selectionner("pâtes");
+  await page.locator('#rtb [data-fmt="b"]').click();
+  expect(await desc()).toBe("Cuire les pâtes __10 minutes__ puis servir");
+  await selectionner("servir");
+  await page.keyboard.press("Control+b");
+  await page.locator("#reok").click();
+  // lecture : mise en forme visible, rien d'autre que du texte échappé
+  await expect(page.locator("#rdv")).toBeVisible();
+  await expect(page.locator("#rdv b")).toHaveText("servir");
+  await expect(page.locator("#rdv u")).toHaveText("10 minutes");
+  await page.evaluate(() => {
+    S.rec[S.cur].desc = '<img src=x onerror="window.__x=1"> **gras**\nligne 2';
+    drawRec();
+  });
+  await expect(page.locator("#rdv img")).toHaveCount(0);
+  await expect(page.locator("#rdv")).toContainText("<img src=x");
+  await expect(page.locator("#rdv br")).toHaveCount(1);
+  expect(await page.evaluate(() => window.__x)).toBeUndefined();
+  // texte à partager et CSV : sans les marques
+  expect(await page.evaluate(() => descTexte("**a** et __b__ **"))).toBe("a et b **");
+  expect(erreurs).toEqual([]);
+});
+
+test("menu imprimable : « N pers. » prend la couleur du nom du repas, lisible sur chaque couleur", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  // une couleur claire et une foncée pour les repas
+  await page.evaluate(() => {
+    C.col[C.types[0].k] = "#f1c40f";
+    C.col[C.types[1].k] = "#1f4e79";
+    calc();
+  });
+  await aller(page, "sh");
+  const r = await page.evaluate(() => {
+    const html = document.createElement("div");
+    html.innerHTML = menuHTML();
+    document.body.appendChild(html);
+    const lignes = [...html.querySelectorAll("tr.sl td.sn")].map((td) => {
+      const ad = td.querySelector(".ad");
+      return [getComputedStyle(td).color, getComputedStyle(ad).color];
+    });
+    html.remove();
+    return { lignes, css: DOC_CSS.includes(".mt td.sn .ad{color:inherit") };
+  });
+  expect(r.lignes.length).toBeGreaterThan(0);
+  for (const [nom, eff] of r.lignes) expect(eff).toBe(nom);
+  expect(r.css).toBe(true);
 });

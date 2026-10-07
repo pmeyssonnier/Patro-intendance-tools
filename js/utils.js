@@ -18,6 +18,19 @@ const esc = (s) =>
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
   );
 
+/** Description de recette → HTML sûr : **gras**, __souligné__ et retours à la ligne ; tout le reste est échappé. */
+const fmtDesc = (t) =>
+  esc(t)
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/__(.+?)__/g, "<u>$1</u>")
+    .replace(/\n/g, "<br>");
+
+/** Description de recette sans les marques de mise en forme (texte à partager, CSV). */
+const descTexte = (t) =>
+  String(t ?? "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1");
+
 /** Nom de produit sans la marque répétée au début (Colruyt : « EVERYDAY EVERYDAY spaghetti 500g » → « EVERYDAY spaghetti 500g »). */
 const nomProduit = (t) =>
   String(t).replace(/^([A-ZÀ-Ý0-9'.&-]+(?: [A-ZÀ-Ý0-9'.&-]+)*?) \1(?= )/, "$1");

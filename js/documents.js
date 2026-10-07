@@ -19,7 +19,7 @@ function menuHTML() {
         : '<span class="ad">–</span>';
       const ds = dsc
         ? `<td>${rs
-            .map((r) => esc(S.rec[r] ? S.rec[r].desc : ""))
+            .map((r) => fmtDesc(S.rec[r] ? S.rec[r].desc : ""))
             .filter(Boolean)
             .join("<br>")}</td>`
         : "";
@@ -70,7 +70,7 @@ function recHTML(names) {
     (names
       .map((n) => {
         const R = S.rec[n];
-        return `<h3 style="margin:16px 0 2px;break-after:avoid">${esc(n)}</h3><div class="s">${esc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map((s) => `<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(
+        return `<h3 style="margin:16px 0 2px;break-after:avoid">${esc(n)}</h3><div class="s">${fmtDesc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map((s) => `<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(
           R.ing
         )
           .map(
@@ -147,7 +147,7 @@ const txtRec = (n) => {
     ? "📖 " +
         n +
         "\n" +
-        (R.desc ? R.desc + "\n" : "") +
+        (R.desc ? descTexte(R.desc) + "\n" : "") +
         "Par personne (" +
         SEC.map((s) => s[0]).join(" / ") +
         ") :\n" +
@@ -259,7 +259,7 @@ function csvMenu() {
           WD[d.getDay()],
           t.n,
           x,
-          R ? R.desc : "",
+          R ? descTexte(R.desc) : "",
           meal(x, presents(i, t.k)).adapt.join(" | "),
         ]);
       })
