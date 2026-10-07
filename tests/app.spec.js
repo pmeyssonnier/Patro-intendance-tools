@@ -2280,6 +2280,8 @@ test("nouvel ingrédient : un nom déjà pris (même à l'accent ou au pluriel p
   await page.locator("#ingu").selectOption("pc");
   await page.locator("#ingok").click();
   await expect(page.locator("#ingdupt")).toContainText("mais en poids");
+  // depuis le catalogue, pas d'« Utiliser » (rien à ajouter à une recette)
+  await expect(page.locator("#inguse")).toBeHidden();
   expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(0);
   // créer quand même
   await page.locator("#ingforce").click();
@@ -2382,4 +2384,28 @@ test("catalogue : en modification, le champ Nom a la même largeur que les liste
     page.locator(sel).evaluate((e) => Math.round(e.getBoundingClientRect().width));
   expect(await largeur('[data-en="pates"]')).toBe(await largeur('[data-eg="pates"]'));
   expect(await largeur('[data-en="pates"]')).toBeGreaterThan(120);
+});
+
+test("nouvel ingrédient depuis une recette : « Utiliser » est aussi proposé quand l'unité diffère, et reprend l'ingrédient existant", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ajouterIngredient(page, "cat", "Huile d'olive", "ml");
+  await aller(page, "rec");
+  await page.locator("#inew").click();
+  await page.locator("#ingn").fill("huile d'olive");
+  await page.locator("#ingu").selectOption("pc");
+  await page.locator("#ingok").click();
+  await expect(page.locator("#ingdupt")).toContainText("mais en liquide");
+  await expect(page.locator("#inguse")).toBeVisible();
+  await expect(page.locator("#inguse")).toContainText(
+    "Utiliser « Huile d'olive » (en liquide, ml)"
+  );
+  await page.locator("#inguse").click();
+  expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(1);
+  expect(
+    await page.evaluate(() =>
+      Object.keys(S.rec[S.cur].ing).some((k) => ING[k][0] === "Huile d'olive" && ING[k][1] === "ml")
+    )
+  ).toBe(true);
 });

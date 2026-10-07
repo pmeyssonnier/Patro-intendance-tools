@@ -692,7 +692,7 @@ $("imp").onclick = () => {
 };
 
 /* Nouvel ingrédient : une seule fenêtre, ouverte depuis le catalogue (« Insérer ») ou depuis une recette (« Nouvel ingrédient ») */
-const uniteTexte = { g: "en poids (g)", ml: "en liquide (ml)", pc: "à la pièce" };
+const uniteTexte = { g: "en poids, g", ml: "en liquide, ml", pc: "à la pièce" };
 
 /** true : la fenêtre a été ouverte depuis la page Recettes, l'ingrédient créé est aussi ajouté à la recette affichée. */
 let ingVersRecette = false;
@@ -741,9 +741,11 @@ function validerIngredient(confirme) {
     $("ingdupt").textContent = d.exact.length
       ? `« ${ING[k][0]} » existe déjà (${uniteTexte[unite]}). Créer quand même un ingrédient en double ?`
       : `« ${ING[k][0]} » existe déjà, mais ${uniteTexte[ING[k][1]]} (toi : ${uniteTexte[unite]}). Créer quand même un deuxième ingrédient ?`;
-    $("inguse").hidden = !(ingVersRecette && d.exact.length);
-    $("inguse").dataset.k = d.exact[0] || "";
-    $("inguse").textContent = d.exact.length ? `Utiliser « ${ING[d.exact[0]][0]} »` : "";
+    // depuis une recette : on peut reprendre l'ingrédient existant (même avec une autre unité : la quantité sera dans son unité)
+    $("inguse").hidden = !ingVersRecette;
+    $("inguse").dataset.k = k;
+    $("inguse").textContent =
+      `Utiliser « ${ING[k][0]} »` + (ING[k][1] === unite ? "" : ` (${uniteTexte[ING[k][1]]})`);
     $("ingdup").hidden = false;
     return;
   }
