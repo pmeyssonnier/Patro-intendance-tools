@@ -5,49 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.30.0",
+    v: "1.31.0",
     d: "2026-10-07",
-    t: "Version test : renommer et quitter un groupe",
+    t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
-      "Mon groupe : un administrateur peut renommer le groupe ; chaque membre peut le quitter (sauf le dernier administrateur, qui doit d'abord en nommer un autre).",
-      "La synchronisation affiche la date et l'heure du dernier envoi au groupe.",
-    ],
-  },
-  {
-    v: "1.29.0",
-    d: "2026-10-07",
-    t: "Version test : historique et retour arrière",
-    l: [
-      "Mon groupe : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum). « Voir les versions » puis « Revenir à cette version » remet un ancien état ; l'état actuel est d'abord gardé, donc le retour peut lui-même être annulé.",
-      "Un camp supprimé reste récupérable : le dernier contenu avant sa suppression est gardé, et un bouton « Restaurer » le remet.",
-    ],
-  },
-  {
-    v: "1.28.0",
-    d: "2026-10-07",
-    t: "Version test : synchronisation des camps avec le groupe",
-    l: [
-      "Mon groupe : « Envoyer mon projet au groupe » ou « Charger le projet du groupe ». Ensuite, les changements (camps, recettes, prix, régimes, sections) sont envoyés automatiquement en tâche de fond ; le travail reste possible sans réseau.",
-      "Un indicateur ☁️ en haut de page montre l'état : synchronisé, envoi en cours, hors ligne, version plus récente, conflit.",
-      "Si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours de tes données est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
-    ],
-  },
-  {
-    v: "1.27.0",
-    d: "2026-10-07",
-    t: "Version test : groupes, membres et invitations",
-    l: [
-      "Configuration : nouvelle carte « Mon groupe » une fois connecté. Un administrateur invite des personnes par adresse e-mail, choisit leur rôle (administrateur, éditeur ou lecteur) et peut les retirer.",
-      "Les règles de sécurité sont renforcées : on ne lit et n'écrit que dans son groupe, et les rôles sont contrôlés côté serveur. Les camps restent sur l'appareil pour l'instant.",
-    ],
-  },
-  {
-    v: "1.26.0",
-    d: "2026-10-07",
-    t: "Version test : compte en ligne (préparation)",
-    l: [
-      "Configuration : nouvelle carte « Compte en ligne » pour se connecter par un lien envoyé par e-mail (sans mot de passe).",
-      "Rien n'est envoyé en ligne pour l'instant : les camps restent sur l'appareil. La synchronisation arrive dans les prochaines versions.",
+      "Configuration : connexion par un lien envoyé par e-mail (sans mot de passe). Sans connexion, rien ne change : tout reste sur l'appareil et l'application fonctionne comme avant.",
+      "Mon groupe : un administrateur crée un groupe (Sainte-Suzanne, Uccle, Forest…), invite des personnes par e-mail et choisit leur rôle (administrateur, éditeur ou lecteur). Les groupes sont cloisonnés : on ne voit que les siens.",
+      "Synchronisation : camps, recettes, prix, régimes et sections sont envoyés au groupe en tâche de fond ; le travail reste possible sans réseau. Un indicateur ☁️ en haut de page montre l'état.",
+      "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
+      "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
+      "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
     ],
   },
   {

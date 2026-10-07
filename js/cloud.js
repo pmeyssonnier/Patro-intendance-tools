@@ -2,9 +2,11 @@
    Rien n'est chargé tant que personne ne se connecte : l'application reste utilisable hors ligne et sans compte.
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
+/** Le bandeau « version test » ne s'affiche que sur le site de test (Firebase Hosting), pas sur le site habituel ni en local. */
+const siteDeTest = (hote) => /\.(web\.app|firebaseapp\.com)$/.test(String(hote));
+
 const CLOUD = {
-  // true sur le site de test : bandeau « version test » affiché
-  test: true,
+  test: siteDeTest(location.hostname),
   // adresse du super-administrateur : sert seulement à afficher « Nouveau groupe » (les règles de sécurité font foi)
   superAdmin: "pmeyssonnier@gmail.com",
   sdk: "https://www.gstatic.com/firebasejs/11.0.2/",

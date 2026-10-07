@@ -3239,7 +3239,7 @@ test("menu imprimable : « N pers. » prend la couleur du nom du repas, lisible 
   expect(r.css).toBe(true);
 });
 
-test("Compte en ligne : bandeau test, aucun kit chargé au démarrage, e-mail invalide refusé sans réseau", async ({
+test("Compte en ligne : bandeau test réservé au site de test, aucun kit chargé au démarrage, e-mail invalide refusé sans réseau", async ({
   page,
 }) => {
   const externes = [];
@@ -3247,7 +3247,20 @@ test("Compte en ligne : bandeau test, aucun kit chargé au démarrage, e-mail in
     if (/gstatic\.com|googleapis\.com/.test(r.url())) externes.push(r.url());
   });
   const erreurs = await ouvrir(page);
-  await expect(page.locator("#vtest")).toBeVisible();
+  // en local (file://) comme sur le site habituel, pas de bandeau ; sur Firebase Hosting, oui
+  await expect(page.locator("#vtest")).toBeHidden();
+  expect(
+    await page.evaluate(() =>
+      [
+        "patro-intendance-test.web.app",
+        "patro-intendance-test.firebaseapp.com",
+        "pmeyssonnier.github.io",
+        "localhost",
+        "",
+        "web.app.exemple.be",
+      ].map(siteDeTest)
+    )
+  ).toEqual([true, true, false, false, false, false]);
   await aller(page, "cfg");
   await expect(page.locator("#cloudst")).toContainText("Non connecté");
   await expect(page.locator("#cout")).toBeHidden();

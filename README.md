@@ -79,6 +79,26 @@ Tous les boutons et champs ont un nom pour les lecteurs d'écran, le menu ☰ et
 - **Une personne, un seul régime par ingrédient.** Les régimes se comptent par section, pas par personne : si quelqu'un cumule deux régimes qui touchent le **même ingrédient**, il est compté une fois par régime. Exemple : un enfant végétarien et halal, compté dans les deux, fait acheter une portion de substitut végétarien **et** une de viande halal, et retire deux portions de viande normale au lieu d'une. Les régimes qui touchent des ingrédients différents (par exemple végétarien et sans gluten) ne posent aucun problème. Les cas cumulés étant rares, deux solutions : ne compter la personne que dans le régime le plus strict (ici végétarien, qui exclut déjà la viande), ou créer dans « Régimes & allergies » un régime à part (« Végétarien + halal ») avec ses propres règles.
 - Vérifie toujours les étiquettes (traces possibles) et confirme les allergies graves avec les parents.
 
+## Groupes en ligne (Firebase)
+
+Facultatif : sans connexion, l'application fonctionne comme avant et tout reste sur l'appareil.
+
+**Pour les intendants**
+- ⚙️ Configuration, carte « Compte en ligne » : saisis ton adresse e-mail, ouvre le lien reçu (dans le même navigateur). Pas de mot de passe.
+- Carte « Mon groupe » : rejoins le groupe auquel on t'a invité (bouton « Rejoindre »), puis « Charger le projet du groupe » (ou « Envoyer mon projet au groupe » si le groupe est vide). Ensuite, camps, recettes, prix, régimes et sections sont partagés et envoyés en tâche de fond. L'indicateur ☁️ en haut de page montre l'état.
+- Si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version ou de garder la tienne. L'historique (carte « Mon groupe ») permet de revenir à une version précédente (une toutes les 10 minutes, 20 au plus) et de restaurer un camp supprimé.
+- Rôles : administrateur (gère les membres et le nom du groupe), éditeur (modifie), lecteur (consulte seulement).
+
+**Mise en place (une fois, par l'administrateur de l'application)**
+1. Projet Firebase (offre gratuite) avec Authentication (« Lien envoyé par e-mail »), Firestore en région européenne et Hosting. La configuration web est dans `js/cloud.js` (elle n'est pas secrète : la sécurité repose sur les règles).
+2. Règles de sécurité : copier `firestore.rules` dans Firestore > Règles > Publier. À refaire à chaque changement de ce fichier. Elles se testent avec `tests-regles/`.
+3. Authentication > Paramètres > Domaines autorisés : ajouter le domaine du site (par exemple `pmeyssonnier.github.io`). `localhost` et les domaines Firebase y sont déjà.
+4. Recommandé : dans la console Google Cloud (API et services > Identifiants), restreindre la clé d'API du projet aux domaines du site (référents HTTP).
+5. Le super-administrateur (adresse inscrite dans `firestore.rules` et `CLOUD.superAdmin`) crée les groupes avec « Nouveau groupe » et invite leurs administrateurs.
+6. Le site Firebase Hosting (`….web.app`) est une copie de test avec un bandeau « VERSION TEST » ; il est publié par `.github/workflows/deploy-test.yml` (secret `FIREBASE_SERVICE_ACCOUNT`).
+
+**Sauvegardes** : chaque intendant peut exporter le projet (page Sauvegarde). Le groupe garde en plus l'historique des versions. Une sauvegarde automatique de la base demande l'offre payante de Firebase : non activée.
+
 ## Pour les développeurs
 
 Aucune dépendance ni étape de compilation :
@@ -115,7 +135,7 @@ Aucune dépendance ni étape de compilation :
 | `js/cloud-sync.js` | synchronisation avec le groupe : envoi en tâche de fond, version vérifiée, conflits, hors ligne |
 | `js/cloud-history.js` | historique et retour arrière : versions gardées par le groupe (une toutes les 10 minutes, 20 au plus), restauration d'un camp supprimé |
 | `tests-regles/`, `tests-sync/` | tests à part (émulateurs Firebase) : règles de sécurité et synchronisation de bout en bout |
-| `js/cloud.js` | compte en ligne (version test Firebase) : connexion par lien e-mail, rien n'est chargé tant qu'on ne se connecte pas |
+| `js/cloud.js` | compte en ligne (Firebase) : connexion par lien e-mail, rien n'est chargé tant qu'on ne se connecte pas |
 | `firebase.json`, `.firebaserc`, `firestore.rules` | hébergement et règles de sécurité du projet Firebase de test (`patro-intendance-test`) |
 | `js/pwa.js` | installation et hors connexion |
 | `js/main.js` | démarrage |

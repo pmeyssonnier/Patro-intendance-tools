@@ -1,10 +1,10 @@
 name: Déploiement du site de test
 
-# Publie l'application sur Firebase Hosting (projet de test) à chaque envoi sur la branche de la version en ligne.
+# Publie l'application sur Firebase Hosting (site de test, avec le bandeau « version test ») à chaque envoi sur main ou sur la branche de travail.
 # Il faut le secret FIREBASE_SERVICE_ACCOUNT (clé JSON d'un compte de service) ; sans lui, rien n'est publié.
 on:
   push:
-    branches: [firebase, claude/new-session-4fax9s]
+    branches: [main, firebase, claude/new-session-4fax9s]
   workflow_dispatch:
 
 permissions:
