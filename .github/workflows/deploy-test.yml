@@ -1,0 +1,33 @@
+name: Déploiement du site de test
+
+# Publie l'application sur Firebase Hosting (projet de test) à chaque envoi sur la branche de la version en ligne.
+# Il faut le secret FIREBASE_SERVICE_ACCOUNT (clé JSON d'un compte de service) ; sans lui, rien n'est publié.
+on:
+  push:
+    branches: [firebase, claude/new-session-4fax9s]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploiement:
+    name: Publier sur Firebase Hosting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLE_PRESENTE: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publier
+        if: env.CLE_PRESENTE == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: patro-intendance-test
+          channelId: live
+
+      - name: Secret absent
+        if: env.CLE_PRESENTE != 'true'
+        run: echo "Secret FIREBASE_SERVICE_ACCOUNT absent, rien n'est publié."
