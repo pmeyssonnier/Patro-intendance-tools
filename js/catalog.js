@@ -168,9 +168,9 @@ function lignesCat(keys) {
     .map(
       (k) =>
         (catEdit === k
-          ? `<tr class="ced"><td colspan="4"><div class="g"><div><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div><label>Rayon</label><select data-ec="${esc(k)}" aria-label="Rayon de l'ingrédient">${optionsCat(catOf(k))}</select></div><div style="align-self:end"><button data-eok="${esc(k)}">Valider</button> <button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? ` <button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div></td></tr>`
+          ? `<tr class="ced"><td colspan="4"><div class="edg"><div class="eg-nom"><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div class="eg-uni"><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div class="eg-prix"><label>Prix (€)</label><input type="number" step="0.05" min="0" value="${price(k)}" data-ep="${esc(k)}" aria-label="Prix de l'ingrédient"></div><div class="eg-reg"><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div class="eg-ray"><label>Rayon</label><select data-ec="${esc(k)}" aria-label="Rayon de l'ingrédient">${optionsCat(catOf(k))}</select></div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div><div class="eg-btn"><button data-eok="${esc(k)}">Valider</button><button class="x" data-edel="${esc(k)}">Effacer</button><button class="x" data-emg="${esc(k)}">Fusionner</button><button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? `<button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></td></tr>`
           : "") +
-        `<tr><td>${esc(ING[k][0])}<div class="s manq" style="color:#d33"${price(k) ? " hidden" : ""}>⚠ prix manquant</div>${produitLien(k)}${etiquettePromo(k)}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier le nom ou l'unité" aria-label="Modifier ${esc(ING[k][0])}">✎</button> <button class="x" data-cmg="${esc(k)}" title="Fusionner avec un autre ingrédient (doublon)" aria-label="Fusionner ${esc(ING[k][0])} avec un autre ingrédient">⇄</button> <button class="x" data-chd="${esc(k)}" title="Supprimer cet ingrédient" aria-label="Supprimer ${esc(ING[k][0])}">✕</button></td></tr>`
+        `<tr><td>${esc(ING[k][0])}<div class="s manq" style="color:#d33"${price(k) ? " hidden" : ""}>⚠ prix manquant</div>${produitLien(k)}${etiquettePromo(k)}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier, fusionner ou supprimer cet ingrédient" aria-label="Modifier ${esc(ING[k][0])}">✎</button></td></tr>`
     )
     .join("");
 }
@@ -221,17 +221,27 @@ $("ct").addEventListener("click", (e) => {
   if (d.eok || d.ers) {
     const k = d.eok || d.ers,
       ligne = $("ct").querySelector(`[data-en="${k}"]`).closest("tr"),
+      champP = ligne.querySelector("[data-ep]"),
       nom = d.ers ? ING0[k][0] : ligne.querySelector("[data-en]").value,
       unite = d.ers ? ING0[k][1] : ligne.querySelector("[data-eu]").value,
       dg = d.ers ? undefined : ligne.querySelector("[data-eg]").value,
       cat = d.ers ? undefined : ligne.querySelector("[data-ec]").value,
       err = editIng(k, nom, unite, dg, cat);
     if (err) ligne.querySelector("[data-ei]").textContent = "⚠ " + err;
-    else refreshIng();
+    else {
+      // prix modifié dans la fenêtre de modification (comme dans le tableau : il remplace le produit retenu)
+      if (!d.ers && champP.value !== champP.defaultValue) {
+        S.prices[k] = Math.max(0, +champP.value || 0);
+        delete S.pn[k];
+        delete S.promo[k];
+        delete S.url[k];
+      }
+      refreshIng();
+    }
     return;
   }
-  if (e.target.dataset.cmg) return ouvrirFusion(e.target.dataset.cmg);
-  const k = e.target.dataset.chd;
+  if (d.emg) return ouvrirFusion(d.emg);
+  const k = d.edel;
   if (!k) return;
   const rec = recettesDe(k);
   if (rec.length) {
@@ -248,6 +258,7 @@ $("ct").addEventListener("click", (e) => {
   }
   if (!confirm("Supprimer « " + ING[k][0] + " » ?")) return;
   rmIng(k);
+  catEdit = null;
   drawRec();
   drawDietEd();
   calc();
@@ -692,7 +703,7 @@ $("imp").onclick = () => {
 };
 
 /* Nouvel ingrédient : une seule fenêtre, ouverte depuis le catalogue (« Insérer ») ou depuis une recette (« Nouvel ingrédient ») */
-const uniteTexte = { g: "en poids (g)", ml: "en liquide (ml)", pc: "à la pièce" };
+const uniteTexte = { g: "en poids, g", ml: "en liquide, ml", pc: "à la pièce" };
 
 /** true : la fenêtre a été ouverte depuis la page Recettes, l'ingrédient créé est aussi ajouté à la recette affichée. */
 let ingVersRecette = false;
@@ -741,9 +752,11 @@ function validerIngredient(confirme) {
     $("ingdupt").textContent = d.exact.length
       ? `« ${ING[k][0]} » existe déjà (${uniteTexte[unite]}). Créer quand même un ingrédient en double ?`
       : `« ${ING[k][0]} » existe déjà, mais ${uniteTexte[ING[k][1]]} (toi : ${uniteTexte[unite]}). Créer quand même un deuxième ingrédient ?`;
-    $("inguse").hidden = !(ingVersRecette && d.exact.length);
-    $("inguse").dataset.k = d.exact[0] || "";
-    $("inguse").textContent = d.exact.length ? `Utiliser « ${ING[d.exact[0]][0]} »` : "";
+    // depuis une recette : on peut reprendre l'ingrédient existant (même avec une autre unité : la quantité sera dans son unité)
+    $("inguse").hidden = !ingVersRecette;
+    $("inguse").dataset.k = k;
+    $("inguse").textContent =
+      `Utiliser « ${ING[k][0]} »` + (ING[k][1] === unite ? "" : ` (${uniteTexte[ING[k][1]]})`);
     $("ingdup").hidden = false;
     return;
   }
@@ -817,6 +830,8 @@ function fusionnerIng(src, dst) {
     const ex = DIETS[d].ex;
     for (const x in ex) if (ex[x] === src) ex[x] = x === dst ? null : dst;
   }
+  for (const c of Object.values(S.camps))
+    if (src in c.extra) c.extra[dst] = (c.extra[dst] || 0) + c.extra[src];
   rmIng(src);
   return "";
 }
@@ -871,6 +886,110 @@ function ouvrirFusion(k) {
   }
   if (!$("mgdlg").open) $("mgdlg").showModal();
 }
+
+/* Vérifier les doublons : liste les ingrédients de même nom et de même unité, avec le choix du sens de la fusion (A → B ou B → A) */
+
+/** Groupes d'ingrédients visibles de même nom (accents, majuscules, pluriel ignorés) et de même unité. */
+function groupesDoublons() {
+  const g = {};
+  for (const k of Object.keys(ING))
+    if (!S.hid.includes(k) && !ING[k][4]) {
+      const cle = cleNom(ING[k][0]) + "|" + ING[k][1];
+      (g[cle] = g[cle] || []).push(k);
+    }
+  return Object.values(g)
+    .filter((l) => l.length > 1)
+    .map((l) => l.sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr")));
+}
+
+/** Noms identiques mais unités différentes : pas fusionnables tels quels. */
+function doublonsUnitesDifferentes() {
+  const g = {};
+  for (const k of Object.keys(ING))
+    if (!S.hid.includes(k) && !ING[k][4])
+      (g[cleNom(ING[k][0])] = g[cleNom(ING[k][0])] || []).push(k);
+  return Object.values(g).filter((l) => new Set(l.map((k) => ING[k][1])).size > 1);
+}
+
+const nbRecettes = (k) => {
+  const n = recettesDe(k).length;
+  return n ? ` · ${n} recette${n > 1 ? "s" : ""}` : "";
+};
+
+function drawDoublons() {
+  const gs = groupesDoublons(),
+    autres = doublonsUnitesDifferentes();
+  $("dpl").innerHTML =
+    gs
+      .map((l, i) => {
+        const infos = l
+          .map(
+            (k) =>
+              `<div class="s">« ${esc(ING[k][0])} » (${esc(ING[k][1])})${esc(nbRecettes(k))}</div>`
+          )
+          .join("");
+        const boutons =
+          l.length === 2
+            ? l
+                .map(
+                  (k, j) =>
+                    `<button class="x" data-dsrc="${esc(k)}" data-ddst="${esc(l[1 - j])}">« ${esc(ING[k][0])} » → « ${esc(ING[l[1 - j]][0])} »</button>`
+                )
+                .join("")
+            : l
+                .map(
+                  (k) =>
+                    `<button class="x" data-dall="${esc(k)}" data-dgrp="${i}">Tout dans « ${esc(ING[k][0])} »</button>`
+                )
+                .join("");
+        return `<div class="dpg">${infos}<div class="row2">${boutons}</div></div>`;
+      })
+      .join("") ||
+    '<p class="s">✅ Aucun doublon : chaque ingrédient a un nom et une unité différents.</p>';
+  $("dpm").textContent = autres.length
+    ? "Même nom mais unités différentes (non fusionnables tels quels, change l'unité de l'un avec ✎ d'abord) : " +
+      autres.map((l) => l.map((k) => `« ${ING[k][0]} » (${ING[k][1]})`).join(" / ")).join(" ; ")
+    : "";
+}
+
+$("cdbl").onclick = () => {
+  drawDoublons();
+  if (!$("dpdlg").open) $("dpdlg").showModal();
+};
+$("dpno").onclick = () => $("dpdlg").close();
+$("dpdlg").addEventListener("click", (e) => {
+  const r = $("dpdlg").getBoundingClientRect();
+  if (
+    e.target === $("dpdlg") &&
+    (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
+  )
+    $("dpdlg").close();
+});
+$("dpl").addEventListener("click", (e) => {
+  const d = e.target.dataset;
+  let paires;
+  if (d.dsrc) paires = [[d.dsrc, d.ddst]];
+  else if (d.dall)
+    paires = (groupesDoublons()[+d.dgrp] || []).filter((k) => k !== d.dall).map((k) => [k, d.dall]);
+  else return;
+  if (!paires.length) return;
+  const nomsSrc = paires.map(([s]) => `« ${ING[s][0]} »`).join(", ");
+  if (
+    !confirm(`Fusionner ${nomsSrc} dans « ${ING[paires[0][1]][0]} » ? Cette action est définitive.`)
+  )
+    return;
+  for (const [s, t] of paires) {
+    const err = fusionnerIng(s, t);
+    if (err) {
+      $("dpm").textContent = err;
+      break;
+    }
+  }
+  refreshIng();
+  const msg = $("dpm").textContent;
+  drawDoublons();
+  if (msg) $("dpm").textContent = msg;
+});
 
 $("mgb").onchange = majFusion;
 $("mgs1").onchange = $("mgs2").onchange = majFusion;

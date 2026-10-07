@@ -1128,7 +1128,8 @@ test("catalogue : un ingrédient utilisé dans une recette ne peut pas être sup
   await aller(page, "cat");
   const messages = [];
   page.on("dialog", (d) => messages.push(d.type() + ":" + d.message()));
-  await page.locator('#ct [data-chd="pain"]').click();
+  await page.locator('#ct [data-ced="pain"]').click();
+  await page.locator('#ct [data-edel="pain"]').click();
   await expect.poll(() => messages.length).toBe(1);
   expect(messages[0]).toContain("alert:Suppression impossible");
   expect(await page.evaluate(() => "pain" in ING && !S.hid.includes("pain"))).toBe(true);
@@ -1136,7 +1137,8 @@ test("catalogue : un ingrédient utilisé dans une recette ne peut pas être sup
   await page.locator("#cins").click();
   await page.locator("#ingn").fill("Sirop");
   await page.locator("#ingok").click();
-  await page.locator('#ct [data-chd^="c_"]').click();
+  await page.locator('#ct [data-ced^="c_"]').click();
+  await page.locator('#ct [data-edel^="c_"]').click();
   await expect.poll(() => messages.length).toBe(2);
   expect(messages[1]).toContain("confirm:Supprimer");
   await expect(page.locator("#ct")).not.toContainText("Sirop");
@@ -2280,6 +2282,8 @@ test("nouvel ingrédient : un nom déjà pris (même à l'accent ou au pluriel p
   await page.locator("#ingu").selectOption("pc");
   await page.locator("#ingok").click();
   await expect(page.locator("#ingdupt")).toContainText("mais en poids");
+  // depuis le catalogue, pas d'« Utiliser » (rien à ajouter à une recette)
+  await expect(page.locator("#inguse")).toBeHidden();
   expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(0);
   // créer quand même
   await page.locator("#ingforce").click();
@@ -2326,7 +2330,8 @@ test("catalogue : deux doublons utilisés dans des recettes se fusionnent (quant
   });
   const [a, b] = await page.evaluate(() => window.__ids);
   // b (huile olive, avec prix) est fusionné dans a (sans prix) : a garde son nom et reprend le prix de b
-  await page.locator(`#ct [data-cmg="${b}"]`).click();
+  await page.locator(`#ct [data-ced="${b}"]`).click();
+  await page.locator(`#ct [data-emg="${b}"]`).click();
   await expect(page.locator("#mgdlg")).toBeVisible();
   await expect(page.locator("#mgb")).toContainText("doublon probable");
   await page.locator("#mgb").selectOption(a);
@@ -2370,4 +2375,173 @@ test("catalogue : la fusion peut garder l'autre sens, refuse deux unités diffé
   expect(r.aGone).toBe(true);
   expect(r.b).toBe(true);
   expect(r.total).toBe(1500);
+});
+
+test("catalogue : un seul bouton ✎ ouvre la modification (Nom large, prix, Effacer, Fusionner, Annuler)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  // plus de boutons de fusion ni de suppression sur la ligne : un seul bouton ✎
+  expect(await page.locator('#ct tr:has([data-cp="pates"]) button').count()).toBe(1);
+  await page.locator('#ct [data-ced="pates"]').click();
+  const largeur = (sel) =>
+    page.locator(sel).evaluate((e) => Math.round(e.getBoundingClientRect().width));
+  // le champ Nom est au moins aussi large que Régime (toute la largeur sur téléphone)
+  expect(await largeur('[data-en="pates"]')).toBeGreaterThanOrEqual(
+    await largeur('[data-eg="pates"]')
+  );
+  expect(await largeur('[data-en="pates"]')).toBeGreaterThan(150);
+  // Nom, Unité et Prix sont sur la première ligne (ordinateur) ; Régime et Rayon plus bas
+  const y = (sel) => page.locator(sel).evaluate((e) => Math.round(e.getBoundingClientRect().top));
+  expect(await y('[data-eg="pates"]')).toBeGreaterThan(await y('[data-en="pates"]'));
+  expect(await y('[data-ec="pates"]')).toBe(await y('[data-eg="pates"]'));
+  // le prix se modifie ici
+  await page.locator('[data-ep="pates"]').fill("1.23");
+  await page.locator('[data-eok="pates"]').click();
+  expect(await page.evaluate(() => price("pates"))).toBe(1.23);
+  // les boutons du bas
+  await page.locator('#ct [data-ced="pates"]').click();
+  await expect(page.locator('[data-edel="pates"]')).toBeVisible();
+  await expect(page.locator('[data-emg="pates"]')).toBeVisible();
+  await page.locator('[data-emg="pates"]').click();
+  await expect(page.locator("#mgdlg")).toBeVisible();
+  await page.locator("#mgno").click();
+  await page.locator('[data-eno="pates"]').click();
+  await expect(page.locator('[data-en="pates"]')).toHaveCount(0);
+});
+
+test("nouvel ingrédient depuis une recette : « Utiliser » est aussi proposé quand l'unité diffère, et reprend l'ingrédient existant", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ajouterIngredient(page, "cat", "Huile d'olive", "ml");
+  await aller(page, "rec");
+  await page.locator("#inew").click();
+  await page.locator("#ingn").fill("huile d'olive");
+  await page.locator("#ingu").selectOption("pc");
+  await page.locator("#ingok").click();
+  await expect(page.locator("#ingdupt")).toContainText("mais en liquide");
+  await expect(page.locator("#inguse")).toBeVisible();
+  await expect(page.locator("#inguse")).toContainText(
+    "Utiliser « Huile d'olive » (en liquide, ml)"
+  );
+  await page.locator("#inguse").click();
+  expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(1);
+  expect(
+    await page.evaluate(() =>
+      Object.keys(S.rec[S.cur].ing).some((k) => ING[k][0] === "Huile d'olive" && ING[k][1] === "ml")
+    )
+  ).toBe(true);
+});
+
+test("liste de courses : des articles hors recettes (liquide vaisselle…) s'ajoutent, comptent dans le total et se retirent", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "list");
+  const total = () => page.evaluate(() => LAST.sum);
+  const avant = await total();
+  await page.locator("#xn").fill("Liquide vaisselle");
+  await page.locator("#xq").fill("2");
+  await page.locator("#xp").fill("2.5");
+  await page.locator("#xok").click();
+  // dans la liste, avec son prix, et le total augmente de 2 × 2,50 €
+  const ligne = page.locator("#list tr", { hasText: "Liquide vaisselle" });
+  await expect(ligne).toHaveCount(1);
+  expect(Math.round(((await total()) - avant) * 100) / 100).toBe(5);
+  // il n'est pas proposé dans les ingrédients d'une recette, mais il est dans le catalogue
+  await aller(page, "rec");
+  expect(await page.locator("#radd option", { hasText: "Liquide vaisselle" }).count()).toBe(0);
+  await aller(page, "cat");
+  await expect(page.locator("#ct tr", { hasText: "Liquide vaisselle" })).toHaveCount(1);
+  // il reste après rechargement de la page
+  await page.reload();
+  await aller(page, "list");
+  await expect(page.locator("#list tr", { hasText: "Liquide vaisselle" })).toHaveCount(1);
+  // la quantité se modifie dans le tableau des articles ; 0 retire l'article
+  const q = page.locator("#xl input[data-xq]");
+  await q.fill("3");
+  await q.press("Tab");
+  expect(Math.round(((await total()) - avant) * 100) / 100).toBe(7.5);
+  // il est dans le projet exporté et revient à l'import
+  await aller(page, "pj");
+  const fichier = await telecharger(page, "#exp");
+  const projet = JSON.parse(fichier.texte);
+  const k = Object.keys(projet.art)[0];
+  expect(Object.values(projet.camps)[0].extra[k]).toBe(3);
+  await importer(page, fichier.chemin);
+  expect(await page.evaluate(() => Object.values(C.extra))).toEqual([3]);
+  // retirer l'article
+  await aller(page, "list");
+  await page.locator("#xl [data-xd]").click();
+  await expect(page.locator("#list tr", { hasText: "Liquide vaisselle" })).toHaveCount(0);
+  expect(Math.round(((await total()) - avant) * 100) / 100).toBe(0);
+});
+
+test("liste de courses : un article au nom déjà connu (même unité) reprend l'ingrédient du catalogue, en kg ou en litres", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "list");
+  const nb = await page.evaluate(() => Object.keys(ING).length);
+  await page.locator("#xn").fill("pate");
+  await page.locator("#xu").selectOption("g");
+  await page.locator("#xq").fill("1.5");
+  await page.locator("#xok").click();
+  await expect(page.locator("#xm")).toContainText("existe déjà");
+  expect(await page.evaluate(() => Object.keys(ING).length)).toBe(nb);
+  expect(await page.evaluate(() => C.extra.pates)).toBe(1500);
+  // un nom vide ou une quantité nulle sont refusés
+  await page.locator("#xq").fill("0");
+  await page.locator("#xn").fill("Sacs poubelle");
+  await page.locator("#xok").click();
+  await expect(page.locator("#xm")).toContainText("quantité");
+  expect(await page.evaluate(() => Object.keys(ING).length)).toBe(nb);
+});
+
+test("catalogue : « Vérifier les doublons » liste les doublons et fusionne dans le sens choisi (A → B ou B → A)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  // rien à signaler au départ
+  await page.locator("#cdbl").click();
+  await expect(page.locator("#dpdlg")).toBeVisible();
+  await expect(page.locator("#dpl")).toContainText("Aucun doublon");
+  await page.locator("#dpno").click();
+  // deux doublons (A utilisé en recette) et un nom identique avec une autre unité
+  await page.evaluate(() => {
+    const a = createIng("Huile d'olive", "ml", "", "aut"),
+      b = createIng("huile olive", "ml", "", "aut");
+    createIng("Huile olives", "pc", "", "aut");
+    S.rec[S.cur].ing[a] = SEC.map(() => 10);
+    S.prices[b] = 6;
+    window.__ids = [a, b];
+    refreshIng();
+  });
+  const [a, b] = await page.evaluate(() => window.__ids);
+  await page.locator("#cdbl").click();
+  await expect(page.locator("#dpl .dpg")).toHaveCount(1);
+  await expect(page.locator("#dpl")).toContainText("« Huile d'olive »");
+  await expect(page.locator("#dpl")).toContainText("1 recette");
+  // l'unité différente est signalée à part
+  await expect(page.locator("#dpm")).toContainText("unités différentes");
+  // « huile olive » → « Huile d'olive » : le doublon b disparaît, a garde son nom et reprend le prix
+  await page.locator(`#dpl [data-dsrc="${b}"][data-ddst="${a}"]`).click();
+  await expect(page.locator("#dpl")).toContainText("Aucun doublon");
+  const etat = await page.evaluate(([a, b]) => [!!ING[a], !!ING[b], S.prices[a]], [a, b]);
+  expect(etat).toEqual([true, false, 6]);
+  await page.locator("#dpno").click();
+  // refuser la confirmation ne change rien
+  await page.evaluate(() => {
+    window.__d = [createIng("Sel fin", "g", "", "aut"), createIng("sel fin", "g", "", "aut")];
+    refreshIng();
+  });
+  const [d1, d2] = await page.evaluate(() => window.__d);
+  await page.locator("#cdbl").click();
+  page.removeAllListeners("dialog");
+  page.on("dialog", (d) => d.dismiss());
+  await page.locator(`#dpl [data-dsrc="${d1}"]`).click();
+  expect(await page.evaluate(([x, y]) => [!!ING[x], !!ING[y]], [d1, d2])).toEqual([true, true]);
 });

@@ -1015,6 +1015,51 @@ th.num,
 .ced td {
   background: var(--grp);
 }
+/* panneau de modification : Nom / Unité / Prix, puis Régime / Rayon, l'info, puis les boutons */
+.edg {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+.edg .eg-nom {
+  grid-column: span 6;
+}
+.edg .eg-uni,
+.edg .eg-prix,
+.edg .eg-reg,
+.edg .eg-ray {
+  grid-column: span 3;
+}
+.edg input,
+.edg select {
+  height: 38px;
+}
+.edg input {
+  width: 100%;
+  padding: 0 10px;
+}
+.ced [data-ei] {
+  margin-top: 8px;
+}
+.eg-btn {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+@media (min-width: 640px) {
+  .edg .eg-nom,
+  .edg .eg-reg,
+  .edg .eg-ray {
+    grid-column: span 3;
+  }
+  .edg .eg-uni {
+    grid-column: span 2;
+  }
+  .edg .eg-prix {
+    grid-column: span 1;
+  }
+}
 
 /* liste des rayons du catalogue : deux fois plus large (toute la largeur de la ligne) */
 #crayon {
@@ -1055,7 +1100,8 @@ th.num,
 /* Fenêtres du catalogue : import des prix, nouvel ingrédient, fusion */
 #impdlg,
 #ingdlg,
-#mgdlg {
+#mgdlg,
+#dpdlg {
   width: min(640px, calc(100vw - 24px));
   max-height: calc(100vh - 24px);
   overflow: auto;
@@ -1066,9 +1112,23 @@ th.num,
   color: var(--tx);
   box-sizing: border-box;
 }
+/* fenêtre de fusion : la liste de choix est descendue d'un cran pour aérer l'écran */
+#mgdlg label[for="mgb"] {
+  margin-bottom: 8px;
+}
+#mgdlg #mgb {
+  margin-bottom: 14px;
+}
+#mgdlg fieldset label {
+  margin-bottom: 6px;
+}
+#mgdlg #mgp {
+  margin-top: 14px;
+}
 #impdlg::backdrop,
 #ingdlg::backdrop,
-#mgdlg::backdrop {
+#mgdlg::backdrop,
+#dpdlg::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
 #impdlg textarea,
@@ -1077,4 +1137,16 @@ th.num,
 #mgdlg select {
   width: 100%;
   box-sizing: border-box;
+}
+
+/* Fenêtre « Vérifier les doublons » : un bloc par groupe de doublons */
+.dpg {
+  border-top: 1px solid var(--bd);
+  padding: 10px 0;
+}
+.dpg .row2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }

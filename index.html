@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.14.0">
+<link rel="stylesheet" href="styles.css?v=1.16.0">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -98,7 +98,7 @@
 
 <div class="pg" id="g-cat"><section class="card"><h2>Catalogue de prix</h2>
 <p class="s np">Tape le prix directement dans le tableau ci-dessous (ou dans la liste de courses), ou importe des prix : un fichier, la dernière collecte publiée, ou une liste collée.</p>
-<p class="np"><input type="file" id="file" aria-label="Fichier de prix (CSV, texte ou JSON)" accept=".csv,.txt,.json" hidden> <button id="iopen" class="x">📥 Importer des prix</button> <button id="pfetch" class="x">🌐 Récupérer les derniers prix</button> <button id="cexp" class="x">💾 Exporter le catalogue</button> <span class="s" id="impres" role="status"></span></p>
+<p class="np"><input type="file" id="file" aria-label="Fichier de prix (CSV, texte ou JSON)" accept=".csv,.txt,.json" hidden> <button id="iopen" class="x">📥 Importer des prix</button> <button id="pfetch" class="x">🌐 Récupérer les derniers prix</button> <button id="cexp" class="x">💾 Exporter le catalogue</button> <button id="cdbl" class="x">🔍 Vérifier les doublons</button> <span class="s" id="impres" role="status"></span></p>
 <dialog id="impdlg" class="np" aria-labelledby="impt">
 <h2 id="impt" style="margin-top:0">Importer des prix</h2>
 <p class="s"><b>À quoi ça sert ?</b> À remplir les prix sans les taper un par un. Importe une liste de produits d'un magasin : une ligne par produit, <b>nom ; prix</b>. L'appli lit le poids dans le nom (« Riz 1kg ; 1,95 » → 1,95 €/kg) et prend, pour chaque ingrédient, le produit <b>le moins cher</b> qui correspond. Un fichier <b>.json</b> de prix (collecte) est lu tel quel.</p>
@@ -120,6 +120,16 @@
 <p class="s np"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="lgrp" style="width:auto"> Grouper par rayon (fruits et légumes, boucherie, produits laitiers…)</label></p>
 <div class="w st"><table class="fit"><thead><tr><th>Produit</th><th class="nw num">Quantité</th><th class="num">Prix</th><th class="nw num">Coût</th></tr></thead><tbody id="list"></tbody></table></div>
 <div class="t"><span>Total : <b id="tot"></b></span><span>Par personne : <b id="pp"></b></span><span id="ecow" class="promo" hidden>🏷️ Promos possibles : −<b id="eco"></b></span><span class="s" id="np2"></span></div>
+<h3 class="np" style="margin-bottom:4px">Autres articles (hors recettes)</h3>
+<p class="s np">Ajoute ce qui ne vient pas d'une recette : liquide vaisselle, boissons, sacs poubelle… Ces articles comptent dans la liste et le total, et restent dans le catalogue pour garder leur prix.</p>
+<div class="g np"><div><label for="xn">Article</label><input id="xn" aria-label="Nom de l'article" placeholder="ex. Liquide vaisselle" maxlength="100"></div>
+<div><label for="xq">Quantité</label><input id="xq" type="number" min="0" step="any" value="1" aria-label="Quantité de l'article"></div>
+<div><label for="xu">Unité</label><select id="xu" aria-label="Unité de l'article"><option value="pc">Pièce(s)</option><option value="g">kg</option><option value="ml">Litre(s)</option></select></div>
+<div><label for="xp">Prix (€ par pièce, kg ou L)</label><input id="xp" type="number" min="0" step="any" aria-label="Prix de l'article" placeholder="facultatif"></div>
+<div><label for="xc">Rayon</label><select id="xc" aria-label="Rayon de l'article"></select></div>
+<div style="align-self:end"><button id="xok">Ajouter</button></div></div>
+<p class="s np" id="xm" role="status" style="color:#d33"></p>
+<div class="w st np" id="xlw" hidden><table class="fit"><tbody id="xl"></tbody></table></div>
 <p class="np"><button id="plist">🖨️ Imprimer la liste</button> <button id="lcsv" class="x">📊 Exporter en CSV</button></p></section>
 <section class="card"><h2>Coût par repas</h2><div class="w"><table><tbody id="pm"></tbody></table></div></section></div>
 
@@ -167,6 +177,13 @@
 <div id="ingdup" hidden class="s" role="alert" style="border:1px solid #d33;border-radius:8px;padding:8px;margin:6px 0"><span id="ingdupt"></span><div style="margin-top:6px"><button id="ingforce" class="x">Créer quand même</button> <button id="inguse" class="x" hidden>Utiliser l'existant</button> <button id="ingback" class="x">Modifier</button></div></div>
 <p><button id="ingok">Ajouter</button> <button id="ingno" class="x">Annuler</button></p>
 </dialog>
+<dialog id="dpdlg" class="np" aria-labelledby="dpt">
+<h2 id="dpt" style="margin-top:0">Doublons dans le catalogue</h2>
+<p class="s">Des ingrédients qui portent le même nom (accents, majuscules et pluriel ignorés) et la même unité. Choisis lequel garder : les quantités des recettes sont additionnées, le prix est repris si l'ingrédient gardé n'en a pas.</p>
+<div id="dpl"></div>
+<p class="s" id="dpm" role="status"></p>
+<p><button id="dpno" class="x">Fermer</button></p>
+</dialog>
 <dialog id="mgdlg" class="np" aria-labelledby="mgt">
 <h2 id="mgt" style="margin-top:0">Fusionner deux ingrédients</h2>
 <p class="s">Les quantités des recettes sont additionnées, le prix est repris si l'ingrédient gardé n'en a pas. L'ingrédient supprimé disparaît du catalogue et des recettes.</p>
@@ -176,22 +193,22 @@
 <p class="s" id="mgm" role="status" style="color:#d33"></p>
 <p><button id="mgok">Fusionner</button> <button id="mgno" class="x">Annuler</button></p>
 </dialog>
-<script src="js/data-defaults.js?v=1.14.0"></script>
-<script src="js/utils.js?v=1.14.0"></script>
-<script src="js/storage.js?v=1.14.0"></script>
-<script src="js/state.js?v=1.14.0"></script>
-<script src="js/calculations.js?v=1.14.0"></script>
-<script src="js/shopping-list.js?v=1.14.0"></script>
-<script src="js/documents.js?v=1.14.0"></script>
-<script src="js/share-print.js?v=1.14.0"></script>
-<script src="js/navigation.js?v=1.14.0"></script>
-<script src="js/camps.js?v=1.14.0"></script>
-<script src="js/diets.js?v=1.14.0"></script>
-<script src="js/menu.js?v=1.14.0"></script>
-<script src="js/recipes.js?v=1.14.0"></script>
-<script src="js/catalog.js?v=1.14.0"></script>
-<script src="js/recipe-import.js?v=1.14.0"></script>
-<script src="js/config.js?v=1.14.0"></script>
-<script src="js/pwa.js?v=1.14.0"></script>
-<script src="js/main.js?v=1.14.0"></script>
+<script src="js/data-defaults.js?v=1.16.0"></script>
+<script src="js/utils.js?v=1.16.0"></script>
+<script src="js/storage.js?v=1.16.0"></script>
+<script src="js/state.js?v=1.16.0"></script>
+<script src="js/calculations.js?v=1.16.0"></script>
+<script src="js/shopping-list.js?v=1.16.0"></script>
+<script src="js/documents.js?v=1.16.0"></script>
+<script src="js/share-print.js?v=1.16.0"></script>
+<script src="js/navigation.js?v=1.16.0"></script>
+<script src="js/camps.js?v=1.16.0"></script>
+<script src="js/diets.js?v=1.16.0"></script>
+<script src="js/menu.js?v=1.16.0"></script>
+<script src="js/recipes.js?v=1.16.0"></script>
+<script src="js/catalog.js?v=1.16.0"></script>
+<script src="js/recipe-import.js?v=1.16.0"></script>
+<script src="js/config.js?v=1.16.0"></script>
+<script src="js/pwa.js?v=1.16.0"></script>
+<script src="js/main.js?v=1.16.0"></script>
 </body></html>
