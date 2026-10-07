@@ -1,166 +1,1082 @@
 {
-  "source": "Colruyt",
-  "date_maj": "2026-10-06T00:00:00",
+  "source": "Colruyt via Apify",
+  "magasin": "871",
+  "date_maj": "2026-10-07T08:49:12",
   "ingredients": {
     "pates": {
-      "nom": "Pâtes",
+      "requete": "spaghetti",
+      "categorie": "epi",
       "unite": "kg",
       "prix_unitaire": 0.9,
+      "lien": "https://www.colruyt.be/fr/produits/14502",
       "produit": {
-        "nom": "EVERYDAY spaghetti 500g"
-      }
+        "produit_id": "14502",
+        "nom": "EVERYDAY spaghetti 500g",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Epicerie",
+        "prix": 0.45,
+        "prix_unitaire": 0.9,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/14502",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "14994",
+          "nom": "BONI spaghetti 500g",
+          "marque": "BONI",
+          "categorie_colruyt": "Epicerie",
+          "prix": 0.79,
+          "prix_unitaire": 1.58,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/14994",
+          "promo": 0.79,
+          "promo_prix": 0.79,
+          "en_stock": true
+        },
+        {
+          "produit_id": "20424",
+          "nom": "BONI spaghetti blé complet 500g",
+          "marque": "BONI",
+          "categorie_colruyt": "Epicerie",
+          "prix": 0.99,
+          "prix_unitaire": 1.98,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/20424",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "14511",
+          "nom": "BONI BIO spaghetti 500g",
+          "marque": "BONI BIO",
+          "categorie_colruyt": "Epicerie",
+          "prix": 0.99,
+          "prix_unitaire": 1.98,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/14511",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "riz": {
-      "nom": "Riz",
+      "requete": "riz long grain",
+      "categorie": "epi",
       "unite": "kg",
       "prix_unitaire": 0.89,
+      "lien": "https://www.colruyt.be/fr/produits/9309",
       "produit": {
-        "nom": "EVERYDAY riz long grain étuvé 2kg"
-      }
+        "produit_id": "9309",
+        "nom": "EVERYDAY riz long grain étuvé 2kg",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Epicerie",
+        "prix": 1.78,
+        "prix_unitaire": 0.89,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/9309",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "13601",
+          "nom": "ECONOM riz long grain étuvé 5kg",
+          "marque": "ECONOM",
+          "categorie_colruyt": "Epicerie",
+          "prix": 8.29,
+          "prix_unitaire": 1.66,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/13601",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "14351",
+          "nom": "EVERYDAY riz cuisson rapide 4x125g",
+          "marque": "EVERYDAY",
+          "categorie_colruyt": "Epicerie",
+          "prix": 0.89,
+          "prix_unitaire": 1.78,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/14351",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "12919",
+          "nom": "BONI riz basmati 2kg",
+          "marque": "BONI",
+          "categorie_colruyt": "Epicerie",
+          "prix": 3.68,
+          "prix_unitaire": 1.84,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/12919",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "hache": {
-      "nom": "Viande hachée",
+      "requete": "viande hachée",
+      "categorie": "bou",
       "unite": "kg",
-      "prix_unitaire": 8.38,
+      "prix_unitaire": 7.58,
+      "lien": "https://www.colruyt.be/fr/produits/21300",
       "produit": {
-        "nom": "haché prepare porc+veau"
-      }
+        "produit_id": "21300",
+        "nom": "HACHE PORC BOEUF ±500g",
+        "marque": null,
+        "categorie_colruyt": "Boucherie Colruyt",
+        "prix": 7.58,
+        "prix_unitaire": 7.58,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/21300",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "10095",
+          "nom": "haché prepare porc+veau",
+          "marque": null,
+          "categorie_colruyt": "Boucherie Colruyt",
+          "prix": 8.38,
+          "prix_unitaire": 8.38,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/10095",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "tom": {
-      "nom": "Tomates pelées",
+      "requete": "tomates pelées",
+      "categorie": "epi",
       "unite": "kg",
       "prix_unitaire": 1.13,
+      "lien": "https://www.colruyt.be/fr/produits/12817",
       "produit": {
-        "nom": "EVERYDAY tomates pelées 400g"
-      }
+        "produit_id": "12817",
+        "nom": "EVERYDAY tomates pelées 400g",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Conserves",
+        "prix": 0.45,
+        "prix_unitaire": 1.13,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/12817",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "12830",
+          "nom": "BONI tomates concassées 400g",
+          "marque": "BONI",
+          "categorie_colruyt": "Conserves",
+          "prix": 0.696,
+          "prix_unitaire": 1.74,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/12830",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "12831",
+          "nom": "BONI tomates concassées au basilic 400g",
+          "marque": "BONI",
+          "categorie_colruyt": "Conserves",
+          "prix": 0.79,
+          "prix_unitaire": 1.98,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/12831",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "oig": {
-      "nom": "Oignons",
+      "requete": "oignons",
+      "categorie": "fl",
       "unite": "kg",
       "prix_unitaire": 0.9,
+      "lien": "https://www.colruyt.be/fr/produits/28293",
       "produit": {
-        "nom": "EVERYDAY oignons 2kg"
-      }
+        "produit_id": "28293",
+        "nom": "EVERYDAY oignons 2kg",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Légumes et fruits",
+        "prix": 1.79,
+        "prix_unitaire": 0.9,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/28293",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "28082",
+          "nom": "Oignons",
+          "marque": null,
+          "categorie_colruyt": "Légumes et fruits",
+          "prix": 1.49,
+          "prix_unitaire": 1.49,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/28082",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "28283",
+          "nom": "BONI gros oignons 2,5kg",
+          "marque": "BONI",
+          "categorie_colruyt": "Légumes et fruits",
+          "prix": 4.25,
+          "prix_unitaire": 1.7,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/28283",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "28354",
+          "nom": "BONI oignons rouges 1kg",
+          "marque": "BONI",
+          "categorie_colruyt": "Légumes et fruits",
+          "prix": 1.79,
+          "prix_unitaire": 1.79,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/28354",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "fro": {
-      "nom": "Fromage râpé",
+      "requete": "fromage râpé",
+      "categorie": "lai",
       "unite": "kg",
       "prix_unitaire": 5.98,
+      "lien": "https://www.colruyt.be/fr/produits/39137",
       "produit": {
-        "nom": "EVERYDAY emmental râpé 500g"
-      }
+        "produit_id": "39137",
+        "nom": "EVERYDAY emmental râpé 500g",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Crémerie",
+        "prix": 2.99,
+        "prix_unitaire": 5.98,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/39137",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "1454",
+          "nom": "BONI emmental français râpé 200g",
+          "marque": "BONI",
+          "categorie_colruyt": "Crémerie",
+          "prix": 2.15,
+          "prix_unitaire": 10.75,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/1454",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "39144",
+          "nom": "BONI Spaghetti Mix râpé 200g",
+          "marque": "BONI",
+          "categorie_colruyt": "Crémerie",
+          "prix": 2.49,
+          "prix_unitaire": 12.45,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/39144",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "39142",
+          "nom": "BONI Fromage gratin Mix râpé 200g",
+          "marque": "BONI",
+          "categorie_colruyt": "Crémerie",
+          "prix": 2.65,
+          "prix_unitaire": 13.25,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/39142",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "poulet": {
-      "nom": "Blanc de poulet",
+      "requete": "filet de poulet",
+      "categorie": "fri",
       "unite": "kg",
       "prix_unitaire": 7.25,
+      "lien": "https://www.colruyt.be/fr/produits/8111",
       "produit": {
-        "nom": "EVERYDAY filet de poulet tranches 200g"
-      }
+        "produit_id": "8111",
+        "nom": "EVERYDAY filet de poulet tranches 200g",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Préparations/Charcuterie/Poissons/Veggi",
+        "prix": 1.45,
+        "prix_unitaire": 7.25,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/8111",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "27555",
+          "nom": "BONI lanières de poulet 200g",
+          "marque": "BONI",
+          "categorie_colruyt": null,
+          "prix": 2.99,
+          "prix_unitaire": 14.95,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/27555",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "27767",
+          "nom": "BONI filet de poulet tranches 200g",
+          "marque": "BONI",
+          "categorie_colruyt": "Préparations/Charcuterie/Poissons/Veggi",
+          "prix": 3.18,
+          "prix_unitaire": 15.9,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/27767",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "29804",
+          "nom": "BONI filet de poulet rôti morceaux 150g",
+          "marque": "BONI",
+          "categorie_colruyt": "Préparations/Charcuterie/Poissons/Veggi",
+          "prix": 2.69,
+          "prix_unitaire": 17.94,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/29804",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "leg": {
-      "nom": "Légumes",
+      "requete": "légumes surgelés",
+      "categorie": "sur",
       "unite": "kg",
       "prix_unitaire": 1.29,
+      "lien": "https://www.colruyt.be/fr/produits/30064",
       "produit": {
-        "nom": "BONI légumes minestrone 1kg"
-      }
+        "produit_id": "30064",
+        "nom": "BONI légumes minestrone 1kg",
+        "marque": "BONI",
+        "categorie_colruyt": "Surgelés",
+        "prix": 1.29,
+        "prix_unitaire": 1.29,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/30064",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": []
     },
     "coco": {
-      "nom": "Lait de coco",
+      "requete": "lait de coco",
+      "categorie": "epi",
       "unite": "l",
       "prix_unitaire": 2.48,
+      "lien": "https://www.colruyt.be/fr/produits/12210",
       "produit": {
-        "nom": "BONI lait de coco cons 400ml"
-      }
+        "produit_id": "12210",
+        "nom": "BONI lait de coco cons 400ml",
+        "marque": "BONI",
+        "categorie_colruyt": "Epicerie",
+        "prix": 0.99,
+        "prix_unitaire": 2.48,
+        "unite": "l",
+        "url": "https://www.colruyt.be/fr/produits/12210",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "11909",
+          "nom": "BONI BIO lait de coco 200ml",
+          "marque": "BONI BIO",
+          "categorie_colruyt": "Epicerie",
+          "prix": 1.99,
+          "prix_unitaire": 9.95,
+          "unite": "l",
+          "url": "https://www.colruyt.be/fr/produits/11909",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "12757",
+          "nom": "SUZI WAN lait de coco (brique) 500ml",
+          "marque": "SUZI WAN",
+          "categorie_colruyt": "Epicerie",
+          "prix": 6.35,
+          "prix_unitaire": 12.7,
+          "unite": "l",
+          "url": "https://www.colruyt.be/fr/produits/12757",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "18782",
+          "nom": "SO THAI lait de coco 165ml",
+          "marque": "SO THAI",
+          "categorie_colruyt": "Epicerie",
+          "prix": 2.18,
+          "prix_unitaire": 13.22,
+          "unite": "l",
+          "url": "https://www.colruyt.be/fr/produits/18782",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "pdt": {
-      "nom": "Pommes de terre",
+      "requete": "pommes de terre",
+      "categorie": "fl",
       "unite": "kg",
-      "prix_unitaire": 1.4,
+      "prix_unitaire": 0.95,
+      "lien": "https://www.colruyt.be/fr/produits/28074",
       "produit": {
-        "nom": "POTATO CHEF pommes de terre belges 4kg"
-      }
+        "produit_id": "28074",
+        "nom": "Pommes de terre mi-fermes",
+        "marque": null,
+        "categorie_colruyt": "Légumes et fruits",
+        "prix": 0.95,
+        "prix_unitaire": 0.95,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/28074",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "10863",
+          "nom": "POTATO CHEF pommes de terre belges 4kg",
+          "marque": "POTATO CHEF",
+          "categorie_colruyt": "Légumes et fruits",
+          "prix": 5.6,
+          "prix_unitaire": 1.4,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/10863",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "7843",
+          "nom": "BONI pommes de terre polder 2,5kg",
+          "marque": "BONI",
+          "categorie_colruyt": "Légumes et fruits",
+          "prix": 4.25,
+          "prix_unitaire": 1.7,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/7843",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "22313",
+          "nom": "BONI Laurette pommes de terre 2,5kg",
+          "marque": "BONI",
+          "categorie_colruyt": "Légumes et fruits",
+          "prix": 5.2,
+          "prix_unitaire": 2.08,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/22313",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "sauc": {
-      "nom": "Saucisses",
+      "requete": "saucisses",
+      "categorie": "fri",
       "unite": "kg",
       "prix_unitaire": 3.33,
+      "lien": "https://www.colruyt.be/fr/produits/27622",
       "produit": {
-        "nom": "CHATAR saucisses cuites 3x280g"
-      }
+        "produit_id": "27622",
+        "nom": "CHATAR saucisses cuites 3x280g",
+        "marque": "CHATAR",
+        "categorie_colruyt": "Préparations/Charcuterie/Poissons/Veggi",
+        "prix": 2.79,
+        "prix_unitaire": 3.33,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/27622",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "10098",
+          "nom": "BH Saucisses Boeuf+Porc",
+          "marque": null,
+          "categorie_colruyt": "Boucherie Colruyt",
+          "prix": 13.49,
+          "prix_unitaire": 13.49,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/10098",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "car": {
-      "nom": "Carottes",
+      "requete": "carottes",
+      "categorie": "fl",
       "unite": "kg",
       "prix_unitaire": 0.72,
+      "lien": "https://www.colruyt.be/fr/produits/39388",
       "produit": {
-        "nom": "EVERYDAY carottes 2kg"
-      }
+        "produit_id": "39388",
+        "nom": "EVERYDAY carottes 2kg",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Légumes et fruits",
+        "prix": 1.43,
+        "prix_unitaire": 0.72,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/39388",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "29628",
+          "nom": "carottes",
+          "marque": null,
+          "categorie_colruyt": "Légumes et fruits",
+          "prix": 1.09,
+          "prix_unitaire": 1.09,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/29628",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "30042",
+          "nom": "BONI carottes rondelles 1,5kg",
+          "marque": "BONI",
+          "categorie_colruyt": "Surgelés",
+          "prix": 1.87,
+          "prix_unitaire": 1.25,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/30042",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "39387",
+          "nom": "BONI carottes 1,5kg",
+          "marque": "BONI",
+          "categorie_colruyt": "Légumes et fruits",
+          "prix": 2.01,
+          "prix_unitaire": 1.34,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/39387",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "pain": {
-      "nom": "Pain",
+      "requete": "pain",
+      "categorie": "boul",
       "unite": "kg",
       "prix_unitaire": 1.12,
+      "lien": "https://www.colruyt.be/fr/produits/29921",
       "produit": {
-        "nom": "EVERYDAY pain blanc tranches 800g"
-      }
+        "produit_id": "29921",
+        "nom": "EVERYDAY pain blanc tranches 800g",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+        "prix": 0.89,
+        "prix_unitaire": 1.12,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/29921",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "29922",
+          "nom": "EVERYDAY pain gris en tranches 800g",
+          "marque": "EVERYDAY",
+          "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+          "prix": 0.99,
+          "prix_unitaire": 1.24,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/29922",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "7383",
+          "nom": "pain gris carré frais du jour 800g",
+          "marque": null,
+          "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+          "prix": 1.69,
+          "prix_unitaire": 2.12,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/7383",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "7004",
+          "nom": "pain tigre blanc frais 800g",
+          "marque": null,
+          "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+          "prix": 1.75,
+          "prix_unitaire": 2.19,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/7004",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "jam": {
-      "nom": "Jambon",
+      "requete": "jambon cuit",
+      "categorie": "fri",
       "unite": "kg",
       "prix_unitaire": 8.72,
+      "lien": "https://www.colruyt.be/fr/produits/27155",
       "produit": {
-        "nom": "EVERYDAY DES DE JAMBON CUIT 250g"
-      }
+        "produit_id": "27155",
+        "nom": "EVERYDAY DES DE JAMBON CUIT 250g",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Préparations/Charcuterie/Poissons/Veggi",
+        "prix": 2.18,
+        "prix_unitaire": 8.72,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/27155",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "8383",
+          "nom": "EVERYDAY jambon de cuisse 200g",
+          "marque": "EVERYDAY",
+          "categorie_colruyt": "Préparations/Charcuterie/Poissons/Veggi",
+          "prix": 1.99,
+          "prix_unitaire": 9.95,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/8383",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "32202",
+          "nom": "BONI Jambon cuit sans gluten 150g",
+          "marque": "BONI",
+          "categorie_colruyt": "Préparations/Charcuterie/Poissons/Veggi",
+          "prix": 2.34,
+          "prix_unitaire": 15.6,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/32202",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "32207",
+          "nom": "BONI Jambon cuit 250g",
+          "marque": "BONI",
+          "categorie_colruyt": "Préparations/Charcuterie/Poissons/Veggi",
+          "prix": 3.9,
+          "prix_unitaire": 15.6,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/32207",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "beu": {
-      "nom": "Beurre",
+      "requete": "beurre",
+      "categorie": "lai",
       "unite": "kg",
       "prix_unitaire": 7.56,
+      "lien": "https://www.colruyt.be/fr/produits/26700",
       "produit": {
-        "nom": "BONI beurre de laiterie doux 250g"
-      }
+        "produit_id": "26700",
+        "nom": "BONI beurre de laiterie doux 250g",
+        "marque": "BONI",
+        "categorie_colruyt": "Crémerie",
+        "prix": 1.89,
+        "prix_unitaire": 7.56,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/26700",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "26676",
+          "nom": "BONI beurre laiterie salé 250g",
+          "marque": "BONI",
+          "categorie_colruyt": "Crémerie",
+          "prix": 1.95,
+          "prix_unitaire": 7.8,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/26676",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "26704",
+          "nom": "EVERYDAY beurre laiterie non salé 250g",
+          "marque": "EVERYDAY",
+          "categorie_colruyt": "Crémerie",
+          "prix": 1.95,
+          "prix_unitaire": 7.8,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/26704",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "8023",
+          "nom": "BONI beurre DE doux 250g",
+          "marque": "BONI",
+          "categorie_colruyt": "Crémerie",
+          "prix": 2.69,
+          "prix_unitaire": 10.76,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/8023",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "conf": {
-      "nom": "Confiture",
+      "requete": "confiture",
+      "categorie": "boul",
       "unite": "kg",
       "prix_unitaire": 1.93,
+      "lien": "https://www.colruyt.be/fr/produits/20348",
       "produit": {
-        "nom": "EVERYDAY confiture fraises 50% 700g"
-      }
+        "produit_id": "20348",
+        "nom": "EVERYDAY confiture fraises 50% 700g",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+        "prix": 1.35,
+        "prix_unitaire": 1.93,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/20348",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "16288",
+          "nom": "EVERYDAY confiture abricots 50% 450g",
+          "marque": "EVERYDAY",
+          "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+          "prix": 1.29,
+          "prix_unitaire": 2.87,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/16288",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "50569",
+          "nom": "BONI confiture fraises 61% 450g",
+          "marque": "BONI",
+          "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+          "prix": 1.55,
+          "prix_unitaire": 3.45,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/50569",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "50568",
+          "nom": "BONI confiture cerise 61% 450g",
+          "marque": "BONI",
+          "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+          "prix": 1.65,
+          "prix_unitaire": 3.67,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/50568",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "cer": {
-      "nom": "Céréales",
+      "requete": "corn flakes",
+      "categorie": "boul",
       "unite": "kg",
-      "prix_unitaire": 2.13,
+      "prix_unitaire": 4.98,
+      "lien": "https://www.colruyt.be/fr/produits/15008",
       "produit": {
-        "nom": "EVERYDAY Corn flakes 750g"
-      }
+        "produit_id": "15008",
+        "nom": "KELLOGG'S CORN FLAKES 750g",
+        "marque": "KELLOGG'S CORN FLAKES",
+        "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+        "prix": 3.73,
+        "prix_unitaire": 4.98,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/15008",
+        "promo": 3.73,
+        "promo_prix": 3.73,
+        "en_stock": true
+      },
+      "alternatives": []
     },
     "lait": {
-      "nom": "Lait",
+      "requete": "lait demi-écrémé",
+      "categorie": "lai",
       "unite": "l",
       "prix_unitaire": 0.85,
+      "lien": "https://www.colruyt.be/fr/produits/5593",
       "produit": {
-        "nom": "EVERYDAY Lait demi-écrémé brique 1L"
-      }
+        "produit_id": "5593",
+        "nom": "EVERYDAY Lait demi-écrémé brique 1L",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Crémerie",
+        "prix": 0.849,
+        "prix_unitaire": 0.85,
+        "unite": "l",
+        "url": "https://www.colruyt.be/fr/produits/5593",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "5588",
+          "nom": "BONI Lait demi-écrémé Ardenne brique 1L",
+          "marque": "BONI",
+          "categorie_colruyt": "Crémerie",
+          "prix": 1.05,
+          "prix_unitaire": 1.05,
+          "unite": "l",
+          "url": "https://www.colruyt.be/fr/produits/5588",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "5671",
+          "nom": "BONI BIO Lait demi-écrémé brique 1L",
+          "marque": "BONI BIO",
+          "categorie_colruyt": "Crémerie",
+          "prix": 1.29,
+          "prix_unitaire": 1.29,
+          "unite": "l",
+          "url": "https://www.colruyt.be/fr/produits/5671",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "1599",
+          "nom": "BONI lait demi-écrémé PET 50cl",
+          "marque": "BONI",
+          "categorie_colruyt": "Crémerie",
+          "prix": 0.648,
+          "prix_unitaire": 1.3,
+          "unite": "l",
+          "url": "https://www.colruyt.be/fr/produits/1599",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "choc": {
-      "nom": "Pâte à tartiner",
+      "requete": "pâte à tartiner",
+      "categorie": "boul",
       "unite": "kg",
       "prix_unitaire": 2.64,
+      "lien": "https://www.colruyt.be/fr/produits/16012",
       "produit": {
-        "nom": "EVERYDAY pâte à tartiner noisettes 750g"
-      }
+        "produit_id": "16012",
+        "nom": "EVERYDAY pâte à tartiner noisettes 750g",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+        "prix": 1.98,
+        "prix_unitaire": 2.64,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/16012",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "15260",
+          "nom": "BONI pate à tartiner noisettes 750g",
+          "marque": "BONI",
+          "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+          "prix": 1.99,
+          "prix_unitaire": 2.66,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/15260",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "4447",
+          "nom": "BONI pâte à tartiner noir 600g",
+          "marque": "BONI",
+          "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+          "prix": 2.19,
+          "prix_unitaire": 3.65,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/4447",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "1741",
+          "nom": "BONI Pâte à tartiner duo aux noise. 400g",
+          "marque": "BONI",
+          "categorie_colruyt": "Boulangerie/Petit-déjeuner",
+          "prix": 1.49,
+          "prix_unitaire": 3.73,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/1741",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "suc": {
-      "nom": "Sucre",
+      "requete": "sucre",
+      "categorie": "epi",
       "unite": "kg",
       "prix_unitaire": 0.69,
+      "lien": "https://www.colruyt.be/fr/produits/5928",
       "produit": {
-        "nom": "EVERYDAY sucre cristallisé fin 1kg"
-      }
+        "produit_id": "5928",
+        "nom": "EVERYDAY sucre cristallisé fin 1kg",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Epicerie",
+        "prix": 0.69,
+        "prix_unitaire": 0.69,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/5928",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "18465",
+          "nom": "EVERYDAY morceaux de sucre 1kg",
+          "marque": "EVERYDAY",
+          "categorie_colruyt": "Epicerie",
+          "prix": 0.99,
+          "prix_unitaire": 0.99,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/18465",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "5910",
+          "nom": "SUCRE TIRLEMONT sucre fin 1kg",
+          "marque": "SUCRE TIRLEMONT",
+          "categorie_colruyt": "Epicerie",
+          "prix": 1.59,
+          "prix_unitaire": 1.59,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/5910",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "22090",
+          "nom": "SUCRE TIRLEMONT morceaux 1kg",
+          "marque": "SUCRE TIRLEMONT",
+          "categorie_colruyt": "Epicerie",
+          "prix": 1.89,
+          "prix_unitaire": 1.89,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/22090",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
     },
     "hache_h": {
       "nom": "Viande hachée halal",
@@ -179,28 +1095,115 @@
       }
     },
     "sauc_h": {
-      "nom": "Saucisses halal",
+      "requete": "saucisses halal",
+      "categorie": "fri",
       "unite": "kg",
       "prix_unitaire": 9.98,
+      "lien": "https://www.colruyt.be/fr/produits/19239",
       "produit": {
-        "nom": "Mini saucisses de dinde halal (Marhaba) 1kg"
-      }
+        "produit_id": "19239",
+        "nom": "MARHABA mini saucisses dinde Halal 400g",
+        "marque": "MARHABA",
+        "categorie_colruyt": "Préparations/Charcuterie/Poissons/Veggi",
+        "prix": 3.99,
+        "prix_unitaire": 9.98,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/19239",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": []
     },
     "lait_sl": {
-      "nom": "Lait sans lactose",
+      "requete": "lait sans lactose",
+      "categorie": "lai",
       "unite": "l",
       "prix_unitaire": 1.15,
+      "lien": "https://www.colruyt.be/fr/produits/7054",
       "produit": {
-        "nom": "BONI lait sans lactose briq 1L"
-      }
+        "produit_id": "7054",
+        "nom": "BONI lait sans lactose briq 1L",
+        "marque": "BONI",
+        "categorie_colruyt": "Crémerie",
+        "prix": 1.15,
+        "prix_unitaire": 1.15,
+        "unite": "l",
+        "url": "https://www.colruyt.be/fr/produits/7054",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": []
     },
     "margar": {
-      "nom": "Margarine végétale",
+      "requete": "margarine",
+      "categorie": "lai",
       "unite": "kg",
       "prix_unitaire": 1.98,
+      "lien": "https://www.colruyt.be/fr/produits/13758",
       "produit": {
-        "nom": "EVERYDAY margarine cuire et rôtir 500g"
-      }
+        "produit_id": "13758",
+        "nom": "EVERYDAY margarine cuire et rôtir 500g",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Crémerie",
+        "prix": 0.99,
+        "prix_unitaire": 1.98,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/13758",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": [
+        {
+          "produit_id": "16266",
+          "nom": "EVERYDAY margarine tartiner ravier 500g",
+          "marque": "EVERYDAY",
+          "categorie_colruyt": "Crémerie",
+          "prix": 0.99,
+          "prix_unitaire": 1.98,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/16266",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        },
+        {
+          "produit_id": "13805",
+          "nom": "BONI margarine cuire&rôtir 500g",
+          "marque": "BONI",
+          "categorie_colruyt": "Crémerie",
+          "prix": 1.59,
+          "prix_unitaire": 3.18,
+          "unite": "kg",
+          "url": "https://www.colruyt.be/fr/produits/13805",
+          "promo": null,
+          "promo_prix": null,
+          "en_stock": true
+        }
+      ]
+    },
+    "pain_sg": {
+      "requete": "pain sans gluten",
+      "categorie": "epi",
+      "unite": "kg",
+      "prix_unitaire": 4.81,
+      "lien": "https://www.colruyt.be/fr/produits/33466",
+      "produit": {
+        "produit_id": "33466",
+        "nom": "SCHÄR mix pain sans gluten-lactose 1kg",
+        "marque": "SCHÄR",
+        "categorie_colruyt": "Epicerie",
+        "prix": 4.81,
+        "prix_unitaire": 4.81,
+        "unite": "kg",
+        "url": "https://www.colruyt.be/fr/produits/33466",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": []
     }
   }
 }
