@@ -113,6 +113,7 @@ Aucune dépendance ni étape de compilation :
 | `js/sync-data.js` | synchronisation, partie données : découpage du projet en morceaux (catalogue du groupe, un camp), empreintes, reconstruction |
 | `js/cloud-groups.js` | carte « Mon groupe » : groupes, membres et invitations dans Firestore |
 | `js/cloud-sync.js` | synchronisation avec le groupe : envoi en tâche de fond, version vérifiée, conflits, hors ligne |
+| `js/cloud-history.js` | historique et retour arrière : versions gardées par le groupe (une toutes les 10 minutes, 20 au plus), restauration d'un camp supprimé |
 | `tests-regles/`, `tests-sync/` | tests à part (émulateurs Firebase) : règles de sécurité et synchronisation de bout en bout |
 | `js/cloud.js` | compte en ligne (version test Firebase) : connexion par lien e-mail, rien n'est chargé tant qu'on ne se connecte pas |
 | `firebase.json`, `.firebaserc`, `firestore.rules` | hébergement et règles de sécurité du projet Firebase de test (`patro-intendance-test`) |

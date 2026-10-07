@@ -9,6 +9,7 @@ rules_version = '2';
 //   groupes/{g}                       un groupe (nom)
 //   groupes/{g}/membres/{uid}         membres du groupe et leur rôle
 //   groupes/{g}/catalogue|camps/{id}  données du groupe, avec un numéro de version
+//   groupes/{g}/historique/{id}       versions gardées pour revenir en arrière
 //   invitations/{g|e-mail}            invitation d'une adresse à rejoindre un groupe
 //   utilisateurs/{uid}/groupes/{g}    copie du rôle, pour retrouver « mes groupes »
 service cloud.firestore {
@@ -58,6 +59,19 @@ service cloud.firestore {
         && (!('supprime' in d) || d.supprime is bool);
     }
 
+    // Version gardée dans l'historique : copie d'un morceau à un moment donné (jamais modifiée, seulement ajoutée ou élaguée).
+    function versionGardee() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['cle', 'version', 'data', 'par', 'le', 'note', 'fin'])
+        && d.cle is string
+        && d.version is int
+        && d.data is string
+        && d.data.size() <= 900000
+        && d.par == request.auth.uid
+        && (!('fin' in d) || d.fin is bool)
+        && (!('note' in d) || (d.note is string && d.note.size() <= 80));
+    }
+
     // Invitation adressée à l'utilisateur connecté pour le groupe g (identifiant : « g|adresse »).
     function invitationPour(g) {
       return exists(/databases/$(database)/documents/invitations/$(g + '|' + monMail()));
@@ -96,6 +110,13 @@ service cloud.firestore {
               && request.resource.data.email == monMail()));
         allow update: if (admin(g) || superAdmin()) && roleValide(request.resource.data.role);
         allow delete: if admin(g) || superAdmin();
+      }
+
+      // Historique : les membres consultent, les éditeurs ajoutent une version et suppriment les plus anciennes.
+      match /historique/{doc} {
+        allow read: if membre(g);
+        allow create: if editeur(g) && versionGardee();
+        allow delete: if editeur(g);
       }
 
       // Catalogue du groupe et camps : un document par élément, avec un numéro de version qui avance de 1 à chaque écriture.

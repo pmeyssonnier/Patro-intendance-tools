@@ -273,3 +273,32 @@ test("morceaux : seuls les champs prévus, avec un texte de taille raisonnable ;
   );
   await assertFails(setDoc(doc(e, "groupes/g1/catalogue/main"), { version: 2, data: "{}" }));
 });
+
+test("historique : les membres lisent, les éditeurs ajoutent leur propre version et élaguent, personne ne modifie", async () => {
+  const v = { cle: "cat", version: 1, data: "{}", par: "e", le: 1 };
+  const e = moi("e", "e@x.be");
+  await assertSucceeds(setDoc(doc(e, "groupes/g1/historique/h1"), v));
+  await assertSucceeds(
+    setDoc(doc(e, "groupes/g1/historique/h2"), { ...v, note: "avant suppression", fin: true })
+  );
+  await assertFails(setDoc(doc(e, "groupes/g1/historique/h3"), { ...v, par: "autre" })); // auteur falsifié
+  await assertFails(setDoc(doc(e, "groupes/g1/historique/h4"), { ...v, intrus: 1 }));
+  await assertFails(setDoc(doc(e, "groupes/g1/historique/h5"), { ...v, data: 3 }));
+  await assertFails(setDoc(doc(e, "groupes/g1/historique/h6"), { ...v, data: "x".repeat(900001) }));
+  await assertFails(setDoc(doc(e, "groupes/g1/historique/h7"), { ...v, note: "x".repeat(81) }));
+  await assertFails(setDoc(doc(e, "groupes/g2/historique/h8"), v)); // autre groupe
+  await assertFails(
+    setDoc(doc(moi("l", "l@x.be"), "groupes/g1/historique/h9"), { ...v, par: "l" })
+  ); // lecteur
+  await assertSucceeds(getDoc(doc(moi("l", "l@x.be"), "groupes/g1/historique/h1")));
+  await assertFails(getDoc(doc(moi("z", "z@x.be"), "groupes/g1/historique/h1")));
+  await assertFails(updateDoc(doc(e, "groupes/g1/historique/h1"), { note: "x" })); // pas de modification
+  await assertFails(deleteDoc(doc(moi("l", "l@x.be"), "groupes/g1/historique/h1")));
+  await assertSucceeds(deleteDoc(doc(e, "groupes/g1/historique/h1")));
+  const q = query(
+    collection(moi("l", "l@x.be"), "groupes/g1/historique"),
+    where("fin", "==", true)
+  );
+  const r = await assertSucceeds(getDocs(q));
+  if (r.size !== 1) throw new Error("une version « avant suppression » attendue");
+});

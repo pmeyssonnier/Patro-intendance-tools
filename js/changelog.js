@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.29.0",
+    d: "2026-10-07",
+    t: "Version test : historique et retour arrière",
+    l: [
+      "Mon groupe : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum). « Voir les versions » puis « Revenir à cette version » remet un ancien état ; l'état actuel est d'abord gardé, donc le retour peut lui-même être annulé.",
+      "Un camp supprimé reste récupérable : le dernier contenu avant sa suppression est gardé, et un bouton « Restaurer » le remet.",
+    ],
+  },
+  {
     v: "1.28.0",
     d: "2026-10-07",
     t: "Version test : synchronisation des camps avec le groupe",

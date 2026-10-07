@@ -83,3 +83,23 @@ function projetDepuisGroupe(texteCat, textesCamps, local) {
   if (!p.ccur) p.ccur = ids[0];
   return p;
 }
+
+/** Historique : au plus une version gardée toutes les 10 minutes pour un même morceau, 20 versions au maximum. */
+const HISTORIQUE_PAUSE = 10 * 60 * 1000,
+  HISTORIQUE_MAX = 20;
+
+/** Faut-il garder une version du morceau `cle` maintenant ? `hs` : dernier instant de garde connu par morceau. */
+const doitGarder = (hs, cle, maintenant) =>
+  !hs || !hs[cle] || maintenant - hs[cle] >= HISTORIQUE_PAUSE;
+
+/** Identifiant d'une version gardée : unique par morceau, instant et auteur (pas de doublon si on renvoie deux fois). */
+const idHistorique = (cle, le, uid) =>
+  cle.replace(":", "-") + "_" + le + "_" + String(uid).slice(0, 6);
+
+/** Identifiants à supprimer pour ne garder que les `max` versions les plus récentes : liste [{ id, le }]. */
+function aElaguer(versions, max = HISTORIQUE_MAX) {
+  return [...versions]
+    .sort((a, b) => b.le - a.le)
+    .slice(max)
+    .map((v) => v.id);
+}

@@ -75,6 +75,26 @@ function htmlSync(s) {
   return h;
 }
 
+/** Section « Historique » : h = { choix: [{ cle, nom }], cle, versions: [{ id, le, par, note }] | null, supprimes: [{ id, nom, le }], ecriture }. */
+function htmlHistorique(h) {
+  if (!h) return "";
+  const quand = (le) =>
+    new Date(le).toLocaleString("fr-BE", { dateStyle: "short", timeStyle: "short" });
+  let x = `<h3>Historique</h3><p class="s">Le groupe garde des versions de chaque camp et du catalogue (une toutes les ${HISTORIQUE_PAUSE / 60000} minutes au plus, ${HISTORIQUE_MAX} au maximum) pour revenir en arrière après une fausse manœuvre. Revenir à une version en crée une nouvelle : rien n'est perdu.</p>`;
+  x += `<div class="g"><div><label for="hicle">Élément</label><select id="hicle" aria-label="Élément dont voir l'historique">${h.choix.map((c) => `<option value="${esc(c.cle)}"${c.cle === h.cle ? " selected" : ""}>${esc(c.nom)}</option>`).join("")}</select></div></div><p><button class="x" data-gr="hi-voir">Voir les versions</button></p>`;
+  if (h.versions) {
+    if (!h.versions.length) x += `<p class="s">Aucune version gardée pour l'instant.</p>`;
+    for (const v of h.versions)
+      x += `<div class="mbr"><span>${quand(v.le)} · ${esc(v.par)}${v.note ? " · " + esc(v.note) : ""}</span>${h.ecriture ? `<button class="x" data-gr="hi-retour" data-i="${esc(v.id)}">Revenir à cette version</button>` : ""}</div>`;
+  }
+  if (h.supprimes.length) {
+    x += `<h3>Camps supprimés</h3>`;
+    for (const v of h.supprimes)
+      x += `<div class="mbr"><span>${esc(v.nom)} · supprimé, dernière version du ${quand(v.le)}</span>${h.ecriture ? `<button class="x" data-gr="hi-restaurer" data-i="${esc(v.id)}">Restaurer</button>` : ""}</div>`;
+  }
+  return x;
+}
+
 /** Contenu de la carte « Mon groupe » pour l'état e :
     { superAdmin, groupes: [{ id, nom, role }], courant, invitations: [{ id, nomGroupe, role }], membres: [{ uid, email, role }], moi, attente: [{ id, email, role }] }. */
 function htmlGroupes(e) {
@@ -93,6 +113,7 @@ function htmlGroupes(e) {
   if (g) {
     const admin = g.role === "admin";
     h += htmlSync(e.sync);
+    if (e.sync && e.sync.liee) h += htmlHistorique(e.hist);
     h += `<h3>Membres</h3>`;
     for (const m of e.membres) {
       const verrou = erreurDernierAdmin(e.membres, m.uid) !== "";

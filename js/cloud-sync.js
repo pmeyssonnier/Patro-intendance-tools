@@ -195,15 +195,30 @@ async function syncPousser() {
             ? fs.doc(db, "groupes", l.g, "catalogue", "main")
             : fs.doc(db, "groupes", l.g, "camps", cle.slice(2)),
         attendue = l.v[cle] || 0,
-        contenu = supprime ? { supprime: true, data: "" } : { data: morceaux[cle] };
+        contenu = supprime ? { supprime: true, data: "" } : { data: morceaux[cle] },
+        maintenant = Date.now(),
+        garder = !supprime && doitGarder(l.hs, cle, maintenant);
       l.v[cle] = await fs.runTransaction(db, async (tx) => {
         const s = await tx.get(ref),
           reelle = s.exists() ? s.data().version : 0;
         if (reelle !== attendue)
           throw Object.assign(new Error("conflit"), { code: "sync/conflit" });
-        tx.set(ref, { version: reelle + 1, ...contenu, par: cloudUser.uid, le: Date.now() });
+        const gardee = (version, data, plus) =>
+          tx.set(
+            fs.doc(db, "groupes", l.g, "historique", idHistorique(cle, maintenant, cloudUser.uid)),
+            { cle, version, data, par: cloudUser.uid, le: maintenant, ...plus }
+          );
+        // un camp supprimé reste récupérable : on garde son dernier contenu avant de le marquer supprimé
+        if (supprime && s.exists() && s.data().data)
+          gardee(reelle, s.data().data, { fin: true, note: "Avant suppression" });
+        if (garder) gardee(reelle + 1, morceaux[cle], {});
+        tx.set(ref, { version: reelle + 1, ...contenu, par: cloudUser.uid, le: maintenant });
         return reelle + 1;
       });
+      if (garder) {
+        l.hs = { ...l.hs, [cle]: maintenant };
+        hiElaguer(l.g, cle).catch(() => {});
+      }
       if (supprime) delete l.h[cle];
       else l.h[cle] = empreinte(morceaux[cle]);
       syncPoser(l);

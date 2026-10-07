@@ -31,6 +31,7 @@ const FILES = [
   "js/sync-data.js",
   "js/cloud-groups.js",
   "js/cloud-sync.js",
+  "js/cloud-history.js",
   "js/cloud.js",
   "js/pwa.js",
   "js/main.js",

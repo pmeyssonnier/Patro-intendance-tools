@@ -60,7 +60,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(30);
+  expect(liens.length).toBe(31);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -3399,5 +3399,68 @@ test("synchronisation : morceaux stables, reconstruction identique, envoi des se
   expect(r.supprime).toEqual([{ cle: "c:" + r.ids[0], supprime: true }]);
   expect(r.taille[0]).toBe("");
   expect(r.taille[1]).toContain("catalogue");
+  expect(erreurs).toEqual([]);
+});
+
+test("historique : une version toutes les 10 minutes, 20 au plus, et contenu de la section", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const t = 1e12,
+      min = 60 * 1000,
+      versions = Array.from({ length: 25 }, (_, i) => ({ id: "v" + i, le: t + i * min }));
+    const base = {
+      groupes: [{ id: "g1", nom: "Sainte-Suzanne", role: "editeur" }],
+      courant: "g1",
+      invitations: [],
+      membres: [],
+      attente: [],
+      moi: "a",
+      superAdmin: false,
+      url: "",
+      sync: { liee: true, autre: false, ecriture: true, texte: "synchronisé" },
+    };
+    const hist = {
+      choix: [
+        { cle: "cat", nom: "Catalogue" },
+        { cle: "c:x", nom: "Camp : <i>Été</i>" },
+      ],
+      cle: "c:x",
+      versions: [{ id: "h1", le: t, par: "a@x.be", note: "Avant retour arrière" }],
+      supprimes: [{ id: "h2", nom: "Camp perdu", le: t }],
+      ecriture: true,
+    };
+    return {
+      garder: [
+        doitGarder({}, "cat", t),
+        doitGarder({ cat: t }, "cat", t + 5 * min),
+        doitGarder({ cat: t }, "cat", t + 10 * min),
+        doitGarder({ cat: t }, "c:x", t + 1),
+        doitGarder(undefined, "cat", t),
+      ],
+      id: idHistorique("c:abc", 123, "uid1234567"),
+      elaguer: aElaguer(versions),
+      editeur: htmlHistorique(hist),
+      lecteur: htmlHistorique({ ...hist, ecriture: false }),
+      carteLiee: htmlGroupes({ ...base, hist }),
+      carteNonLiee: htmlGroupes({ ...base, hist, sync: { ...base.sync, liee: false } }),
+    };
+  });
+  expect(r.garder).toEqual([true, false, true, true, true]);
+  expect(r.id).toBe("c-abc_123_uid123");
+  // les 5 plus anciennes sont élaguées, les 20 plus récentes gardées
+  expect(r.elaguer.sort()).toEqual(["v0", "v1", "v2", "v3", "v4"]);
+  expect(r.editeur).toContain('data-gr="hi-voir"');
+  expect(r.editeur).toContain('data-gr="hi-retour" data-i="h1"');
+  expect(r.editeur).toContain('data-gr="hi-restaurer" data-i="h2"');
+  expect(r.editeur).toContain("Camp : &lt;i&gt;Été&lt;/i&gt;");
+  expect(r.editeur).toContain("Avant retour arrière");
+  expect(r.lecteur).not.toContain("hi-retour");
+  expect(r.lecteur).not.toContain("hi-restaurer");
+  expect(r.carteLiee).toContain('id="hicle"');
+  expect(r.carteNonLiee).not.toContain('id="hicle"');
+  await aller(page, "cfg");
+  await expect(page.locator("#grc")).toBeHidden();
   expect(erreurs).toEqual([]);
 });

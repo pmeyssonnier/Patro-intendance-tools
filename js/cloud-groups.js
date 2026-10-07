@@ -92,6 +92,7 @@ function grAfficher() {
     superAdmin: normMail(cloudUser.email) === CLOUD.superAdmin,
     url: location.origin + location.pathname,
     sync: syncResume(),
+    hist: histResume(),
   });
 }
 
@@ -239,10 +240,14 @@ $("grc").onclick = (ev) => {
         g.nom
       );
   } else if (a === "sync-stop") syncArretLien();
+  else if (a === "hi-voir") hiVoir($("hicle").value);
+  else if (a === "hi-retour") hiRetour(b.dataset.i);
+  else if (a === "hi-restaurer") hiRestaurer(b.dataset.i);
 };
 
 $("grc").onchange = (ev) => {
   const t = ev.target;
   if (t.id === "grsel") grCharger(t.value);
+  else if (t.id === "hicle") hiVoir(t.value);
   else if (t.dataset.grrole) grChangerRole(t.dataset.grrole, t.value);
 };
