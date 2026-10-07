@@ -27,6 +27,7 @@ const FILES = [
   "js/recipe-import.js",
   "js/changelog.js",
   "js/config.js",
+  "js/cloud.js",
   "js/pwa.js",
   "js/main.js",
   "assets/logo-pss.jpg",

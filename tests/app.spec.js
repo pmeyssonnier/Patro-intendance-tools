@@ -60,7 +60,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(25);
+  expect(liens.length).toBe(26);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -3237,4 +3237,23 @@ test("menu imprimable : « N pers. » prend la couleur du nom du repas, lisible 
   expect(r.lignes.length).toBeGreaterThan(0);
   for (const [nom, eff] of r.lignes) expect(eff).toBe(nom);
   expect(r.css).toBe(true);
+});
+
+test("Compte en ligne : bandeau test, aucun kit chargé au démarrage, e-mail invalide refusé sans réseau", async ({
+  page,
+}) => {
+  const externes = [];
+  page.on("request", (r) => {
+    if (/gstatic\.com|googleapis\.com/.test(r.url())) externes.push(r.url());
+  });
+  const erreurs = await ouvrir(page);
+  await expect(page.locator("#vtest")).toBeVisible();
+  await aller(page, "cfg");
+  await expect(page.locator("#cloudst")).toContainText("Non connecté");
+  await expect(page.locator("#cout")).toBeHidden();
+  await page.fill("#cmail", "pas-une-adresse");
+  await page.click("#cmailok");
+  await expect(page.locator("#cloudmsg")).toHaveText("Adresse e-mail invalide.");
+  expect(externes).toEqual([]);
+  expect(erreurs).toEqual([]);
 });

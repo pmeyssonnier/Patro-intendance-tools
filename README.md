@@ -109,6 +109,8 @@ Aucune dépendance ni étape de compilation :
 | `js/recipe-import.js` | import d'une recette collée (ld+json) |
 | `js/changelog.js` | page « Nouveautés » : historique des versions (à compléter à chaque release) |
 | `js/config.js` | configuration : nom de la troupe, logo, sections |
+| `js/cloud.js` | compte en ligne (version test Firebase) : connexion par lien e-mail, rien n'est chargé tant qu'on ne se connecte pas |
+| `firebase.json`, `.firebaserc`, `firestore.rules` | hébergement et règles de sécurité du projet Firebase de test (`patro-intendance-test`) |
 | `js/pwa.js` | installation et hors connexion |
 | `js/main.js` | démarrage |
 | `assets/logo-pss.jpg` | logo par défaut |

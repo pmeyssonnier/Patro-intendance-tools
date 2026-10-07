@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.26.0",
+    d: "2026-10-07",
+    t: "Version test : compte en ligne (préparation)",
+    l: [
+      "Configuration : nouvelle carte « Compte en ligne » pour se connecter par un lien envoyé par e-mail (sans mot de passe).",
+      "Rien n'est envoyé en ligne pour l'instant : les camps restent sur l'appareil. La synchronisation arrive dans les prochaines versions.",
+    ],
+  },
+  {
     v: "1.25.0",
     d: "2026-10-07",
     t: "Gras et souligné, effectif lisible sur le menu imprimé",

@@ -1,0 +1,66 @@
+rules_version = '2';
+
+// Règles de sécurité Firestore – version test.
+// Tout ce qui n'est pas autorisé ci-dessous est refusé.
+// Rôles d'un groupe : admin (gère les membres), editeur (modifie), lecteur (consulte).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function connecte() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function superAdmin() {
+      return connecte() && request.auth.token.email == 'pmeyssonnier@gmail.com';
+    }
+
+    function roleDans(g) {
+      return exists(/databases/$(database)/documents/groupes/$(g)/membres/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/groupes/$(g)/membres/$(request.auth.uid)).data.role
+        : '';
+    }
+
+    function membre(g) {
+      return connecte() && roleDans(g) in ['admin', 'editeur', 'lecteur'];
+    }
+
+    function editeur(g) {
+      return connecte() && roleDans(g) in ['admin', 'editeur'];
+    }
+
+    function admin(g) {
+      return connecte() && roleDans(g) == 'admin';
+    }
+
+    // Prix communs (import Colruyt) : lisibles par tout utilisateur connecté, écrits par le super-administrateur seul.
+    match /prix/{doc} {
+      allow read: if connecte();
+      allow write: if superAdmin();
+    }
+
+    match /groupes/{g} {
+      allow read: if membre(g) || superAdmin();
+      allow create, delete: if superAdmin();
+      allow update: if (admin(g) || superAdmin())
+        && request.resource.data.nom is string
+        && request.resource.data.nom.size() <= 80;
+
+      match /membres/{uid} {
+        allow read: if membre(g) || superAdmin() || (connecte() && request.auth.uid == uid);
+        allow create, update: if (admin(g) || superAdmin())
+          && request.resource.data.role in ['admin', 'editeur', 'lecteur'];
+        allow delete: if admin(g) || superAdmin();
+      }
+
+      // Catalogue du groupe et camps : un document par élément, avec un numéro de version qui avance de 1 à chaque écriture.
+      match /{type}/{doc} {
+        allow read: if (type == 'catalogue' || type == 'camps') && membre(g);
+        allow create: if (type == 'catalogue' || type == 'camps') && editeur(g)
+          && request.resource.data.version == 1;
+        allow update: if (type == 'catalogue' || type == 'camps') && editeur(g)
+          && request.resource.data.version == resource.data.version + 1;
+        allow delete: if (type == 'catalogue' || type == 'camps') && admin(g);
+      }
+    }
+  }
+}

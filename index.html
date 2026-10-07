@@ -15,8 +15,9 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.25.0">
+<link rel="stylesheet" href="styles.css?v=1.26.0">
 </head><body><main>
+<div id="vtest" class="np" role="note" hidden>VERSION TEST – les données de ce site sont à part de l'application habituelle.</div>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
 <nav id="drawer" class="np" aria-label="Navigation">
@@ -151,6 +152,11 @@
 <p class="s">Nom et âges de chaque section, dans l'ordre d'affichage (▲ ▼ pour trier). Supprimer une section efface ses effectifs et ses quantités dans les recettes. 12 sections au maximum.</p>
 <div id="secl"></div>
 <p><button id="secadd" class="x">+ Ajouter une section</button></p></section>
+<section class="card np" id="cloudc"><h2>Compte en ligne (version test)</h2>
+<p class="s" id="cloudst"></p>
+<div class="g" id="cloudf"><div><label for="cmail">Adresse e-mail</label><input id="cmail" type="email" autocomplete="email" maxlength="120" aria-label="Adresse e-mail"></div></div>
+<p><button id="cmailok" class="x">✉️ Recevoir le lien de connexion</button> <button id="cout" class="x" hidden>Se déconnecter</button></p>
+<p class="s" id="cloudmsg" role="status"></p></section>
 </div><div class="pg" id="g-nv">
 <section class="card np"><h2>Nouveautés</h2>
 <p class="s">Les changements de l'application, de la plus récente version à la première. Touche une version pour voir le détail.</p>
@@ -207,28 +213,29 @@
 <p class="s" id="rym" role="status" style="color:#d33"></p>
 <p><button id="ryno" class="x">Fermer</button></p>
 </dialog>
-<script src="js/data-defaults.js?v=1.25.0"></script>
-<script src="js/utils.js?v=1.25.0"></script>
-<script src="js/storage.js?v=1.25.0"></script>
-<script src="js/state.js?v=1.25.0"></script>
-<script src="js/calculations.js?v=1.25.0"></script>
-<script src="js/shopping-list.js?v=1.25.0"></script>
-<script src="js/documents.js?v=1.25.0"></script>
-<script src="js/share-print.js?v=1.25.0"></script>
-<script src="js/navigation.js?v=1.25.0"></script>
-<script src="js/camps.js?v=1.25.0"></script>
-<script src="js/diets.js?v=1.25.0"></script>
-<script src="js/menu.js?v=1.25.0"></script>
-<script src="js/recipes.js?v=1.25.0"></script>
-<script src="js/ingredient-matching.js?v=1.25.0"></script>
-<script src="js/ingredients.js?v=1.25.0"></script>
-<script src="js/ingredient-merge.js?v=1.25.0"></script>
-<script src="js/price-import.js?v=1.25.0"></script>
-<script src="js/rayons.js?v=1.25.0"></script>
-<script src="js/catalog-ui.js?v=1.25.0"></script>
-<script src="js/recipe-import.js?v=1.25.0"></script>
-<script src="js/changelog.js?v=1.25.0"></script>
-<script src="js/config.js?v=1.25.0"></script>
-<script src="js/pwa.js?v=1.25.0"></script>
-<script src="js/main.js?v=1.25.0"></script>
+<script src="js/data-defaults.js?v=1.26.0"></script>
+<script src="js/utils.js?v=1.26.0"></script>
+<script src="js/storage.js?v=1.26.0"></script>
+<script src="js/state.js?v=1.26.0"></script>
+<script src="js/calculations.js?v=1.26.0"></script>
+<script src="js/shopping-list.js?v=1.26.0"></script>
+<script src="js/documents.js?v=1.26.0"></script>
+<script src="js/share-print.js?v=1.26.0"></script>
+<script src="js/navigation.js?v=1.26.0"></script>
+<script src="js/camps.js?v=1.26.0"></script>
+<script src="js/diets.js?v=1.26.0"></script>
+<script src="js/menu.js?v=1.26.0"></script>
+<script src="js/recipes.js?v=1.26.0"></script>
+<script src="js/ingredient-matching.js?v=1.26.0"></script>
+<script src="js/ingredients.js?v=1.26.0"></script>
+<script src="js/ingredient-merge.js?v=1.26.0"></script>
+<script src="js/price-import.js?v=1.26.0"></script>
+<script src="js/rayons.js?v=1.26.0"></script>
+<script src="js/catalog-ui.js?v=1.26.0"></script>
+<script src="js/recipe-import.js?v=1.26.0"></script>
+<script src="js/changelog.js?v=1.26.0"></script>
+<script src="js/config.js?v=1.26.0"></script>
+<script src="js/cloud.js?v=1.26.0"></script>
+<script src="js/pwa.js?v=1.26.0"></script>
+<script src="js/main.js?v=1.26.0"></script>
 </body></html>
