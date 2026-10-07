@@ -1128,7 +1128,8 @@ test("catalogue : un ingrédient utilisé dans une recette ne peut pas être sup
   await aller(page, "cat");
   const messages = [];
   page.on("dialog", (d) => messages.push(d.type() + ":" + d.message()));
-  await page.locator('#ct [data-chd="pain"]').click();
+  await page.locator('#ct [data-ced="pain"]').click();
+  await page.locator('#ct [data-edel="pain"]').click();
   await expect.poll(() => messages.length).toBe(1);
   expect(messages[0]).toContain("alert:Suppression impossible");
   expect(await page.evaluate(() => "pain" in ING && !S.hid.includes("pain"))).toBe(true);
@@ -1136,7 +1137,8 @@ test("catalogue : un ingrédient utilisé dans une recette ne peut pas être sup
   await page.locator("#cins").click();
   await page.locator("#ingn").fill("Sirop");
   await page.locator("#ingok").click();
-  await page.locator('#ct [data-chd^="c_"]').click();
+  await page.locator('#ct [data-ced^="c_"]').click();
+  await page.locator('#ct [data-edel^="c_"]').click();
   await expect.poll(() => messages.length).toBe(2);
   expect(messages[1]).toContain("confirm:Supprimer");
   await expect(page.locator("#ct")).not.toContainText("Sirop");
@@ -2328,7 +2330,8 @@ test("catalogue : deux doublons utilisés dans des recettes se fusionnent (quant
   });
   const [a, b] = await page.evaluate(() => window.__ids);
   // b (huile olive, avec prix) est fusionné dans a (sans prix) : a garde son nom et reprend le prix de b
-  await page.locator(`#ct [data-cmg="${b}"]`).click();
+  await page.locator(`#ct [data-ced="${b}"]`).click();
+  await page.locator(`#ct [data-emg="${b}"]`).click();
   await expect(page.locator("#mgdlg")).toBeVisible();
   await expect(page.locator("#mgb")).toContainText("doublon probable");
   await page.locator("#mgb").selectOption(a);
@@ -2374,16 +2377,38 @@ test("catalogue : la fusion peut garder l'autre sens, refuse deux unités diffé
   expect(r.total).toBe(1500);
 });
 
-test("catalogue : en modification, le champ Nom a la même largeur que les listes (Unité, Régime, Rayon)", async ({
+test("catalogue : un seul bouton ✎ ouvre la modification (Nom large, prix, Effacer, Fusionner, Annuler)", async ({
   page,
 }) => {
   await ouvrir(page);
   await aller(page, "cat");
+  // plus de boutons de fusion ni de suppression sur la ligne : un seul bouton ✎
+  expect(await page.locator('#ct tr:has([data-cp="pates"]) button').count()).toBe(1);
   await page.locator('#ct [data-ced="pates"]').click();
   const largeur = (sel) =>
     page.locator(sel).evaluate((e) => Math.round(e.getBoundingClientRect().width));
-  expect(await largeur('[data-en="pates"]')).toBe(await largeur('[data-eg="pates"]'));
-  expect(await largeur('[data-en="pates"]')).toBeGreaterThan(120);
+  // le champ Nom est au moins aussi large que Régime (toute la largeur sur téléphone)
+  expect(await largeur('[data-en="pates"]')).toBeGreaterThanOrEqual(
+    await largeur('[data-eg="pates"]')
+  );
+  expect(await largeur('[data-en="pates"]')).toBeGreaterThan(150);
+  // Nom, Unité et Prix sont sur la première ligne (ordinateur) ; Régime et Rayon plus bas
+  const y = (sel) => page.locator(sel).evaluate((e) => Math.round(e.getBoundingClientRect().top));
+  expect(await y('[data-eg="pates"]')).toBeGreaterThan(await y('[data-en="pates"]'));
+  expect(await y('[data-ec="pates"]')).toBe(await y('[data-eg="pates"]'));
+  // le prix se modifie ici
+  await page.locator('[data-ep="pates"]').fill("1.23");
+  await page.locator('[data-eok="pates"]').click();
+  expect(await page.evaluate(() => price("pates"))).toBe(1.23);
+  // les boutons du bas
+  await page.locator('#ct [data-ced="pates"]').click();
+  await expect(page.locator('[data-edel="pates"]')).toBeVisible();
+  await expect(page.locator('[data-emg="pates"]')).toBeVisible();
+  await page.locator('[data-emg="pates"]').click();
+  await expect(page.locator("#mgdlg")).toBeVisible();
+  await page.locator("#mgno").click();
+  await page.locator('[data-eno="pates"]').click();
+  await expect(page.locator('[data-en="pates"]')).toHaveCount(0);
 });
 
 test("nouvel ingrédient depuis une recette : « Utiliser » est aussi proposé quand l'unité diffère, et reprend l'ingrédient existant", async ({

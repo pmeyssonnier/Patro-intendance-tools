@@ -1015,10 +1015,50 @@ th.num,
 .ced td {
   background: var(--grp);
 }
-/* le champ Nom prend toute la largeur de sa colonne, comme les listes (« td input » le limitait à 72 px) */
-.ced .g input {
+/* panneau de modification : Nom / Unité / Prix, puis Régime / Rayon, l'info, puis les boutons */
+.edg {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+.edg .eg-nom {
+  grid-column: span 6;
+}
+.edg .eg-uni,
+.edg .eg-prix,
+.edg .eg-reg,
+.edg .eg-ray {
+  grid-column: span 3;
+}
+.edg input,
+.edg select {
+  height: 38px;
+}
+.edg input {
   width: 100%;
-  padding: 9px 10px;
+  padding: 0 10px;
+}
+.ced [data-ei] {
+  margin-top: 8px;
+}
+.eg-btn {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+@media (min-width: 640px) {
+  .edg .eg-nom,
+  .edg .eg-reg,
+  .edg .eg-ray {
+    grid-column: span 3;
+  }
+  .edg .eg-uni {
+    grid-column: span 2;
+  }
+  .edg .eg-prix {
+    grid-column: span 1;
+  }
 }
 
 /* liste des rayons du catalogue : deux fois plus large (toute la largeur de la ligne) */
