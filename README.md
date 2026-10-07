@@ -71,6 +71,7 @@ Tous les boutons et champs ont un nom pour les lecteurs d'écran, le menu ☰ et
 
 ## Conseils
 
+- **Plusieurs onglets** : si l'appli est ouverte dans deux onglets du même navigateur, celui qui n'a pas enregistré en dernier est prévenu (bandeau rouge) et n'écrase pas le travail de l'autre. « 🔄 Recharger » reprend les données de l'autre onglet ; « Garder cet onglet » remplace les siennes par celles de cet onglet.
 - Les données sont enregistrées **dans le navigateur de l'appareil** : change d'appareil ou vide le navigateur, et elles disparaissent. Exporte régulièrement ton projet (`.json`) et importe-le sur l'autre appareil pour le retrouver.
 - Si l'appli ne peut plus enregistrer (mémoire pleine, navigation privée), un bandeau rouge te le dit et propose d'exporter tout de suite. Installer l'appli sur l'écran d'accueil protège aussi mieux tes données : sur iPhone, Safari peut effacer les données d'un site simplement consulté, après une longue période sans l'ouvrir.
 - Si tu changes les dates d'un camp, les plats restent attachés au numéro du jour : le menu n'est pas perdu, seuls les jours de la semaine affichés se décalent.

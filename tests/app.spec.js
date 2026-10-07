@@ -1,5 +1,13 @@
 const { test, expect } = require("@playwright/test");
-const { ouvrir, aller, telecharger, importer, montant, deplierRegime } = require("./helpers");
+const {
+  ouvrir,
+  aller,
+  telecharger,
+  importer,
+  montant,
+  deplierRegime,
+  URL: URL_APPLI,
+} = require("./helpers");
 
 test("la page s'ouvre sans erreur avec le camp d'exemple", async ({ page }) => {
   const erreurs = await ouvrir(page);
@@ -2833,4 +2841,39 @@ test("catalogue : la fusion refuse un ingrédient en quantité unique avec un au
   expect(r.a).toBe(true);
   expect(r.b).toBe(true);
   expect(r.fx).toBe(500);
+});
+
+test("deux onglets : le second à enregistrer ne remplace pas le travail du premier sans prévenir", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const B = await page.context().newPage();
+  B.on("dialog", (d) => d.accept());
+  await B.goto(URL_APPLI);
+  const nomEnregistre = () =>
+    page.evaluate(() => {
+      const p = JSON.parse(localStorage.getItem("intendance2"));
+      return p.camps[p.ccur].name;
+    });
+  // l'onglet A renomme le camp, enregistré tout de suite
+  await page.locator("#cname").fill("Camp A");
+  expect(await nomEnregistre()).toBe("Camp A");
+  // B (qui ne le sait pas) est prévenu sans rien faire, et n'écrase pas
+  await expect(B.locator("#warn")).toBeVisible();
+  await expect(B.locator("#warnr")).toBeVisible();
+  await B.locator("#cname").fill("Camp B");
+  expect(await nomEnregistre()).toBe("Camp A");
+  // « Recharger » reprend le travail de A
+  await B.locator("#warnr").click();
+  await expect(B.locator("#cname")).toHaveValue("Camp A");
+  await expect(B.locator("#warn")).toBeHidden();
+  // B enregistre normalement ensuite, et A est alors prévenu à son tour
+  await B.locator("#cname").fill("Camp B");
+  expect(await nomEnregistre()).toBe("Camp B");
+  await expect(page.locator("#warn")).toBeVisible();
+  // « Garder cet onglet » : A remplace ce que B avait écrit
+  await page.locator("#warnk").click();
+  await expect(page.locator("#warn")).toBeHidden();
+  expect(await nomEnregistre()).toBe("Camp A");
+  expect(erreurs).toEqual([]);
 });
