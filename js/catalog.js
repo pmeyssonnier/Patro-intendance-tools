@@ -887,6 +887,110 @@ function ouvrirFusion(k) {
   if (!$("mgdlg").open) $("mgdlg").showModal();
 }
 
+/* Vérifier les doublons : liste les ingrédients de même nom et de même unité, avec le choix du sens de la fusion (A → B ou B → A) */
+
+/** Groupes d'ingrédients visibles de même nom (accents, majuscules, pluriel ignorés) et de même unité. */
+function groupesDoublons() {
+  const g = {};
+  for (const k of Object.keys(ING))
+    if (!S.hid.includes(k) && !ING[k][4]) {
+      const cle = cleNom(ING[k][0]) + "|" + ING[k][1];
+      (g[cle] = g[cle] || []).push(k);
+    }
+  return Object.values(g)
+    .filter((l) => l.length > 1)
+    .map((l) => l.sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr")));
+}
+
+/** Noms identiques mais unités différentes : pas fusionnables tels quels. */
+function doublonsUnitesDifferentes() {
+  const g = {};
+  for (const k of Object.keys(ING))
+    if (!S.hid.includes(k) && !ING[k][4])
+      (g[cleNom(ING[k][0])] = g[cleNom(ING[k][0])] || []).push(k);
+  return Object.values(g).filter((l) => new Set(l.map((k) => ING[k][1])).size > 1);
+}
+
+const nbRecettes = (k) => {
+  const n = recettesDe(k).length;
+  return n ? ` · ${n} recette${n > 1 ? "s" : ""}` : "";
+};
+
+function drawDoublons() {
+  const gs = groupesDoublons(),
+    autres = doublonsUnitesDifferentes();
+  $("dpl").innerHTML =
+    gs
+      .map((l, i) => {
+        const infos = l
+          .map(
+            (k) =>
+              `<div class="s">« ${esc(ING[k][0])} » (${esc(ING[k][1])})${esc(nbRecettes(k))}</div>`
+          )
+          .join("");
+        const boutons =
+          l.length === 2
+            ? l
+                .map(
+                  (k, j) =>
+                    `<button class="x" data-dsrc="${esc(k)}" data-ddst="${esc(l[1 - j])}">« ${esc(ING[k][0])} » → « ${esc(ING[l[1 - j]][0])} »</button>`
+                )
+                .join("")
+            : l
+                .map(
+                  (k) =>
+                    `<button class="x" data-dall="${esc(k)}" data-dgrp="${i}">Tout dans « ${esc(ING[k][0])} »</button>`
+                )
+                .join("");
+        return `<div class="dpg">${infos}<div class="row2">${boutons}</div></div>`;
+      })
+      .join("") ||
+    '<p class="s">✅ Aucun doublon : chaque ingrédient a un nom et une unité différents.</p>';
+  $("dpm").textContent = autres.length
+    ? "Même nom mais unités différentes (non fusionnables tels quels, change l'unité de l'un avec ✎ d'abord) : " +
+      autres.map((l) => l.map((k) => `« ${ING[k][0]} » (${ING[k][1]})`).join(" / ")).join(" ; ")
+    : "";
+}
+
+$("cdbl").onclick = () => {
+  drawDoublons();
+  if (!$("dpdlg").open) $("dpdlg").showModal();
+};
+$("dpno").onclick = () => $("dpdlg").close();
+$("dpdlg").addEventListener("click", (e) => {
+  const r = $("dpdlg").getBoundingClientRect();
+  if (
+    e.target === $("dpdlg") &&
+    (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
+  )
+    $("dpdlg").close();
+});
+$("dpl").addEventListener("click", (e) => {
+  const d = e.target.dataset;
+  let paires;
+  if (d.dsrc) paires = [[d.dsrc, d.ddst]];
+  else if (d.dall)
+    paires = (groupesDoublons()[+d.dgrp] || []).filter((k) => k !== d.dall).map((k) => [k, d.dall]);
+  else return;
+  if (!paires.length) return;
+  const nomsSrc = paires.map(([s]) => `« ${ING[s][0]} »`).join(", ");
+  if (
+    !confirm(`Fusionner ${nomsSrc} dans « ${ING[paires[0][1]][0]} » ? Cette action est définitive.`)
+  )
+    return;
+  for (const [s, t] of paires) {
+    const err = fusionnerIng(s, t);
+    if (err) {
+      $("dpm").textContent = err;
+      break;
+    }
+  }
+  refreshIng();
+  const msg = $("dpm").textContent;
+  drawDoublons();
+  if (msg) $("dpm").textContent = msg;
+});
+
 $("mgb").onchange = majFusion;
 $("mgs1").onchange = $("mgs2").onchange = majFusion;
 $("mgno").onclick = () => $("mgdlg").close();

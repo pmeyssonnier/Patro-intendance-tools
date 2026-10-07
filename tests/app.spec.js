@@ -2499,3 +2499,49 @@ test("liste de courses : un article au nom déjà connu (même unité) reprend l
   await expect(page.locator("#xm")).toContainText("quantité");
   expect(await page.evaluate(() => Object.keys(ING).length)).toBe(nb);
 });
+
+test("catalogue : « Vérifier les doublons » liste les doublons et fusionne dans le sens choisi (A → B ou B → A)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  // rien à signaler au départ
+  await page.locator("#cdbl").click();
+  await expect(page.locator("#dpdlg")).toBeVisible();
+  await expect(page.locator("#dpl")).toContainText("Aucun doublon");
+  await page.locator("#dpno").click();
+  // deux doublons (A utilisé en recette) et un nom identique avec une autre unité
+  await page.evaluate(() => {
+    const a = createIng("Huile d'olive", "ml", "", "aut"),
+      b = createIng("huile olive", "ml", "", "aut");
+    createIng("Huile olives", "pc", "", "aut");
+    S.rec[S.cur].ing[a] = SEC.map(() => 10);
+    S.prices[b] = 6;
+    window.__ids = [a, b];
+    refreshIng();
+  });
+  const [a, b] = await page.evaluate(() => window.__ids);
+  await page.locator("#cdbl").click();
+  await expect(page.locator("#dpl .dpg")).toHaveCount(1);
+  await expect(page.locator("#dpl")).toContainText("« Huile d'olive »");
+  await expect(page.locator("#dpl")).toContainText("1 recette");
+  // l'unité différente est signalée à part
+  await expect(page.locator("#dpm")).toContainText("unités différentes");
+  // « huile olive » → « Huile d'olive » : le doublon b disparaît, a garde son nom et reprend le prix
+  await page.locator(`#dpl [data-dsrc="${b}"][data-ddst="${a}"]`).click();
+  await expect(page.locator("#dpl")).toContainText("Aucun doublon");
+  const etat = await page.evaluate(([a, b]) => [!!ING[a], !!ING[b], S.prices[a]], [a, b]);
+  expect(etat).toEqual([true, false, 6]);
+  await page.locator("#dpno").click();
+  // refuser la confirmation ne change rien
+  await page.evaluate(() => {
+    window.__d = [createIng("Sel fin", "g", "", "aut"), createIng("sel fin", "g", "", "aut")];
+    refreshIng();
+  });
+  const [d1, d2] = await page.evaluate(() => window.__d);
+  await page.locator("#cdbl").click();
+  page.removeAllListeners("dialog");
+  page.on("dialog", (d) => d.dismiss());
+  await page.locator(`#dpl [data-dsrc="${d1}"]`).click();
+  expect(await page.evaluate(([x, y]) => [!!ING[x], !!ING[y]], [d1, d2])).toEqual([true, true]);
+});

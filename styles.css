@@ -1100,7 +1100,8 @@ th.num,
 /* Fenêtres du catalogue : import des prix, nouvel ingrédient, fusion */
 #impdlg,
 #ingdlg,
-#mgdlg {
+#mgdlg,
+#dpdlg {
   width: min(640px, calc(100vw - 24px));
   max-height: calc(100vh - 24px);
   overflow: auto;
@@ -1126,7 +1127,8 @@ th.num,
 }
 #impdlg::backdrop,
 #ingdlg::backdrop,
-#mgdlg::backdrop {
+#mgdlg::backdrop,
+#dpdlg::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
 #impdlg textarea,
@@ -1135,4 +1137,16 @@ th.num,
 #mgdlg select {
   width: 100%;
   box-sizing: border-box;
+}
+
+/* Fenêtre « Vérifier les doublons » : un bloc par groupe de doublons */
+.dpg {
+  border-top: 1px solid var(--bd);
+  padding: 10px 0;
+}
+.dpg .row2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
