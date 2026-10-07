@@ -162,6 +162,113 @@ function brancherFiche(racine, ouvrir, redessiner) {
 brancherFiche($("ct"), (k) => (catEdit = k), drawCat);
 brancherFiche($("rb"), (k) => (recEdit = k), drawRec);
 
+/* Gérer les rayons : créer, renommer, ordonner, supprimer (la logique est dans rayons.js) */
+
+/** Rayon dont on choisit le rayon d'accueil des produits avant de le supprimer, ou null. */
+let rySuppr = null;
+
+function drawRayons() {
+  $("ryl").innerHTML = CATS.map(([id, nom], i) => {
+    const n = nbProduitsRayon(id),
+      produits = `${n} produit${n > 1 ? "s" : ""}`;
+    const accueil =
+      rySuppr === id
+        ? `<div class="ryx s">${n ? `Les ${produits} de « ${esc(nom)} » vont dans :` : `« ${esc(nom)} » est vide. Rayon de repli :`} <select data-rv aria-label="Rayon qui reçoit les produits">${CATS.filter(
+            (c) => c[0] !== id
+          )
+            .map(
+              ([cid, cn]) =>
+                `<option value="${cid}"${cid === "aut" ? " selected" : ""}>${esc(cn)}</option>`
+            )
+            .join(
+              ""
+            )}</select> <button data-rxok="${id}">Supprimer le rayon</button> <button class="x" data-rxno="1">Annuler</button></div>`
+        : "";
+    return `<div class="ryr"><button class="x" data-ru="${id}" aria-label="Monter ${esc(nom)}"${i === 0 ? " disabled" : ""}>▲</button><button class="x" data-rd="${id}" aria-label="Descendre ${esc(nom)}"${i === CATS.length - 1 ? " disabled" : ""}>▼</button><input type="text" value="${esc(nom)}" data-rn="${id}" maxlength="${RAYON_NOM_MAX}" aria-label="Nom du rayon ${esc(nom)}"><span class="s">${produits}</span>${id === "aut" ? "" : `<button class="x" data-rx="${id}" aria-label="Supprimer le rayon ${esc(nom)}" title="Supprimer ce rayon">🗑</button>`}</div>${accueil}`;
+  }).join("");
+}
+
+/** Après un changement de rayons : les listes de choix, le catalogue, les recettes et la liste de courses suivent. */
+function apresRayons() {
+  for (const id of ["ingc", "xc"]) {
+    const v = $(id).value;
+    $(id).innerHTML = optionsCat(CATS.some((c) => c[0] === v) ? v : "aut");
+  }
+  $("rym").textContent = "";
+  drawRayons();
+  drawCat();
+  drawRec();
+  calc();
+}
+
+$("rygere").onclick = () => {
+  rySuppr = null;
+  $("rym").textContent = "";
+  $("ryn").value = "";
+  drawRayons();
+  if (!$("rydlg").open) $("rydlg").showModal();
+};
+
+$("ryno").onclick = () => $("rydlg").close();
+
+$("rydlg").addEventListener("click", (e) => {
+  const r = $("rydlg").getBoundingClientRect();
+  if (
+    e.target === $("rydlg") &&
+    (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
+  )
+    $("rydlg").close();
+});
+
+$("ryok").onclick = () => {
+  const r = creerRayon($("ryn").value);
+  if (r.err) return ($("rym").textContent = r.err);
+  $("ryn").value = "";
+  apresRayons();
+  $("ryn").focus();
+};
+
+$("ryn").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("ryok").click();
+});
+
+$("ryl").addEventListener("change", (e) => {
+  const id = e.target.dataset.rn;
+  if (!id) return;
+  const err = renommerRayon(id, e.target.value);
+  if (err) {
+    $("rym").textContent = err;
+    drawRayons();
+  } else apresRayons();
+});
+
+$("ryl").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const d = b.dataset;
+  if (d.ru || d.rd) {
+    const id = d.ru || d.rd;
+    if (deplacerRayon(id, d.ru ? -1 : 1)) {
+      apresRayons();
+      const f = $("ryl").querySelector(`[data-${d.ru ? "ru" : "rd"}="${id}"]:not([disabled])`);
+      if (f) f.focus();
+      say("Rayon déplacé");
+    }
+  } else if (d.rx) {
+    rySuppr = d.rx;
+    $("rym").textContent = "";
+    drawRayons();
+  } else if (d.rxno) {
+    rySuppr = null;
+    drawRayons();
+  } else if (d.rxok) {
+    const err = supprimerRayon(d.rxok, $("ryl").querySelector("[data-rv]").value);
+    if (err) return ($("rym").textContent = err);
+    rySuppr = null;
+    apresRayons();
+  }
+});
+
 /** Exporte les prix du catalogue en .json, au format que « Choisir un fichier » sait relire. */
 $("cexp").onclick = () => {
   const jour = new Date().toISOString().slice(0, 10);

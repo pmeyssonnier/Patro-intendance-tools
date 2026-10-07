@@ -204,6 +204,9 @@ if (!S.ov || typeof S.ov !== "object") S.ov = {};
 
 if (!S.cat || typeof S.cat !== "object") S.cat = {};
 
+// rayons personnalisés (déjà vérifiés au chargement) : ils remplacent ceux d'origine
+if (Array.isArray(S.rayons)) CATS.splice(0, CATS.length, ...S.rayons.map((c) => [...c]));
+
 if (!S.promo || typeof S.promo !== "object") S.promo = {};
 
 if (!S.url || typeof S.url !== "object") S.url = {};
@@ -226,7 +229,10 @@ const promoDe = (k) => {
 };
 
 /** Rayon d'un ingrédient (clé de CATS) : celui choisi, sinon le rayon par défaut des ingrédients de base, sinon « Autre ». */
-const catOf = (k) => S.cat[k] || CAT0[k] || "aut";
+const catOf = (k) => {
+  const c = S.cat[k] || CAT0[k] || "aut";
+  return CATS.some((r) => r[0] === c) ? c : "aut";
+};
 
 /** Options d'un choix de rayon, avec le rayon sel sélectionné. */
 const optionsCat = (sel) =>

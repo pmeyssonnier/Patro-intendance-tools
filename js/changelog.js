@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.24.0",
+    d: "2026-10-07",
+    t: "Gérer les rayons",
+    l: [
+      "Catalogue de prix : un bouton « Gérer les rayons » permet de créer, renommer, réordonner et supprimer les rayons (les produits d'un rayon supprimé sont transférés vers le rayon choisi).",
+      "L'ordre des rayons est celui de la liste de courses et des exports. « Autre » reste toujours disponible. Les rayons sont les mêmes pour tous les camps.",
+    ],
+  },
+  {
     v: "1.23.0",
     d: "2026-10-07",
     t: "Page Nouveautés",

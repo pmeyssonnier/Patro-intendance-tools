@@ -60,7 +60,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(24);
+  expect(liens.length).toBe(25);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -2151,6 +2151,7 @@ test("catalogue : la liste des rayons est deux fois plus large, sans changer de 
   page,
 }) => {
   await ouvrir(page);
+  await page.setViewportSize({ width: 400, height: 800 }); // le bouton « Gérer les rayons » passe dessous
   await aller(page, "cat");
   const t = await page.evaluate(() => {
     const e = document.querySelector("#crayon"),
@@ -2498,7 +2499,7 @@ test("liste de courses : un article au nom déjà connu (même unité) reprend l
   await page.locator("#xu").selectOption("g");
   await page.locator("#xq").fill("1.5");
   await page.locator("#xok").click();
-  await expect(page.locator("#xm")).toContainText("existe déjà");
+  await expect(page.locator("#xm")).toContainText("s'appelle déjà");
   expect(await page.evaluate(() => Object.keys(ING).length)).toBe(nb);
   expect(await page.evaluate(() => C.extra.pates)).toBe(1500);
   // un nom vide ou une quantité nulle sont refusés
@@ -3002,4 +3003,115 @@ test("Nouveautés : une page entre Configuration et Sauvegarde, avec l'historiqu
   // la plus ancienne remonte aux débuts
   await expect(versions.last().locator("summary b")).toHaveText("1.0.0 – 1.4.0");
   expect(erreurs).toEqual([]);
+});
+
+test("rayons : créer, renommer, réordonner et supprimer un rayon depuis le catalogue", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator("#rygere").click();
+  const lignes = page.locator("#ryl .ryr");
+  const n0 = await lignes.count();
+  expect(n0).toBe(9);
+  // « Autre » ne peut pas être supprimé
+  await expect(page.locator('#ryl [data-rx="aut"]')).toHaveCount(0);
+  // créer : un nom vide ou déjà pris est refusé ; le nouveau rayon se place avant « Autre »
+  await page.locator("#ryn").fill("  ");
+  await page.locator("#ryok").click();
+  await expect(page.locator("#rym")).toContainText("vide");
+  await page.locator("#ryn").fill("epicerie & conserves");
+  await page.locator("#ryok").click();
+  await expect(page.locator("#rym")).toContainText("s'appelle déjà");
+  await page.locator("#ryn").fill("Hygiène");
+  await page.locator("#ryok").click();
+  await expect(lignes).toHaveCount(n0 + 1);
+  const id = await page.evaluate(() => CATS[CATS.length - 2][0]);
+  expect(await page.evaluate(() => CATS[CATS.length - 2][1])).toBe("Hygiène");
+  expect(await page.evaluate(() => CATS[CATS.length - 1][0])).toBe("aut");
+  // proposé dans les listes de choix et dans le filtre du catalogue
+  await expect(page.locator(`#crayon option[value="${id}"]`)).toHaveCount(1);
+  await expect(page.locator(`#ingc option[value="${id}"]`)).toHaveCount(1);
+  // renommer garde les produits : un ingrédient rangé dans « Hygiène » y reste
+  const k = await page.evaluate((r) => {
+    const k = Object.keys(ING)[0];
+    S.cat[k] = r;
+    calc();
+    return k;
+  }, id);
+  await page.locator(`#ryl [data-rn="${id}"]`).fill("Hygiène & entretien");
+  await page.locator(`#ryl [data-rn="${id}"]`).dispatchEvent("change");
+  expect(await page.evaluate((k) => catOf(k), k)).toBe(id);
+  await expect(page.locator(`#crayon option[value="${id}"]`)).toContainText("Hygiène & entretien");
+  // réordonner : monter le rayon d'un cran
+  const avant = await page.evaluate(() => CATS.map((c) => c[0]).join(","));
+  await page.locator(`#ryl [data-ru="${id}"]`).click();
+  const apres = await page.evaluate(() => CATS.map((c) => c[0]).join(","));
+  expect(apres).not.toBe(avant);
+  // enregistré avec le projet et conservé au rechargement
+  await page.reload();
+  expect(await page.evaluate(() => CATS.map((c) => c[0]).join(","))).toBe(apres);
+  expect(await page.evaluate((id) => CATS.find((c) => c[0] === id)[1], id)).toBe(
+    "Hygiène & entretien"
+  );
+  // supprimer : les produits vont dans le rayon choisi
+  await aller(page, "cat");
+  await page.locator("#rygere").click();
+  await page.locator(`#ryl [data-rx="${id}"]`).click();
+  await page.locator("#ryl [data-rv]").selectOption("boi");
+  await page.locator(`#ryl [data-rxok="${id}"]`).click();
+  expect(await page.evaluate((k) => catOf(k), k)).toBe("boi");
+  expect(await page.evaluate((id) => CATS.some((c) => c[0] === id), id)).toBe(false);
+  // tout supprimer et revenir à l'identique : plus rien d'enregistré
+  expect(erreurs).toEqual([]);
+});
+
+test("rayons : un rayon par défaut supprimé transfère ses produits, et l'ordre suit la liste de courses", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const avant = Object.keys(ING).filter((k) => catOf(k) === "epi");
+    const err = supprimerRayon("epi", "aut");
+    return {
+      err,
+      avant: avant.length,
+      apres: avant.filter((k) => catOf(k) === "aut").length,
+      supprime: !CATS.some((c) => c[0] === "epi"),
+      err2: supprimerRayon("aut", "fl"),
+    };
+  });
+  expect(r.err).toBe("");
+  expect(r.avant).toBeGreaterThan(0);
+  expect(r.apres).toBe(r.avant);
+  expect(r.supprime).toBe(true);
+  expect(r.err2).toContain("ne peut pas");
+  // la liste de courses suit l'ordre des rayons
+  await page.evaluate(() => {
+    deplacerRayon("lai", -1);
+    calc();
+  });
+  await aller(page, "list");
+  const titres = await page.locator("#list tr.grp").allTextContents();
+  const i = titres.findIndex((t) => t.includes("Frais"));
+  const j = titres.findIndex((t) => t.includes("Frigo"));
+  if (i >= 0 && j >= 0) expect(i).toBeLessThan(j);
+  // un rayon invalide dans un projet importé est ignoré, les produits reviennent à « Autre »
+  const ok = await page.evaluate(() => {
+    const c = cleanProject(
+      JSON.parse(
+        JSON.stringify({
+          ...S,
+          rayons: [
+            ["x1", "Un"],
+            ["x1", "Doublon"],
+            ["", "Sans id"],
+          ],
+          cat: { lait: "x1", pain: "fl" },
+        })
+      )
+    );
+    return [c.rayons.map((r) => r[0]).join(","), c.cat.lait, c.cat.pain];
+  });
+  expect(ok).toEqual(["x1,aut", "x1", undefined]);
 });

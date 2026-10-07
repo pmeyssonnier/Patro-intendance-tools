@@ -21,6 +21,7 @@ const FILES = [
   "js/ingredient-matching.js",
   "js/ingredients.js",
   "js/ingredient-merge.js",
+  "js/rayons.js",
   "js/price-import.js",
   "js/catalog-ui.js",
   "js/recipe-import.js",

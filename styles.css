@@ -1288,3 +1288,66 @@ th.num,
 .nv li {
   margin: 4px 0;
 }
+
+/* Gérer les rayons */
+.rayrow {
+  grid-template-columns: 1fr auto;
+}
+@media (max-width: 560px) {
+  .rayrow {
+    grid-template-columns: 1fr;
+  }
+}
+#rydlg {
+  width: min(640px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--tx);
+  box-sizing: border-box;
+}
+#rydlg::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+.ryr,
+.ryadd {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 6px 0;
+}
+.ryr input,
+.ryadd input {
+  flex: 1;
+  min-width: 0;
+}
+.ryr .s {
+  white-space: nowrap;
+}
+.ryx {
+  margin: 0 0 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--grp);
+}
+.ryx select {
+  width: auto;
+  max-width: 100%;
+}
+@media (max-width: 560px) {
+  /* petit écran : le nom du rayon prend toute la ligne, les boutons passent dessous */
+  .ryr {
+    flex-wrap: wrap;
+  }
+  .ryr input {
+    order: -1;
+    flex: 1 1 100%;
+  }
+  .ryr .s {
+    flex: 1;
+    text-align: right;
+  }
+}
