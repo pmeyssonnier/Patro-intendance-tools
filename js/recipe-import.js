@@ -237,7 +237,7 @@ ${RI.desc ? `<p class="s">${esc(RI.desc)}</p>` : ""}
 function drawLignes() {
   const regimes = OPTIONS_REGIME;
   const cand = Object.keys(ING)
-    .filter((k) => !ING[k][4] && !S.hid.includes(k))
+    .filter((k) => !ING[k][4] && !S.art[k] && !S.hid.includes(k))
     .sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr"));
   const lignes = RI.lignes
     .map((L, i) => {

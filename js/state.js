@@ -57,6 +57,7 @@ function mkCamp(name, o) {
       dt: {},
       notes: "",
       menu: {},
+      extra: {},
       types: DEFT(),
       off: {},
       col: { ...SCOL },
@@ -160,6 +161,9 @@ const usedIn = (nm) =>
 
 if (!S.cust) S.cust = {};
 
+/** Articles ajoutés à la liste de courses hors recettes (identifiant d'ingrédient -> 1) : cachés des listes d'ingrédients de recette. */
+if (!S.art || typeof S.art !== "object") S.art = {};
+
 if (!Array.isArray(S.hid)) S.hid = [];
 
 /** Nom et unité d'origine des ingrédients de base (avant les modifications de S.ov). */
@@ -247,7 +251,10 @@ if (S.dd && typeof S.dd === "object") DIETS = S.dd;
       else if (ex[k] && !ING[ex[k]]) ex[k] = null;
     }
   }
+  for (const k of Object.keys(S.art)) if (!ING[k]) delete S.art[k];
   for (const c of Object.values(S.camps)) {
+    if (!c.extra || typeof c.extra !== "object") c.extra = {};
+    for (const k of Object.keys(c.extra)) if (!ING[k] || !(+c.extra[k] > 0)) delete c.extra[k];
     if (typeof c.name !== "string") c.name = "Camp";
     if (!pISO(c.start)) c.start = iso(nextDow(5));
     if (!pISO(c.end) || c.end < c.start) c.end = c.start;

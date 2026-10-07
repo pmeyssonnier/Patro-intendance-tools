@@ -40,10 +40,13 @@ function cleanCamp(c, N) {
     notes: str(c.notes, 5000),
     mt: str(c.mt, 80, "Menu du camp"),
     menu: {},
+    extra: {},
     types: [],
     off: {},
     col: {},
   };
+  // articles ajoutés à la liste de courses hors recettes (identifiant d'ingrédient -> quantité de base)
+  for (const [k, v] of ent(c.extra)) if (okid(k) && +v > 0) o.extra[k] = num(v, 0, 1e7);
   for (const [k, v] of ent(c.dt))
     if (okid(k) && Array.isArray(v)) o.dt[k] = qn(v, N).map((x) => Math.min(x, 1e4));
   for (const t of (Array.isArray(c.types) ? c.types : []).slice(0, 30))
@@ -77,6 +80,7 @@ function cleanProject(x) {
     cat: {},
     promo: {},
     url: {},
+    art: {},
     hid: Array.isArray(x.hid)
       ? x.hid.filter((k) => typeof k === "string" && okid(k)).slice(0, 200)
       : [],
@@ -135,6 +139,8 @@ function cleanProject(x) {
   // rayons choisis (identifiant -> clé de CATS) et regroupement de la liste par rayon
   for (const [k, v] of ent(x.cat)) if (okid(k) && CATS.some((c) => c[0] === v)) o.cat[k] = v;
   if (x.gl === false) o.gl = false;
+  // articles hors recettes (identifiant -> 1)
+  for (const [k, v] of ent(x.art)) if (okid(k) && v) o.art[k] = 1;
   // fiches produit Colruyt (identifiant -> adresse https://www.colruyt.be/…)
   for (const [k, v] of ent(x.url)) if (okid(k) && lienColruyt(v)) o.url[k] = v;
   // promotions repérées (identifiant -> { p: prix promo par unité, t: texte })

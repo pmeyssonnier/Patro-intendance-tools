@@ -1071,6 +1071,19 @@ th.num,
   color: var(--tx);
   box-sizing: border-box;
 }
+/* fenêtre de fusion : la liste de choix est descendue d'un cran pour aérer l'écran */
+#mgdlg label[for="mgb"] {
+  margin-bottom: 8px;
+}
+#mgdlg #mgb {
+  margin-bottom: 14px;
+}
+#mgdlg fieldset label {
+  margin-bottom: 6px;
+}
+#mgdlg #mgp {
+  margin-top: 14px;
+}
 #impdlg::backdrop,
 #ingdlg::backdrop,
 #mgdlg::backdrop {

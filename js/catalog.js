@@ -819,6 +819,8 @@ function fusionnerIng(src, dst) {
     const ex = DIETS[d].ex;
     for (const x in ex) if (ex[x] === src) ex[x] = x === dst ? null : dst;
   }
+  for (const c of Object.values(S.camps))
+    if (src in c.extra) c.extra[dst] = (c.extra[dst] || 0) + c.extra[src];
   rmIng(src);
   return "";
 }

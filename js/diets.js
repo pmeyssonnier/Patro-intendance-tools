@@ -195,7 +195,7 @@ $("ddel").onclick = () => {
 
 $("dradd").onclick = () => {
   const ex = DIETS[dcur].ex,
-    k = Object.keys(ING).find((k) => !(k in ex) && !ING[k][4] && !S.hid.includes(k));
+    k = Object.keys(ING).find((k) => !(k in ex) && !ING[k][4] && !S.art[k] && !S.hid.includes(k));
   if (!k) {
     alert("Aucun ingrédient disponible.");
     return;

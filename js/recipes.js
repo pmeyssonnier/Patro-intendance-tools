@@ -64,7 +64,7 @@ function drawRec() {
   $("radd").innerHTML =
     "<option value=''>+ Ajouter un ingrédient…</option>" +
     Object.entries(ING)
-      .filter(([k, v]) => R && !R.ing[k] && !v[4] && !S.hid.includes(k))
+      .filter(([k, v]) => R && !R.ing[k] && !v[4] && !S.art[k] && !S.hid.includes(k))
       .sort((a, b) => a[1][0].localeCompare(b[1][0], "fr"))
       .map(([k, v]) => `<option value="${esc(k)}">${esc(v[0])}</option>`)
       .join("");
@@ -297,6 +297,8 @@ function rmIng(k) {
   delete S.cat[k];
   delete S.promo[k];
   delete S.url[k];
+  delete S.art[k];
+  for (const c of Object.values(S.camps)) delete c.extra[k];
   if (S.cust[k]) {
     delete S.cust[k];
     delete ING[k];

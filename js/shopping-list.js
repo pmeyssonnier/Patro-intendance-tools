@@ -40,6 +40,8 @@ function calc() {
     }
     pm.push([l, d, c, r.adapt]);
   });
+  // articles ajoutés à la main (hors recettes) : ils comptent dans la liste et le total, pas dans le coût par repas
+  for (const k in C.extra) if (ING[k]) tot[k] = (tot[k] || 0) + C.extra[k];
   let sum = 0;
   const keys = Object.keys(tot)
     .filter((k) => tot[k] > 0)
@@ -63,6 +65,7 @@ function calc() {
       )
       .join("") || "<tr><td>Aucun repas</td></tr>";
   LAST = { keys, tot, sum, pm };
+  drawExtras();
   const eco = keys.reduce((a, k) => a + economie(k, tot[k]), 0);
   $("ecow").hidden = !(eco > 0.005);
   $("eco").textContent = eur(eco);
@@ -105,3 +108,73 @@ $("list").addEventListener("change", (e) => {
     calc();
   }
 });
+
+/* Articles hors recettes (liquide vaisselle, boissons, sacs poubelle…) : des ingrédients du catalogue, avec une quantité propre au camp (C.extra) */
+
+/** Libellé de l'unité de saisie d'un article (le catalogue compte en g / ml / pièces, la saisie en kg / L / pièces). */
+const uniteArticle = (k) => ({ g: "kg", ml: "L", pc: "pièce(s)" })[ING[k][1]];
+
+/** Tableau des articles ajoutés au camp en cours, avec leur quantité modifiable. */
+function drawExtras() {
+  const ks = Object.keys(C.extra)
+    .filter((k) => ING[k])
+    .sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr"));
+  $("xl").innerHTML = ks
+    .map(
+      (k) =>
+        `<tr><td>${esc(ING[k][0])}</td><td class="nw"><input type="number" min="0" step="any" value="${+(C.extra[k] / fxu(k)).toFixed(3)}" data-xq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité en ${uniteArticle(k)}"> <span class="s">${uniteArticle(k)}</span></td><td><button class="x" data-xd="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la liste" title="Retirer de la liste">✕</button></td></tr>`
+    )
+    .join("");
+  $("xlw").hidden = !ks.length;
+}
+
+$("xok").onclick = () => {
+  const nom = $("xn").value.trim().replace(/\s+/g, " "),
+    unite = $("xu").value,
+    q = +$("xq").value,
+    p = +$("xp").value,
+    msg = (t) => ($("xm").textContent = t);
+  if (!nom) return msg("Donne un nom à l'article.");
+  if (!(q > 0)) return msg("Indique une quantité supérieure à 0.");
+  let k = doublonsNom(nom, unite).exact[0];
+  const neuf = !k;
+  if (neuf) {
+    k = createIng(nom, unite, "", $("xc").value);
+    S.art[k] = 1;
+  }
+  if (p > 0) {
+    S.prices[k] = p;
+    delete S.pn[k];
+    delete S.promo[k];
+    delete S.url[k];
+  }
+  C.extra[k] = Math.round((C.extra[k] || 0) + q * fxu(k) * 1000) / 1000;
+  $("xn").value = "";
+  $("xq").value = "1";
+  $("xp").value = "";
+  msg(neuf ? "" : "« " + ING[k][0] + " » existe déjà dans le catalogue : repris.");
+  neuf ? refreshIng() : calc();
+  $("xn").focus();
+};
+
+$("xn").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("xok").click();
+});
+
+$("xl").addEventListener("change", (e) => {
+  const k = e.target.dataset.xq;
+  if (!k) return;
+  const v = Math.max(0, +e.target.value || 0) * fxu(k);
+  if (v > 0) C.extra[k] = Math.round(v * 1000) / 1000;
+  else delete C.extra[k];
+  calc();
+});
+
+$("xl").addEventListener("click", (e) => {
+  const k = e.target.dataset.xd;
+  if (!k) return;
+  delete C.extra[k];
+  calc();
+});
+
+$("xc").innerHTML = optionsCat("aut");

@@ -2409,3 +2409,68 @@ test("nouvel ingrédient depuis une recette : « Utiliser » est aussi proposé 
     )
   ).toBe(true);
 });
+
+test("liste de courses : des articles hors recettes (liquide vaisselle…) s'ajoutent, comptent dans le total et se retirent", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "list");
+  const total = () => page.evaluate(() => LAST.sum);
+  const avant = await total();
+  await page.locator("#xn").fill("Liquide vaisselle");
+  await page.locator("#xq").fill("2");
+  await page.locator("#xp").fill("2.5");
+  await page.locator("#xok").click();
+  // dans la liste, avec son prix, et le total augmente de 2 × 2,50 €
+  const ligne = page.locator("#list tr", { hasText: "Liquide vaisselle" });
+  await expect(ligne).toHaveCount(1);
+  expect(Math.round(((await total()) - avant) * 100) / 100).toBe(5);
+  // il n'est pas proposé dans les ingrédients d'une recette, mais il est dans le catalogue
+  await aller(page, "rec");
+  expect(await page.locator("#radd option", { hasText: "Liquide vaisselle" }).count()).toBe(0);
+  await aller(page, "cat");
+  await expect(page.locator("#ct tr", { hasText: "Liquide vaisselle" })).toHaveCount(1);
+  // il reste après rechargement de la page
+  await page.reload();
+  await aller(page, "list");
+  await expect(page.locator("#list tr", { hasText: "Liquide vaisselle" })).toHaveCount(1);
+  // la quantité se modifie dans le tableau des articles ; 0 retire l'article
+  const q = page.locator("#xl input[data-xq]");
+  await q.fill("3");
+  await q.press("Tab");
+  expect(Math.round(((await total()) - avant) * 100) / 100).toBe(7.5);
+  // il est dans le projet exporté et revient à l'import
+  await aller(page, "pj");
+  const fichier = await telecharger(page, "#exp");
+  const projet = JSON.parse(fichier.texte);
+  const k = Object.keys(projet.art)[0];
+  expect(Object.values(projet.camps)[0].extra[k]).toBe(3);
+  await importer(page, fichier.chemin);
+  expect(await page.evaluate(() => Object.values(C.extra))).toEqual([3]);
+  // retirer l'article
+  await aller(page, "list");
+  await page.locator("#xl [data-xd]").click();
+  await expect(page.locator("#list tr", { hasText: "Liquide vaisselle" })).toHaveCount(0);
+  expect(Math.round(((await total()) - avant) * 100) / 100).toBe(0);
+});
+
+test("liste de courses : un article au nom déjà connu (même unité) reprend l'ingrédient du catalogue, en kg ou en litres", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "list");
+  const nb = await page.evaluate(() => Object.keys(ING).length);
+  await page.locator("#xn").fill("pate");
+  await page.locator("#xu").selectOption("g");
+  await page.locator("#xq").fill("1.5");
+  await page.locator("#xok").click();
+  await expect(page.locator("#xm")).toContainText("existe déjà");
+  expect(await page.evaluate(() => Object.keys(ING).length)).toBe(nb);
+  expect(await page.evaluate(() => C.extra.pates)).toBe(1500);
+  // un nom vide ou une quantité nulle sont refusés
+  await page.locator("#xq").fill("0");
+  await page.locator("#xn").fill("Sacs poubelle");
+  await page.locator("#xok").click();
+  await expect(page.locator("#xm")).toContainText("quantité");
+  expect(await page.evaluate(() => Object.keys(ING).length)).toBe(nb);
+});
