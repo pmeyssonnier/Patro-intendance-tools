@@ -5,6 +5,9 @@
 /** Ingrédient en cours de modification dans le catalogue (identifiant) ou null. */
 let catEdit = null;
 
+/** Ingrédient en modification dans la page Recettes (identifiant) ou null. */
+let recEdit = null;
+
 const catUnits = [
   ["g", "g (prix au kg)"],
   ["ml", "ml (prix au L)"],
@@ -18,7 +21,7 @@ const optionsRegime = (cle) =>
   (cle === "perso" ? '<option value="perso" selected>Personnalisé (voir Régimes)</option>' : "");
 
 function refreshIng() {
-  catEdit = null;
+  catEdit = recEdit = null;
   drawRec();
   drawDietEd();
   drawMenu();
@@ -61,14 +64,18 @@ function drawCat() {
     `<tr><td>${q || catRayon ? "Aucun ingrédient ne correspond au filtre." : "Aucun ingrédient."}</td></tr>`;
 }
 
+/** Fiche de modification d'un ingrédient (nom, unité, prix, régime, rayon, boutons), la même dans le catalogue et dans les recettes.
+    `boutons` : HTML ajouté au début de la rangée de boutons (ex. « → quantité unique » sur la page Recettes). */
+function ficheIngredient(k, boutons = "") {
+  return `<div class="fw"><div class="edg"><div class="eg-nom"><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div class="eg-uni"><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div class="eg-prix"><label>Prix (€)</label><input type="number" step="0.05" min="0" value="${price(k)}" data-ep="${esc(k)}" aria-label="Prix de l'ingrédient"></div><div class="eg-reg"><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div class="eg-ray"><label>Rayon</label><select data-ec="${esc(k)}" aria-label="Rayon de l'ingrédient">${optionsCat(catOf(k))}</select></div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div><div class="eg-btn">${boutons}<button data-eok="${esc(k)}">Valider</button><button class="x" data-edel="${esc(k)}">Effacer</button><button class="x" data-emg="${esc(k)}">Fusionner</button><button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? `<button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></div>`;
+}
+
 /** Les lignes du tableau des prix pour des ingrédients (avec, pour celui en cours de modification, sa ligne d'édition). */
 function lignesCat(keys) {
   return keys
     .map(
       (k) =>
-        (catEdit === k
-          ? `<tr class="ced"><td colspan="4"><div class="edg"><div class="eg-nom"><label>Nom</label><input type="text" value="${esc(ING[k][0])}" data-en="${esc(k)}" aria-label="Nom de l'ingrédient" maxlength="100"></div><div class="eg-uni"><label>Unité</label><select data-eu="${esc(k)}" aria-label="Unité de l'ingrédient">${catUnits.map(([u, l]) => `<option value="${u}"${u === ING[k][1] ? " selected" : ""}>${l}</option>`).join("")}</select></div><div class="eg-prix"><label>Prix (€)</label><input type="number" step="0.05" min="0" value="${price(k)}" data-ep="${esc(k)}" aria-label="Prix de l'ingrédient"></div><div class="eg-reg"><label>Attention régime</label><select data-eg="${esc(k)}" aria-label="Attention régime de l'ingrédient">${optionsRegime(regimeActuel(k))}</select></div><div class="eg-ray"><label>Rayon</label><select data-ec="${esc(k)}" aria-label="Rayon de l'ingrédient">${optionsCat(catOf(k))}</select></div></div><div class="s" data-ei="${esc(k)}" role="status">${esc(editInfo(k, ING[k][1]))}</div><div class="eg-btn"><button data-eok="${esc(k)}">Valider</button><button class="x" data-edel="${esc(k)}">Effacer</button><button class="x" data-emg="${esc(k)}">Fusionner</button><button class="x" data-eno="${esc(k)}">Annuler</button>${S.ov[k] ? `<button class="x" data-ers="${esc(k)}">Rétablir « ${esc(ING0[k][0])} »</button>` : ""}</div></td></tr>`
-          : "") +
+        (catEdit === k ? `<tr class="ced"><td colspan="4">${ficheIngredient(k)}</td></tr>` : "") +
         `<tr><td>${esc(ING[k][0])}<div class="s manq" style="color:#d33"${price(k) ? " hidden" : ""}>⚠ prix manquant</div>${produitLien(k)}${etiquettePromo(k)}</td><td>€/${ING[k][1] === "pc" ? "pièce" : ul(k)}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-cp="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td><button class="x" data-ced="${esc(k)}" title="Modifier, fusionner ou supprimer cet ingrédient" aria-label="Modifier ${esc(ING[k][0])}">✎</button></td></tr>`
     )
     .join("");
@@ -91,61 +98,69 @@ $("ct").addEventListener("change", (e) => {
   }
 });
 
-$("ct").addEventListener("change", (e) => {
-  const k = e.target.dataset.eu || e.target.dataset.eg;
-  if (!k) return;
-  const ligne = $("ct").querySelector(`[data-en="${k}"]`).closest("tr");
-  ligne.querySelector("[data-ei]").textContent = editInfo(
-    k,
-    ligne.querySelector("[data-eu]").value,
-    ligne.querySelector("[data-eg]").value
-  );
-});
+/** Branche la fiche de modification sur un tableau : `racine` le contient, `ouvrir(k)` l'ouvre (null : ferme), `redessiner()` redessine la page. */
+function brancherFiche(racine, ouvrir, redessiner) {
+  racine.addEventListener("change", (e) => {
+    const k = e.target.dataset.eu || e.target.dataset.eg;
+    if (!k) return;
+    const ligne = racine.querySelector(`[data-en="${k}"]`).closest("tr");
+    ligne.querySelector("[data-ei]").textContent = editInfo(
+      k,
+      ligne.querySelector("[data-eu]").value,
+      ligne.querySelector("[data-eg]").value
+    );
+  });
 
-$("ct").addEventListener("click", (e) => {
-  const d = e.target.dataset;
-  if (d.ced) {
-    catEdit = d.ced;
-    drawCat();
-    return;
-  }
-  if (d.eno) {
-    catEdit = null;
-    drawCat();
-    return;
-  }
-  if (d.eok || d.ers) {
-    const k = d.eok || d.ers,
-      ligne = $("ct").querySelector(`[data-en="${k}"]`).closest("tr"),
-      champP = ligne.querySelector("[data-ep]"),
-      nom = d.ers ? ING0[k][0] : ligne.querySelector("[data-en]").value,
-      unite = d.ers ? ING0[k][1] : ligne.querySelector("[data-eu]").value,
-      dg = d.ers ? undefined : ligne.querySelector("[data-eg]").value,
-      cat = d.ers ? undefined : ligne.querySelector("[data-ec]").value,
-      err = editIng(k, nom, unite, dg, cat);
-    if (err) ligne.querySelector("[data-ei]").textContent = "⚠ " + err;
-    else {
-      // prix modifié dans la fenêtre de modification (comme dans le tableau : il remplace le produit retenu)
-      if (!d.ers && champP.value !== champP.defaultValue) poserPrix(k, saisie(champP.value, 1e5));
-      refreshIng();
+  racine.addEventListener("click", (e) => {
+    const bouton = e.target.closest("[data-ced]"),
+      d = bouton ? bouton.dataset : e.target.dataset;
+    if (d.ced) {
+      // un seul ingrédient en modification à la fois ; un second clic sur le même le referme (page Recettes)
+      ouvrir(racine === $("rb") && recEdit === d.ced ? null : d.ced);
+      redessiner();
+      return;
     }
-    return;
-  }
-  if (d.emg) return ouvrirFusion(d.emg);
-  const k = d.edel;
-  if (!k) return;
-  const refus = refusSuppression(k);
-  if (refus) {
-    alert(refus);
-    return;
-  }
-  if (!confirm("Supprimer « " + ING[k][0] + " » ?")) return;
-  rmIng(k);
-  catEdit = null;
-  drawRec();
-  drawDietEd();
-  calc();
-});
+    if (d.eno) {
+      ouvrir(null);
+      redessiner();
+      return;
+    }
+    if (d.eok || d.ers) {
+      const k = d.eok || d.ers,
+        ligne = racine.querySelector(`[data-en="${k}"]`).closest("tr"),
+        champP = ligne.querySelector("[data-ep]"),
+        nom = d.ers ? ING0[k][0] : ligne.querySelector("[data-en]").value,
+        unite = d.ers ? ING0[k][1] : ligne.querySelector("[data-eu]").value,
+        dg = d.ers ? undefined : ligne.querySelector("[data-eg]").value,
+        cat = d.ers ? undefined : ligne.querySelector("[data-ec]").value,
+        err = editIng(k, nom, unite, dg, cat);
+      if (err) ligne.querySelector("[data-ei]").textContent = "⚠ " + err;
+      else {
+        // prix modifié dans la fenêtre de modification (comme dans le tableau : il remplace le produit retenu)
+        if (!d.ers && champP.value !== champP.defaultValue) poserPrix(k, saisie(champP.value, 1e5));
+        refreshIng();
+      }
+      return;
+    }
+    if (d.emg) return ouvrirFusion(d.emg);
+    const k = d.edel;
+    if (!k) return;
+    const refus = refusSuppression(k);
+    if (refus) {
+      alert(refus);
+      return;
+    }
+    if (!confirm("Supprimer « " + ING[k][0] + " » ?")) return;
+    rmIng(k);
+    catEdit = recEdit = null;
+    drawRec();
+    drawDietEd();
+    calc();
+  });
+}
+
+brancherFiche($("ct"), (k) => (catEdit = k), drawCat);
+brancherFiche($("rb"), (k) => (recEdit = k), drawRec);
 
 /** Exporte les prix du catalogue en .json, au format que « Choisir un fichier » sait relire. */
 $("cexp").onclick = () => {

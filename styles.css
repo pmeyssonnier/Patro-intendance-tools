@@ -272,7 +272,30 @@ button.x {
 #rb .ih {
   display: inline-block;
   vertical-align: middle;
-  padding: 6px 8px 6px 0;
+  padding: 10px 4px;
+}
+.ibox {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 0 6px;
+  background: var(--card);
+}
+.ib {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: break-word;
 }
 #rb tr.drag {
   opacity: 0.5;
@@ -1017,6 +1040,17 @@ th.num,
 }
 
 /* Catalogue de prix : modification d'un ingrédient */
+/* Page Recettes : la fiche reste dans la partie visible du tableau (qui défile en largeur), sans l'élargir */
+.rw {
+  container-type: inline-size;
+}
+.rw .fw {
+  position: sticky;
+  left: 0;
+  width: calc(100cqw - 16px);
+  box-sizing: border-box;
+  white-space: normal;
+}
 .ced td {
   background: var(--grp);
 }

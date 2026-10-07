@@ -42,6 +42,7 @@ function drawRec() {
     .map((d) => `<option${d === S.cur ? " selected" : ""}>${esc(d)}</option>`)
     .join("");
   const R = S.rec[S.cur];
+  if (!R || !(recEdit in R.ing)) recEdit = null;
   $("rdesc").value = R ? R.desc : "";
   // la description n'est modifiable que dans le mode édition (✎)
   $("rdesc").readOnly = !EDIT;
@@ -57,7 +58,9 @@ function drawRec() {
     ? Object.entries(R.ing)
         .map(([k, q]) => {
           const fx = R.fx && k in R.fx;
-          return `<tr data-rk="${esc(k)}"><td><span class="ih" role="button" tabindex="0" data-ih="${esc(k)}" aria-label="Déplacer ${esc(ING[k][0])} avec les flèches du clavier" title="Glisser pour changer l’ordre des ingrédients (flèches haut/bas au clavier)">⠿</span>${esc(ING[k][0])} (${ING[k][1]})<div><button class="x tg" data-tg="${esc(k)}">${fx ? "→ par personne" : "→ quantité unique"}</button></div></td>${fx ? `<td colspan="${SEC.length}"><input type="number" min="0" step="any" value="${+(R.fx[k] / fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span>${ratioForm(k)}<label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa && R.fa[k] === 0 ? "" : " checked"} style="width:auto"> adapter aux régimes</label></td>` : q.map((v, i) => `<td><input type="number" min="0" step="any" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${esc(SEC[i][0])}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>`;
+          const ouvert = recEdit === k,
+            nom = `${esc(ING[k][0])} (${ING[k][1]})`;
+          return `<tr data-rk="${esc(k)}"><td><div class="ibox"><span class="ih" role="button" tabindex="0" data-ih="${esc(k)}" aria-label="Déplacer ${esc(ING[k][0])} avec les flèches du clavier" title="Glisser pour changer l’ordre des ingrédients (flèches haut/bas au clavier)">⠿</span><button class="ib" data-ced="${esc(k)}" aria-expanded="${ouvert}" title="Modifier cet ingrédient : nom, unité, prix, régime, rayon, quantité unique" aria-label="Modifier ${esc(ING[k][0])}"><span class="ibt">${nom}</span> <span aria-hidden="true">${ouvert ? "▴" : "✎"}</span></button></div></td>${fx ? `<td colspan="${SEC.length}"><input type="number" min="0" step="any" value="${+(R.fx[k] / fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span>${ratioForm(k)}<label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa && R.fa[k] === 0 ? "" : " checked"} style="width:auto"> adapter aux régimes</label></td>` : q.map((v, i) => `<td><input type="number" min="0" step="any" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${esc(SEC[i][0])}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>${ouvert ? `<tr class="ced"><td colspan="${SEC.length + 2}">${ficheIngredient(k, `<button class="x tg" data-tg="${esc(k)}">${fx ? "→ par personne" : "→ quantité unique"}</button>`)}</td></tr>` : ""}`;
         })
         .join("")
     : "";
