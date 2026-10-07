@@ -1,39 +1,23 @@
 /* Styles de l'application Intendance de camp – Patro Sainte-Suzanne */
 :root {
-  --bg: #eaf4ec;
-  --card: #fff;
-  --tx: #1f2a22;
-  --mu: #5c6f62;
-  --ac: #1f7a3f;
-  --bd: #c9e0cf;
-  --grp: #e3efe6;
+  /* light-dark() : clair, sombre (thème du système, ou choisi avec le bouton 🌙 via data-theme) */
+  color-scheme: light dark;
+  --bg: light-dark(#eaf4ec, #142019);
+  --card: light-dark(#fff, #1c2b21);
+  --tx: light-dark(#1f2a22, #e6f0e8);
+  --mu: light-dark(#5c6f62, #9bb3a2);
+  --ac: light-dark(#1f7a3f, #2a8a50);
+  --bd: light-dark(#c9e0cf, #2c4234);
+  --grp: light-dark(#e3efe6, #264a33);
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #142019;
-    --card: #1c2b21;
-    --tx: #e6f0e8;
-    --mu: #9bb3a2;
-    --ac: #2a8a50;
-    --bd: #2c4234;
-    --grp: #264a33;
-  }
 }
 :root[data-theme="light"] {
   color-scheme: light;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --grp: #264a33;
-  --bg: #142019;
-  --card: #1c2b21;
-  --tx: #e6f0e8;
-  --mu: #9bb3a2;
-  --ac: #2a8a50;
-  --bd: #2c4234;
 }
 html {
   scroll-padding-top: env(safe-area-inset-top, 0px);
@@ -291,14 +275,6 @@ button.x {
   background: none;
   border-top: 1px solid var(--bd);
   margin-top: 6px;
-}
-.zx {
-  background: transparent;
-  color: inherit;
-  border: 0;
-  padding: 0 6px;
-  font-size: 0.9rem;
-  opacity: 0.85;
 }
 .crow {
   display: flex;
@@ -959,30 +935,14 @@ details[open] > summary.dhd::before {
 /* Régimes : champ dépassant l'effectif de la section, et message d'erreur */
 input.bad {
   border-color: #c0392b;
-  background: #fdecea;
-  color: #7a1f16;
+  background: light-dark(#fdecea, #3b1f1c);
+  color: light-dark(#7a1f16, #f2b8b5);
 }
 .derr {
   margin: 6px 0;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #b3261e;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) input.bad {
-    background: #3b1f1c;
-    color: #f2b8b5;
-  }
-  :root:not([data-theme="light"]) .derr {
-    color: #f2b8b5;
-  }
-}
-:root[data-theme="dark"] input.bad {
-  background: #3b1f1c;
-  color: #f2b8b5;
-}
-:root[data-theme="dark"] .derr {
-  color: #f2b8b5;
+  color: light-dark(#b3261e, #f2b8b5);
 }
 #dlist details.rg.bad {
   border-color: #c0392b;
@@ -1006,15 +966,11 @@ th.num,
 #list td:nth-child(2) {
   white-space: nowrap;
 }
-#list td:nth-child(3) input {
-  display: block;
-  margin-left: auto;
-  text-align: right;
-}
 /* Catalogue de prix : seule la colonne des prix est alignée à droite */
 #ct td:nth-child(3) {
   text-align: right;
 }
+#list td:nth-child(3) input,
 #ct td:nth-child(3) input {
   display: block;
   margin-left: auto;
@@ -1022,7 +978,8 @@ th.num,
 }
 
 /* Recettes : saisie « X pour N personnes » */
-.rtf {
+.rtf,
+.rimpr {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -1070,7 +1027,8 @@ th.num,
 .ced [data-ei] {
   margin-top: 8px;
 }
-.eg-btn {
+.eg-btn,
+.dpg .row2 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -1109,13 +1067,6 @@ th.num,
 .rimpl {
   border-top: 1px solid var(--bd);
   padding: 8px 0;
-}
-.rimpr {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  margin-top: 4px;
 }
 .rimpr select {
   width: auto;
@@ -1184,12 +1135,6 @@ th.num,
 .dpg {
   border-top: 1px solid var(--bd);
   padding: 10px 0;
-}
-.dpg .row2 {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
 }
 
 /* Aperçu détaillé de l'import de prix : ce qui change par rapport au catalogue */
