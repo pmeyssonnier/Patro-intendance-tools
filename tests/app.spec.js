@@ -715,9 +715,9 @@ test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la qua
   await ouvrir(page);
   await aller(page, "rec");
   await page.locator("#inew").click();
-  await page.locator("#iname").fill("Baguette");
-  await page.locator("#iunit").selectOption("pc");
-  await page.locator("#iok").click();
+  await page.locator("#ingn").fill("Baguette");
+  await page.locator("#ingu").selectOption("pc");
+  await page.locator("#ingok").click();
   const ligne = () => page.locator("#rb tr", { hasText: "Baguette" });
   // pas de saisie par ratio en mode « par personne » : elle est dans le mode « quantité unique »
   await expect(ligne().locator("[data-rq]")).toHaveCount(0);
@@ -812,9 +812,9 @@ test("catalogue : un JSON sans identifiant connu est relié par le nom de l'ingr
   // un ingrédient ajouté à la main (identifiant propre à l'appareil)
   await aller(page, "rec");
   await page.locator("#inew").click();
-  await page.locator("#iname").fill("Poivrons");
-  await page.locator("#iunit").selectOption("pc");
-  await page.locator("#iok").click();
+  await page.locator("#ingn").fill("Poivrons");
+  await page.locator("#ingu").selectOption("pc");
+  await page.locator("#ingok").click();
   await aller(page, "cat");
   const json = {
     source: "Colruyt",
@@ -903,10 +903,10 @@ test("catalogue : un ingrédient inutilisé peut changer d'unité (prix remis à
   await ouvrir(page);
   await aller(page, "cat");
   await page.locator("#cins").click();
-  await page.locator("#cinn").fill("Poivrons");
-  await page.locator("#cinu").selectOption("g");
-  await page.locator("#cinp").fill("2.78");
-  await page.locator("#cinok").click();
+  await page.locator("#ingn").fill("Poivrons");
+  await page.locator("#ingu").selectOption("g");
+  await page.locator("#ingp").fill("2.78");
+  await page.locator("#ingok").click();
   const k = await page.evaluate(() => Object.keys(S.cust)[0]);
   await page.locator(`#ct [data-ced="${k}"]`).click();
   // nom déjà pris (le pluriel et les accents comptent pour pareil)
@@ -928,9 +928,9 @@ test("catalogue : « Insérer un ingrédient » ne l'ajoute à aucune recette", 
   await ouvrir(page);
   await aller(page, "cat");
   await page.locator("#cins").click();
-  await page.locator("#cinn").fill("Courgettes");
-  await page.locator("#cinp").fill("1.99");
-  await page.locator("#cinok").click();
+  await page.locator("#ingn").fill("Courgettes");
+  await page.locator("#ingp").fill("1.99");
+  await page.locator("#ingok").click();
   await expect(page.locator("#ct")).toContainText("Courgettes");
   const r = await page.evaluate(() => {
     const k = Object.keys(S.cust)[0];
@@ -1134,8 +1134,8 @@ test("catalogue : un ingrédient utilisé dans une recette ne peut pas être sup
   expect(await page.evaluate(() => "pain" in ING && !S.hid.includes("pain"))).toBe(true);
   // un ingrédient inséré au catalogue, sans recette, se supprime
   await page.locator("#cins").click();
-  await page.locator("#cinn").fill("Sirop");
-  await page.locator("#cinok").click();
+  await page.locator("#ingn").fill("Sirop");
+  await page.locator("#ingok").click();
   await page.locator('#ct [data-chd^="c_"]').click();
   await expect.poll(() => messages.length).toBe(2);
   expect(messages[1]).toContain("confirm:Supprimer");
@@ -1512,9 +1512,9 @@ test("catalogue : modifier un ingrédient propose les mêmes champs que l'ajout,
   await aller(page, "cat");
   // ajout avec une attention régime
   await page.locator("#cins").click();
-  await page.locator("#cinn").fill("Chipolatas");
-  await page.locator("#cing").selectOption("porc");
-  await page.locator("#cinok").click();
+  await page.locator("#ingn").fill("Chipolatas");
+  await page.locator("#ingg").selectOption("porc");
+  await page.locator("#ingok").click();
   const k = await page.evaluate(() => Object.keys(S.cust).find((c) => ING[c][0] === "Chipolatas"));
   expect(await page.evaluate((c) => [c in DIETS.veg.ex, c in DIETS.halal.ex], k)).toEqual([
     true,
@@ -1617,9 +1617,9 @@ test("rayons : ajout au catalogue et en recette, export CSV, export du catalogue
   await ouvrir(page);
   await aller(page, "cat");
   await page.locator("#cins").click();
-  await page.locator("#cinn").fill("Glace vanille");
-  await page.locator("#cinc").selectOption("sur");
-  await page.locator("#cinok").click();
+  await page.locator("#ingn").fill("Glace vanille");
+  await page.locator("#ingc").selectOption("sur");
+  await page.locator("#ingok").click();
   const k = await page.evaluate(() =>
     Object.keys(S.cust).find((c) => ING[c][0] === "Glace vanille")
   );
@@ -1627,9 +1627,9 @@ test("rayons : ajout au catalogue et en recette, export CSV, export du catalogue
   // depuis la page Recettes
   await aller(page, "rec");
   await page.locator("#inew").click();
-  await page.locator("#iname").fill("Eau gazeuse");
-  await page.locator("#icat").selectOption("boi");
-  await page.locator("#iok").click();
+  await page.locator("#ingn").fill("Eau gazeuse");
+  await page.locator("#ingc").selectOption("boi");
+  await page.locator("#ingok").click();
   const k2 = await page.evaluate(() =>
     Object.keys(S.cust).find((c) => ING[c][0] === "Eau gazeuse")
   );
@@ -1637,8 +1637,8 @@ test("rayons : ajout au catalogue et en recette, export CSV, export du catalogue
   // un ingrédient sans rayon choisi est dans « Autre »
   await aller(page, "cat");
   await page.locator("#cins").click();
-  await page.locator("#cinn").fill("Machin");
-  await page.locator("#cinok").click();
+  await page.locator("#ingn").fill("Machin");
+  await page.locator("#ingok").click();
   expect(
     await page.evaluate(() => catOf(Object.keys(S.cust).find((c) => ING[c][0] === "Machin")))
   ).toBe("aut");
@@ -1720,8 +1720,8 @@ test("rayons : le champ « categorie » du fichier de prix est repris sans écra
   await ouvrir(page);
   await aller(page, "cat");
   await page.locator("#cins").click();
-  await page.locator("#cinn").fill("Spéculoos");
-  await page.locator("#cinok").click();
+  await page.locator("#ingn").fill("Spéculoos");
+  await page.locator("#ingok").click();
   const json = {
     source: "Colruyt",
     date_maj: "2026-10-06",
@@ -2229,4 +2229,145 @@ test("liens produit : enregistrés dans le projet, adresses étrangères refusé
     sucre: "https://www.colruyt.be/fr/produits/<script>",
   };
   expect(await page.evaluate((x) => cleanProject(x).url, abime)).toEqual({});
+});
+
+/** Ouvre la fenêtre « Nouvel ingrédient » depuis la page demandée (« cat » ou « rec ») et valide un nom / une unité. */
+async function ajouterIngredient(page, depuis, nom, unite) {
+  await aller(page, depuis);
+  await page.locator(depuis === "cat" ? "#cins" : "#inew").click();
+  await page.locator("#ingn").fill(nom);
+  await page.locator("#ingu").selectOption(unite);
+  await page.locator("#ingok").click();
+}
+
+test("nouvel ingrédient : un seul formulaire (catalogue et recettes), qui ajoute à la recette seulement depuis les recettes", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ajouterIngredient(page, "cat", "Sirop", "ml");
+  await expect(page.locator("#ingdlg")).not.toBeVisible();
+  const [nb, rec] = await page.evaluate(() => [
+    Object.keys(S.cust).length,
+    S.rec[S.cur] ? Object.keys(S.rec[S.cur].ing).length : -1,
+  ]);
+  expect(nb).toBe(1);
+  await ajouterIngredient(page, "rec", "Sucre glace", "g");
+  expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(2);
+  expect(
+    await page.evaluate(() =>
+      Object.keys(S.rec[S.cur].ing).some((k) => ING[k][0] === "Sucre glace")
+    )
+  ).toBe(true);
+  expect(
+    await page.evaluate(() => Object.keys(S.rec[S.cur].ing).some((k) => ING[k][0] === "Sirop"))
+  ).toBe(false);
+  expect(rec).toBeGreaterThan(0);
+});
+
+test("nouvel ingrédient : un nom déjà pris (même à l'accent ou au pluriel près) demande confirmation, aussi pour une autre unité", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  // « Pâtes » existe en grammes : « pate » en grammes = doublon exact
+  await ajouterIngredient(page, "cat", "pate", "g");
+  await expect(page.locator("#ingdup")).toBeVisible();
+  await expect(page.locator("#ingdupt")).toContainText("« Pâtes » existe déjà");
+  expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(0);
+  // « Modifier » referme l'avertissement sans rien créer
+  await page.locator("#ingback").click();
+  await expect(page.locator("#ingdup")).toBeHidden();
+  // autre unité : avertissement différent, qui parle de l'unité de l'existant
+  await page.locator("#ingu").selectOption("pc");
+  await page.locator("#ingok").click();
+  await expect(page.locator("#ingdupt")).toContainText("mais en poids");
+  expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(0);
+  // créer quand même
+  await page.locator("#ingforce").click();
+  await expect(page.locator("#ingdlg")).not.toBeVisible();
+  expect(await page.evaluate(() => Object.values(S.cust).map((e) => [e[0], e[1]]))).toEqual([
+    ["pate", "pc"],
+  ]);
+  // un nom nouveau ne demande rien
+  await ajouterIngredient(page, "cat", "Cannelle", "g");
+  await expect(page.locator("#ingdlg")).not.toBeVisible();
+});
+
+test("nouvel ingrédient depuis une recette : « Utiliser l'existant » ajoute l'ingrédient du catalogue sans en créer un", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ajouterIngredient(page, "cat", "Sirop", "ml");
+  await aller(page, "rec");
+  await page.locator("#inew").click();
+  await page.locator("#ingn").fill("sirops");
+  await page.locator("#ingu").selectOption("ml");
+  await page.locator("#ingok").click();
+  await expect(page.locator("#inguse")).toBeVisible();
+  await page.locator("#inguse").click();
+  expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(1);
+  expect(
+    await page.evaluate(() => Object.keys(S.rec[S.cur].ing).some((k) => ING[k][0] === "Sirop"))
+  ).toBe(true);
+});
+
+test("catalogue : deux doublons utilisés dans des recettes se fusionnent (quantités additionnées, prix gardé, un seul reste)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.evaluate(() => {
+    const a = createIng("Huile d'olive", "ml", "", "aut"),
+      b = createIng("huile olive", "ml", "", "aut");
+    S.prices[b] = 6;
+    S.rec[S.cur].ing[a] = SEC.map(() => 10);
+    S.rec[S.cur].ing[b] = SEC.map(() => 5);
+    window.__ids = [a, b];
+    refreshIng();
+  });
+  const [a, b] = await page.evaluate(() => window.__ids);
+  // b (huile olive, avec prix) est fusionné dans a (sans prix) : a garde son nom et reprend le prix de b
+  await page.locator(`#ct [data-cmg="${b}"]`).click();
+  await expect(page.locator("#mgdlg")).toBeVisible();
+  await expect(page.locator("#mgb")).toContainText("doublon probable");
+  await page.locator("#mgb").selectOption(a);
+  await page.locator("#mgs1").check(); // garder « a », « b » est supprimé
+  await page.locator("#mgok").click();
+  await expect(page.locator("#mgdlg")).not.toBeVisible();
+  const etat = await page.evaluate(
+    ([a, b]) => ({
+      aExiste: !!ING[a],
+      bExiste: !!ING[b],
+      q: S.rec[S.cur].ing[a],
+      prix: S.prices[a],
+      bDansRecette: b in S.rec[S.cur].ing,
+    }),
+    [a, b]
+  );
+  expect(etat.bExiste).toBe(false);
+  expect(etat.aExiste).toBe(true);
+  expect(etat.bDansRecette).toBe(false);
+  expect(etat.q.every((v) => v === 15)).toBe(true);
+  expect(etat.prix).toBe(6);
+});
+
+test("catalogue : la fusion peut garder l'autre sens, refuse deux unités différentes et additionne les quantités uniques", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const a = createIng("Lait entier", "ml", "", "aut"),
+      b = createIng("lait entier", "ml", "", "aut"),
+      c = createIng("Lait pièce", "pc", "", "aut");
+    S.rec[S.cur].ing[a] = SEC.map(() => 10);
+    S.rec[S.cur].ing[b] = SEC.map(() => 0);
+    S.rec[S.cur].fx = { ...(S.rec[S.cur].fx || {}), [a]: 1000, [b]: 500 };
+    const unites = fusionnerIng(a, c);
+    const ok = fusionnerIng(a, b);
+    return { unites, ok, aGone: !ING[a], total: S.rec[S.cur].fx[b], b: !!ING[b] };
+  });
+  expect(r.unites).toContain("pas la même unité");
+  expect(r.ok).toBe("");
+  expect(r.aGone).toBe(true);
+  expect(r.b).toBe(true);
+  expect(r.total).toBe(1500);
 });

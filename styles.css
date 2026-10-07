@@ -1052,8 +1052,10 @@ th.num,
   max-width: 100%;
 }
 
-/* Fenêtre d'import des prix (catalogue) */
-#impdlg {
+/* Fenêtres du catalogue : import des prix, nouvel ingrédient, fusion */
+#impdlg,
+#ingdlg,
+#mgdlg {
   width: min(640px, calc(100vw - 24px));
   max-height: calc(100vh - 24px);
   overflow: auto;
@@ -1064,10 +1066,15 @@ th.num,
   color: var(--tx);
   box-sizing: border-box;
 }
-#impdlg::backdrop {
+#impdlg::backdrop,
+#ingdlg::backdrop,
+#mgdlg::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
-#impdlg textarea {
+#impdlg textarea,
+#ingdlg input,
+#ingdlg select,
+#mgdlg select {
   width: 100%;
   box-sizing: border-box;
 }

@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.13.1">
+<link rel="stylesheet" href="styles.css?v=1.14.0">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -94,11 +94,6 @@
 <input id="rimu" type="text" aria-label="Adresse de la recette (facultatif)" placeholder="Adresse de la recette, pour garder la source (facultatif)" style="margin-top:6px">
 <p><button id="rimlire">Lire la recette</button> <button id="rimfer" class="x">Annuler</button></p>
 <div id="rimv"></div></div>
-<div class="g" id="iform" style="display:none"><div><label>Nom</label><input id="iname" aria-label="Nom du nouvel ingrédient" placeholder="ex. Poivrons"></div>
-<div><label>Unité</label><select id="iunit" aria-label="Unité du nouvel ingrédient"><option value="g">Poids : g (prix au kg)</option><option value="ml">Liquide : ml (prix au L)</option><option value="pc">Pièce (prix à la pièce)</option></select></div>
-<div><label>Attention régime</label><select id="idiet" aria-label="Attention régime du nouvel ingrédient"><option value="">Aucun</option><option value="viande">Viande / poisson</option><option value="porc">Porc</option><option value="boeuf">Bœuf</option><option value="sl">Lactose</option><option value="sg">Gluten</option><option value="nut">Fruits à coque / arachides</option></select></div>
-<div><label>Rayon</label><select id="icat" aria-label="Rayon du nouvel ingrédient"></select></div>
-<div style="align-self:end"><button id="iok">Ajouter</button> <button id="ino" class="x">Annuler</button></div></div>
 </section></div>
 
 <div class="pg" id="g-cat"><section class="card"><h2>Catalogue de prix</h2>
@@ -118,12 +113,6 @@
 <input type="search" id="cfilt" aria-label="Filtrer les ingrédients par nom ou nom de produit" placeholder="🔍 Filtrer par ingrédient ou produit…" autocomplete="off" style="margin-bottom:8px">
 <div class="w st"><table class="fit"><thead><tr><th>Ingrédient</th><th>Unité</th><th class="num">Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
 <p><button id="cins" class="x">➕ Insérer un ingrédient</button> <span class="s" id="cinm" role="status"></span></p>
-<div class="g" id="cinf" style="display:none"><div><label>Nom</label><input id="cinn" aria-label="Nom du nouvel ingrédient" placeholder="ex. Poivrons"></div>
-<div><label>Unité</label><select id="cinu" aria-label="Unité du nouvel ingrédient"><option value="g">Poids : g (prix au kg)</option><option value="ml">Liquide : ml (prix au L)</option><option value="pc">Pièce (prix à la pièce)</option></select></div>
-<div><label>Attention régime</label><select id="cing" aria-label="Attention régime du nouvel ingrédient"></select></div>
-<div><label>Rayon</label><select id="cinc" aria-label="Rayon du nouvel ingrédient"></select></div>
-<div><label>Prix (€ par kg, L ou pièce)</label><input id="cinp" type="number" min="0" step="any" aria-label="Prix du nouvel ingrédient" placeholder="facultatif"></div>
-<div style="align-self:end"><button id="cinok">Ajouter</button> <button id="cinno" class="x">Annuler</button></div></div>
 <p><button id="hrs" class="x">Restaurer les ingrédients de base</button></p></section></div>
 
 <div class="pg" id="g-list">
@@ -166,22 +155,43 @@
 <div id="live" class="sr" aria-live="polite"></div>
 <div id="warn" class="np" role="alert" hidden><span id="warnt"></span> <button id="warnx">💾 Exporter</button> <button id="warnc" class="x" aria-label="Fermer l'avertissement">✕</button></div>
 <!-- Scripts classiques : l'ordre compte (chaque fichier dépend de ceux qui le précèdent). -->
-<script src="js/data-defaults.js?v=1.13.1"></script>
-<script src="js/utils.js?v=1.13.1"></script>
-<script src="js/storage.js?v=1.13.1"></script>
-<script src="js/state.js?v=1.13.1"></script>
-<script src="js/calculations.js?v=1.13.1"></script>
-<script src="js/shopping-list.js?v=1.13.1"></script>
-<script src="js/documents.js?v=1.13.1"></script>
-<script src="js/share-print.js?v=1.13.1"></script>
-<script src="js/navigation.js?v=1.13.1"></script>
-<script src="js/camps.js?v=1.13.1"></script>
-<script src="js/diets.js?v=1.13.1"></script>
-<script src="js/menu.js?v=1.13.1"></script>
-<script src="js/recipes.js?v=1.13.1"></script>
-<script src="js/catalog.js?v=1.13.1"></script>
-<script src="js/recipe-import.js?v=1.13.1"></script>
-<script src="js/config.js?v=1.13.1"></script>
-<script src="js/pwa.js?v=1.13.1"></script>
-<script src="js/main.js?v=1.13.1"></script>
+<dialog id="ingdlg" class="np" aria-labelledby="ingt">
+<h2 id="ingt" style="margin-top:0">Nouvel ingrédient</h2>
+<p class="s" id="ingctx"></p>
+<div class="g"><div><label for="ingn">Nom</label><input id="ingn" aria-label="Nom du nouvel ingrédient" placeholder="ex. Poivrons" maxlength="100"></div>
+<div><label for="ingu">Unité</label><select id="ingu" aria-label="Unité du nouvel ingrédient"><option value="g">Poids : g (prix au kg)</option><option value="ml">Liquide : ml (prix au L)</option><option value="pc">Pièce (prix à la pièce)</option></select></div>
+<div><label for="ingg">Attention régime</label><select id="ingg" aria-label="Attention régime du nouvel ingrédient"><option value="">Aucun</option><option value="viande">Viande / poisson</option><option value="porc">Porc</option><option value="boeuf">Bœuf</option><option value="sl">Lactose</option><option value="sg">Gluten</option><option value="nut">Fruits à coque / arachides</option></select></div>
+<div><label for="ingc">Rayon</label><select id="ingc" aria-label="Rayon du nouvel ingrédient"></select></div>
+<div><label for="ingp">Prix (€ par kg, L ou pièce)</label><input id="ingp" type="number" min="0" step="any" aria-label="Prix du nouvel ingrédient" placeholder="facultatif"></div></div>
+<p class="s" id="ingm" role="status" style="color:#d33"></p>
+<div id="ingdup" hidden class="s" role="alert" style="border:1px solid #d33;border-radius:8px;padding:8px;margin:6px 0"><span id="ingdupt"></span><div style="margin-top:6px"><button id="ingforce" class="x">Créer quand même</button> <button id="inguse" class="x" hidden>Utiliser l'existant</button> <button id="ingback" class="x">Modifier</button></div></div>
+<p><button id="ingok">Ajouter</button> <button id="ingno" class="x">Annuler</button></p>
+</dialog>
+<dialog id="mgdlg" class="np" aria-labelledby="mgt">
+<h2 id="mgt" style="margin-top:0">Fusionner deux ingrédients</h2>
+<p class="s">Les quantités des recettes sont additionnées, le prix est repris si l'ingrédient gardé n'en a pas. L'ingrédient supprimé disparaît du catalogue et des recettes.</p>
+<p><label for="mgb">Fusionner « <span id="mga"></span> » avec</label><select id="mgb" aria-label="Autre ingrédient à fusionner"></select></p>
+<fieldset style="border:0;padding:0;margin:6px 0"><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="mgs" id="mgs1" value="ab" checked style="width:auto"> <span id="mgl1"></span></label><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="mgs" id="mgs2" value="ba" style="width:auto"> <span id="mgl2"></span></label></fieldset>
+<p class="s" id="mgp"></p>
+<p class="s" id="mgm" role="status" style="color:#d33"></p>
+<p><button id="mgok">Fusionner</button> <button id="mgno" class="x">Annuler</button></p>
+</dialog>
+<script src="js/data-defaults.js?v=1.14.0"></script>
+<script src="js/utils.js?v=1.14.0"></script>
+<script src="js/storage.js?v=1.14.0"></script>
+<script src="js/state.js?v=1.14.0"></script>
+<script src="js/calculations.js?v=1.14.0"></script>
+<script src="js/shopping-list.js?v=1.14.0"></script>
+<script src="js/documents.js?v=1.14.0"></script>
+<script src="js/share-print.js?v=1.14.0"></script>
+<script src="js/navigation.js?v=1.14.0"></script>
+<script src="js/camps.js?v=1.14.0"></script>
+<script src="js/diets.js?v=1.14.0"></script>
+<script src="js/menu.js?v=1.14.0"></script>
+<script src="js/recipes.js?v=1.14.0"></script>
+<script src="js/catalog.js?v=1.14.0"></script>
+<script src="js/recipe-import.js?v=1.14.0"></script>
+<script src="js/config.js?v=1.14.0"></script>
+<script src="js/pwa.js?v=1.14.0"></script>
+<script src="js/main.js?v=1.14.0"></script>
 </body></html>

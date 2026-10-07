@@ -341,16 +341,6 @@ const DMAP = {
   nut: ["nut"],
 };
 
-$("inew").onclick = () => {
-  $("iform").style.display = "grid";
-  $("iname").value = "";
-  $("iname").focus();
-};
-
-$("ino").onclick = () => {
-  $("iform").style.display = "none";
-};
-
 /** Crée un ingrédient ajouté à la main (identifiant c_…) ; dgKey = « attention régime » (viande, porc, boeuf, sl, sg, nut). Renvoie son identifiant. */
 function createIng(n, unit, dgKey, cat) {
   let k = "c_" + Date.now().toString(36);
@@ -366,14 +356,3 @@ function createIng(n, unit, dgKey, cat) {
   });
   return k;
 }
-
-$("iok").onclick = () => {
-  const n = $("iname").value.trim();
-  if (!n) return;
-  const k = createIng(n, $("iunit").value, $("idiet").value, $("icat").value);
-  if (S.rec[S.cur]) S.rec[S.cur].ing[k] = SEC.map(() => 0);
-  $("iform").style.display = "none";
-  drawRec();
-  drawDietEd();
-  calc();
-};
