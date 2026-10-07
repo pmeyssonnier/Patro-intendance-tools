@@ -1131,6 +1131,18 @@ th.num,
 #dpdlg::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
+/* Boutons Importer / Annuler : toujours visibles en bas de la fenêtre, même quand l'aperçu est long */
+#impdlg {
+  padding-bottom: 0;
+}
+#impdlg .impb {
+  position: sticky;
+  bottom: 0;
+  margin: 10px -14px 0;
+  padding: 10px 14px 14px;
+  background: var(--card);
+  border-top: 1px solid var(--bd);
+}
 #impdlg textarea,
 #ingdlg input,
 #ingdlg select,

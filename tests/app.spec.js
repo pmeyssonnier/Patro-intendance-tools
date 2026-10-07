@@ -2604,3 +2604,28 @@ test("import de prix : l'aperçu compare les anciens et nouveaux prix (hausses, 
   await expect(page.locator("#csv")).toBeVisible();
   await expect(cmp).toBeHidden();
 });
+
+test("import des prix : les boutons Importer / Annuler restent visibles malgré un aperçu long", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const ingredients = await page.evaluate(() => {
+    const o = {};
+    Object.keys(ING)
+      .slice(0, 30)
+      .forEach((k, i) => {
+        o[k] = {
+          unite: { g: "kg", ml: "l", pc: "piece" }[ING[k][1]],
+          prix_unitaire: 1 + i,
+          produit: { nom: "Marque produit " + i },
+        };
+      });
+    return o;
+  });
+  await simulerPrixPublies(page, 200, { source: "Colruyt", date_maj: "2026-10-03", ingredients });
+  await page.locator("#pfetch").click();
+  await expect(page.locator("#imp")).toBeVisible();
+  await expect(page.locator("#imp")).toBeInViewport({ ratio: 1 });
+  await expect(page.locator("#impno")).toBeInViewport({ ratio: 1 });
+});
