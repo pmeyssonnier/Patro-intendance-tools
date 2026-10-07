@@ -2499,7 +2499,7 @@ test("liste de courses : un article au nom déjà connu (même unité) reprend l
   await page.locator("#xu").selectOption("g");
   await page.locator("#xq").fill("1.5");
   await page.locator("#xok").click();
-  await expect(page.locator("#xm")).toContainText("s'appelle déjà");
+  await expect(page.locator("#xm")).toContainText("existe déjà");
   expect(await page.evaluate(() => Object.keys(ING).length)).toBe(nb);
   expect(await page.evaluate(() => C.extra.pates)).toBe(1500);
   // un nom vide ou une quantité nulle sont refusés
