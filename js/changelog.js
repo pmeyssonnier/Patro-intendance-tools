@@ -5,6 +5,23 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.25.0",
+    d: "2026-10-07",
+    t: "Gras et souligné, effectif lisible sur le menu imprimé",
+    l: [
+      "Recettes : dans la description, on peut mettre des mots en gras ou soulignés (boutons G et S en mode édition, ou Ctrl+B / Ctrl+U). La mise en forme se voit à la lecture et dans l'impression ; elle est retirée du texte partagé et du CSV.",
+      "Menu imprimable : « 30 pers. » prend la couleur du nom du repas, donc il se lit sur toutes les couleurs de repas.",
+    ],
+  },
+  {
+    v: "1.24.1",
+    d: "2026-10-07",
+    t: "Régimes triés par ordre alphabétique",
+    l: [
+      "Régimes : les règles de remplacement et les listes d'ingrédients et de substituts sont triées par ordre alphabétique.",
+    ],
+  },
+  {
     v: "1.24.0",
     d: "2026-10-07",
     t: "Gérer les rayons",

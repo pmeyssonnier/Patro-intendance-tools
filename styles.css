@@ -559,6 +559,12 @@ footer {
   color: #5c6f62;
   font-style: italic;
 }
+/* effectif sous le nom du repas : même couleur de texte que le nom (choisie pour contraster avec la couleur du repas) */
+.mt td.sn .ad {
+  color: inherit;
+  font-style: normal;
+  font-weight: 700;
+}
 .mt td.ck {
   width: 1.4em;
   text-align: center;
@@ -1350,4 +1356,23 @@ th.num,
     flex: 1;
     text-align: right;
   }
+}
+
+/* Description d'une recette : lecture mise en forme (gras, souligné) et barre de mise en forme en édition */
+.rdv {
+  min-height: 84px;
+  padding: 8px 10px;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.rtb {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0;
+}
+.rtb button {
+  min-width: 40px;
 }

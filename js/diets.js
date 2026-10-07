@@ -129,6 +129,9 @@ $("dlist").addEventListener(
 
 let dcur = null;
 
+/** Ordre alphabétique des ingrédients (par nom affiché, accents et majuscules sans effet) : pour trier des identifiants. */
+const parNom = (a, b) => ING[a][0].localeCompare(ING[b][0], "fr");
+
 function drawDietEd() {
   const ks = Object.keys(DIETS);
   if (!DIETS[dcur]) dcur = ks[0] || null;
@@ -144,6 +147,7 @@ function drawDietEd() {
       (none ? `<option value=""${sel == null ? " selected" : ""}>— retirer —</option>` : "") +
       Object.keys(ING)
         .filter((k) => vis(k, sel))
+        .sort(parNom)
         .map(
           (k) =>
             `<option value="${esc(k)}"${k === sel ? " selected" : ""}>${esc(ING[k][0])}</option>`
@@ -151,6 +155,7 @@ function drawDietEd() {
         .join("");
   $("drules").innerHTML = dcur
     ? Object.entries(DIETS[dcur].ex)
+        .sort(([a], [b]) => parNom(a, b))
         .map(
           ([k, v]) =>
             `<tr><td><select data-ro="${esc(k)}" aria-label="Ingrédient à remplacer">${opt(k)}</select></td><td>→</td><td><select data-rs="${esc(k)}" aria-label="Remplacé par">${opt(v, 1)}</select></td><td><button class="x" data-rx="${esc(k)}" aria-label="Supprimer cette règle" title="Supprimer cette règle">✕</button></td></tr>`
@@ -195,7 +200,9 @@ $("ddel").onclick = () => {
 
 $("dradd").onclick = () => {
   const ex = DIETS[dcur].ex,
-    k = Object.keys(ING).find((k) => !(k in ex) && !ING[k][4] && !S.art[k] && !S.hid.includes(k));
+    k = Object.keys(ING)
+      .filter((k) => !(k in ex) && !ING[k][4] && !S.art[k] && !S.hid.includes(k))
+      .sort(parNom)[0];
   if (!k) {
     alert("Aucun ingrédient disponible.");
     return;
@@ -203,6 +210,8 @@ $("dradd").onclick = () => {
   ex[k] = null;
   drawDietEd();
   calc();
+  const champ = $("drules").querySelector(`[data-ro="${CSS.escape(k)}"]`);
+  if (champ) champ.focus();
 };
 
 $("drules").addEventListener("change", (e) => {

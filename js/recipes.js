@@ -44,8 +44,14 @@ function drawRec() {
   const R = S.rec[S.cur];
   if (!R || !(recEdit in R.ing)) recEdit = null;
   $("rdesc").value = R ? R.desc : "";
-  // la description n'est modifiable que dans le mode édition (✎)
+  // la description n'est modifiable que dans le mode édition (✎) ; sinon on la lit mise en forme (gras, souligné)
   $("rdesc").readOnly = !EDIT;
+  $("rdesc").style.display = $("rtb").style.display = EDIT ? "" : "none";
+  $("rdv").style.display = EDIT ? "none" : "";
+  $("rdv").innerHTML =
+    R && R.desc
+      ? fmtDesc(R.desc)
+      : '<span class="s">Aucune description. Clique sur ✎ pour en ajouter une.</span>';
   $("rdesc").placeholder =
     EDIT || !R ? "" : "Aucune description. Clique sur ✎ pour en ajouter une.";
   $("rh").innerHTML =
@@ -85,6 +91,47 @@ function saveDesc() {
     save();
   }
 }
+
+/** Met en gras (**…**) ou souligne (__…__) la sélection de la description ; refait le geste pour l'enlever. Sans sélection, place les marques autour du curseur. */
+function mettreEnForme(type) {
+  const m = type === "b" ? "**" : "__",
+    ta = $("rdesc"),
+    v = ta.value,
+    s = ta.selectionStart,
+    e = ta.selectionEnd,
+    sel = v.slice(s, e);
+  let nv, ns, ne;
+  if (v.slice(s - 2, s) === m && v.slice(e, e + 2) === m) {
+    nv = v.slice(0, s - 2) + sel + v.slice(e + 2);
+    ns = s - 2;
+    ne = e - 2;
+  } else if (sel.length > 4 && sel.startsWith(m) && sel.endsWith(m)) {
+    nv = v.slice(0, s) + sel.slice(2, -2) + v.slice(e);
+    ns = s;
+    ne = e - 4;
+  } else {
+    nv = v.slice(0, s) + m + sel + m + v.slice(e);
+    ns = s + 2;
+    ne = e + 2;
+  }
+  ta.value = nv;
+  ta.focus();
+  ta.setSelectionRange(ns, ne);
+  saveDesc();
+}
+
+$("rtb").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-fmt]");
+  if (b && EDIT) mettreEnForme(b.dataset.fmt);
+});
+
+$("rdesc").addEventListener("keydown", (e) => {
+  if (!EDIT || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const t = e.key.toLowerCase() === "b" ? "b" : e.key.toLowerCase() === "u" ? "u" : "";
+  if (!t) return;
+  e.preventDefault();
+  mettreEnForme(t);
+});
 
 $("rdesc").onchange = saveDesc;
 $("rdesc").oninput = saveDesc;
