@@ -98,7 +98,11 @@ Aucune dépendance ni étape de compilation :
 | `js/diets.js` | régimes, allergies, règles de remplacement |
 | `js/menu.js` | menu du camp, glisser-déposer, repas supplémentaires, couleurs |
 | `js/recipes.js` | recettes et ingrédients |
-| `js/catalog.js` | catalogue de prix et import |
+| `js/ingredient-matching.js` | comparer les noms d'ingrédients (doublons, correspondances) |
+| `js/ingredients.js` | modifier, créer et exporter les ingrédients (données) |
+| `js/ingredient-merge.js` | détecter les doublons et fusionner deux ingrédients (données) |
+| `js/price-import.js` | lire, comparer et appliquer les prix importés (JSON, CSV/texte) |
+| `js/catalog-ui.js` | catalogue de prix : tableau, fenêtres d'import, d'ingrédient, de fusion et de doublons |
 | `js/recipe-import.js` | import d'une recette collée (ld+json) |
 | `js/config.js` | configuration : nom de la troupe, logo, sections |
 | `js/pwa.js` | installation et hors connexion |

@@ -51,7 +51,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(19);
+  expect(liens.length).toBe(23);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
