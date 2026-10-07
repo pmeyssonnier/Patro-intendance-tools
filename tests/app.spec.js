@@ -2877,3 +2877,44 @@ test("deux onglets : le second à enregistrer ne remplace pas le travail du prem
   expect(await nomEnregistre()).toBe("Camp A");
   expect(erreurs).toEqual([]);
 });
+
+test("recettes : la poignée ⠿ d'un ingrédient change son ordre (clavier et glisser), et l'ordre est conservé", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "rec");
+  const ordre = () => page.evaluate(() => Object.keys(S.rec[S.cur].ing).join(","));
+  const stocke = () =>
+    page.evaluate(() => {
+      const p = JSON.parse(localStorage.getItem("intendance2"));
+      return Object.keys(p.rec[S.cur].ing).join(",");
+    });
+  const avant = await ordre();
+  const cles = avant.split(",");
+  expect(cles.length).toBeGreaterThan(2);
+  // clavier : le premier descend d'un cran, puis remonte
+  await page.locator(`#rb .ih[data-ih="${cles[0]}"]`).focus();
+  await page.keyboard.press("ArrowDown");
+  expect((await ordre()).split(",").slice(0, 2)).toEqual([cles[1], cles[0]]);
+  await page.locator(`#rb .ih[data-ih="${cles[0]}"]`).focus();
+  await page.keyboard.press("ArrowUp");
+  expect(await ordre()).toBe(avant);
+  // glisser : le premier ingrédient prend la place du dernier
+  await page.setViewportSize({ width: 1200, height: 2000 });
+  const lignes = page.locator("#rb tr[data-rk]");
+  const n = await lignes.count();
+  const src = await lignes.first().locator(".ih").boundingBox();
+  const dst = await lignes.nth(n - 1).boundingBox();
+  await page.mouse.move(src.x + src.width / 2, src.y + src.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dst.x + 100, dst.y + dst.height / 2, { steps: 8 });
+  await page.mouse.up();
+  const apres = (await ordre()).split(",");
+  expect(apres[n - 1]).toBe(cles[0]);
+  expect(apres.slice(0, n - 1)).toEqual(cles.slice(1));
+  // permanent : enregistré, relu après rechargement, et dans les documents
+  expect(await stocke()).toBe(apres.join(","));
+  await page.reload();
+  expect(await ordre()).toBe(apres.join(","));
+  expect(erreurs).toEqual([]);
+});

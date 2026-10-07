@@ -251,7 +251,8 @@ button.x {
   cursor: pointer;
   overflow-wrap: anywhere;
 }
-.zh {
+.zh,
+.ih {
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -260,6 +261,17 @@ button.x {
   font-size: 1.1rem;
   line-height: 1.2;
   opacity: 0.85;
+}
+#rb .ih {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 6px 8px 6px 0;
+}
+#rb tr.drag {
+  opacity: 0.5;
+}
+#rb tr.over td {
+  box-shadow: inset 0 2px 0 var(--ac);
 }
 .zone.drag {
   opacity: 0.5;
