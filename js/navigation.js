@@ -10,6 +10,7 @@ const PG = {
   list: "Liste de courses",
   sh: "Partager / imprimer",
   cfg: "Configuration",
+  nv: "Nouveautés",
   pj: "Sauvegarde",
 };
 

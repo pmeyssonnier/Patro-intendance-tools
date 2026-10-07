@@ -60,7 +60,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(23);
+  expect(liens.length).toBe(24);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -2974,5 +2974,32 @@ test("recettes : le nom d'un ingrédient ouvre sa fiche (comme le catalogue), un
   await expect(page.locator("#rb .ced")).toHaveCount(0);
   // le ✕ de la ligne retire toujours de la recette, sans supprimer l'ingrédient
   await expect(page.locator(`#rb tr[data-rk="${cles[0]}"] [data-rm]`)).toHaveCount(1);
+  expect(erreurs).toEqual([]);
+});
+
+test("Nouveautés : une page entre Configuration et Sauvegarde, avec l'historique à jour", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  // place dans le menu : après Configuration, avant Sauvegarde
+  const pages = await page
+    .locator("#drawer .ni[data-g]")
+    .evaluateAll((l) => l.map((x) => x.dataset.g));
+  expect(pages.indexOf("nv")).toBe(pages.indexOf("cfg") + 1);
+  expect(pages.indexOf("pj")).toBe(pages.indexOf("nv") + 1);
+  await aller(page, "nv");
+  await expect(page.locator("#ptitle")).toHaveText("Nouveautés");
+  const versions = page.locator("#nvl details.nv");
+  expect(await versions.count()).toBeGreaterThan(10);
+  // la dernière version est celle de l'appli, dépliée ; les autres sont repliées
+  const v = await page.evaluate(() => APP_VERSION);
+  await expect(versions.first().locator("summary b")).toHaveText(v);
+  await expect(versions.first()).toHaveAttribute("open", "");
+  await expect(versions.nth(1)).not.toHaveAttribute("open", "");
+  // une version repliée s'ouvre au clic
+  await versions.nth(1).locator("summary").click();
+  await expect(versions.nth(1).locator("li").first()).toBeVisible();
+  // la plus ancienne remonte aux débuts
+  await expect(versions.last().locator("summary b")).toHaveText("1.0.0 – 1.4.0");
   expect(erreurs).toEqual([]);
 });

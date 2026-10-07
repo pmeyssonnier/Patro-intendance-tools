@@ -24,6 +24,7 @@ const FILES = [
   "js/price-import.js",
   "js/catalog-ui.js",
   "js/recipe-import.js",
+  "js/changelog.js",
   "js/config.js",
   "js/pwa.js",
   "js/main.js",

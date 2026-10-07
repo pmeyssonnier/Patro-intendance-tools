@@ -1271,3 +1271,20 @@ th.num,
 .zeff > .s:last-child {
   flex-basis: 100%;
 }
+
+/* Page Nouveautés : une ligne repliable par version */
+.nv {
+  border-top: 1px solid var(--bd);
+  padding: 8px 0;
+}
+.nv summary {
+  cursor: pointer;
+  padding: 4px 0;
+}
+.nv ul {
+  margin: 6px 0 4px;
+  padding-left: 20px;
+}
+.nv li {
+  margin: 4px 0;
+}
