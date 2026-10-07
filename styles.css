@@ -1015,6 +1015,11 @@ th.num,
 .ced td {
   background: var(--grp);
 }
+/* le champ Nom prend toute la largeur de sa colonne, comme les listes (« td input » le limitait à 72 px) */
+.ced .g input {
+  width: 100%;
+  padding: 9px 10px;
+}
 
 /* liste des rayons du catalogue : deux fois plus large (toute la largeur de la ligne) */
 #crayon {

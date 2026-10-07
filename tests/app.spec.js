@@ -2371,3 +2371,15 @@ test("catalogue : la fusion peut garder l'autre sens, refuse deux unités diffé
   expect(r.b).toBe(true);
   expect(r.total).toBe(1500);
 });
+
+test("catalogue : en modification, le champ Nom a la même largeur que les listes (Unité, Régime, Rayon)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pates"]').click();
+  const largeur = (sel) =>
+    page.locator(sel).evaluate((e) => Math.round(e.getBoundingClientRect().width));
+  expect(await largeur('[data-en="pates"]')).toBe(await largeur('[data-eg="pates"]'));
+  expect(await largeur('[data-en="pates"]')).toBeGreaterThan(120);
+});
