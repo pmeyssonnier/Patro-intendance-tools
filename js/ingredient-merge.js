@@ -12,8 +12,8 @@ function fusionnerIng(src, dst) {
   const melange = Object.values(S.rec).some(
     (r) => src in r.ing && dst in r.ing && fixe(r, src) !== fixe(r, dst)
   );
-  if (melange && !nn())
-    return "Une recette mélange quantité unique et quantité par personne : renseigne d'abord les effectifs (page Camps).";
+  if (melange)
+    return "Une recette utilise l'un en quantité unique et l'autre en quantité par personne : la fusion fixerait le total pour l'effectif actuel. Mets d'abord les deux en quantité par personne, ou les deux en quantité unique.";
   for (const r of Object.values(S.rec)) {
     if (!(src in r.ing)) continue;
     if (!(dst in r.ing)) {

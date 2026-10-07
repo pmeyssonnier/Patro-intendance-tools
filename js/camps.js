@@ -137,12 +137,12 @@ drawCnt();
 
 $("cnt").addEventListener("input", (e) => {
   if (e.target.dataset.n === undefined) return;
-  C.n[e.target.dataset.n] = +e.target.value || 0;
+  C.n[e.target.dataset.n] = saisie(e.target.value, 1e4);
   checkDiets();
   calc();
 });
 
 $("wa").addEventListener("input", () => {
-  C.wa = +$("wa").value || 0;
+  C.wa = saisie($("wa").value, 500);
   calc();
 });

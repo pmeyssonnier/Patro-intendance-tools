@@ -38,6 +38,12 @@ const price = (k) => S.prices[k] ?? ING[k][2],
   troop = () => (S.troop || "").trim() || TROOP0,
   nn = () => C.n.reduce((a, b) => a + b, 0);
 
+/** Nombre saisi dans un champ : fini, entre 0 et `max` (0 si vide ou invalide). Le « min » du HTML n'empêche pas un « -5 » d'arriver au gestionnaire. */
+const saisie = (v, max = 1e6) => {
+  v = +v;
+  return Number.isFinite(v) ? Math.min(max, Math.max(0, v)) : 0;
+};
+
 const fxu = (k) => (ING[k][1] === "pc" ? 1 : 1000),
   fxl = (k) => ({ g: "kg", ml: "L", pc: "pièces" })[ING[k][1]];
 

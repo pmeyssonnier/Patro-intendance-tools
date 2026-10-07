@@ -2750,3 +2750,87 @@ test("menu : effectif réglé section par section pour un repas, un jour ou un r
   await page.locator('.zpan [data-pra="1"]').click();
   expect(await page.evaluate(() => C.pres["0|s"])).toBeUndefined();
 });
+
+test("liste de courses : ajouter deux fois le même article additionne les quantités (pièces, kg, litres)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "list");
+  const ajouter = async (nom, unite, q) => {
+    await page.locator("#xn").fill(nom);
+    await page.locator("#xu").selectOption(unite);
+    await page.locator("#xq").fill(q);
+    await page.locator("#xok").click();
+  };
+  await ajouter("Sacs poubelle", "pc", "2");
+  await ajouter("Sacs poubelle", "pc", "3");
+  await ajouter("Farine de secours", "g", "1.5");
+  await ajouter("Farine de secours", "g", "2");
+  await ajouter("Jus de secours", "ml", "0.25");
+  await ajouter("Jus de secours", "ml", "0.5");
+  const q = await page.evaluate(() => {
+    const v = (n) => C.extra[Object.keys(ING).find((k) => ING[k][0] === n)];
+    return [v("Sacs poubelle"), v("Farine de secours"), v("Jus de secours")];
+  });
+  expect(q).toEqual([5, 3500, 750]);
+});
+
+test("robustesse : nom de recette trop long refusé, nombres négatifs ou démesurés ramenés dans les bornes", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#rnew").click();
+  await page.locator("#rname").evaluate((e) => (e.value = "x".repeat(101)));
+  await page.locator("#rok").click();
+  expect(await page.evaluate(() => Object.keys(S.rec).some((n) => n.length > 100))).toBe(false);
+  await expect(page.locator("#rname")).toHaveAttribute("placeholder", /trop long/);
+  // un gestionnaire reçoit la saisie telle quelle : le « min » du HTML ne la filtre pas
+  await aller(page, "eff");
+  await page.locator('#cnt [data-n="0"]').evaluate((e) => {
+    e.value = "-5";
+    e.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  expect(await page.evaluate(() => C.n[0])).toBe(0);
+  await page.locator('#cnt [data-n="0"]').evaluate((e) => {
+    e.value = "1e9";
+    e.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  expect(await page.evaluate(() => C.n[0])).toBe(1e4);
+  expect(erreurs).toEqual([]);
+});
+
+test("robustesse : un camp courant nommé comme une propriété héritée (constructor) ne bloque pas le démarrage", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await page.evaluate(() => {
+    const p = JSON.parse(localStorage.getItem("intendance2"));
+    p.ccur = "constructor";
+    p.cur = "constructor";
+    localStorage.setItem("intendance2", JSON.stringify(p));
+  });
+  await page.reload();
+  expect(await page.evaluate(() => Object.hasOwn(S.camps, S.ccur))).toBe(true);
+  expect(await page.evaluate(() => Object.hasOwn(S.rec, S.cur))).toBe(true);
+  expect(erreurs).toEqual([]);
+});
+
+test("catalogue : la fusion refuse un ingrédient en quantité unique avec un autre par personne", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const a = createIng("Lait mixte", "ml", "", "aut"),
+      b = createIng("lait mixte", "ml", "", "aut");
+    S.rec[S.cur].ing[a] = SEC.map(() => 10);
+    S.rec[S.cur].ing[b] = SEC.map(() => 0);
+    S.rec[S.cur].fx = { ...(S.rec[S.cur].fx || {}), [b]: 500 };
+    const err = fusionnerIng(a, b);
+    return { err, a: !!ING[a], b: !!ING[b], fx: S.rec[S.cur].fx[b] };
+  });
+  expect(r.err).toContain("quantité unique");
+  expect(r.a).toBe(true);
+  expect(r.b).toBe(true);
+  expect(r.fx).toBe(500);
+});

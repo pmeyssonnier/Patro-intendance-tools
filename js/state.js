@@ -110,7 +110,7 @@ if (!S.camps || typeof S.camps !== "object" || !Object.keys(S.camps).length) {
 
 ["n", "wa", "dt", "notes", "meals", "mc", "mt"].forEach((k) => delete S[k]);
 
-if (!S.camps[S.ccur]) S.ccur = Object.keys(S.camps)[0];
+if (!Object.hasOwn(S.camps, S.ccur)) S.ccur = Object.keys(S.camps)[0];
 
 let C = S.camps[S.ccur];
 
