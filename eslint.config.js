@@ -39,7 +39,8 @@ for (const f of fichiers)
   Object.assign(globalesAppli, declarations(fs.readFileSync(path.join(JS_DIR, f), "utf8")));
 
 module.exports = [
-  { ignores: ["node_modules/", "test-results/", "playwright-report/"] },
+  // tests-sync : test de bout en bout lancé à part (le code exécuté dans le navigateur utilise les globales de js/, pas celles de Node)
+  { ignores: ["node_modules/", "test-results/", "playwright-report/", "tests-sync/"] },
   js.configs.recommended,
   {
     // Page : scripts classiques qui se partagent les mêmes globales

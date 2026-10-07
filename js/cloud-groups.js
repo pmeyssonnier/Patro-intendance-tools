@@ -21,14 +21,19 @@ function drawGroupes() {
   $("grc").hidden = !cloudUser;
   if (!cloudUser) {
     grEtat = { groupes: [], courant: null, invitations: [], membres: [], attente: [] };
+    syncArreter();
     return;
   }
   grCharger();
 }
 
+// numéro du dernier chargement lancé : une réponse arrivée en retard (d'un chargement plus ancien) est ignorée
+let grSeq = 0;
+
 /** Relit depuis Firestore : mes groupes, mes invitations, puis les membres du groupe choisi. */
 async function grCharger(courant) {
   if (!cloudUser) return;
+  const seq = ++grSeq;
   const uid = cloudUser.uid,
     mail = normMail(cloudUser.email);
   try {
@@ -59,6 +64,7 @@ async function grCharger(courant) {
         ? a.docs.map((d) => ({ id: d.id, email: d.data().email, role: d.data().role }))
         : [];
     }
+    if (seq !== grSeq) return;
     cloudEcrire(GROUPE_CHOIX, choisi);
     grEtat = {
       groupes,
@@ -73,6 +79,7 @@ async function grCharger(courant) {
       attente,
     };
     grAfficher();
+    syncDemarrer();
   } catch (e) {
     grErreur(e);
   }
@@ -84,6 +91,7 @@ function grAfficher() {
     moi: cloudUser.uid,
     superAdmin: normMail(cloudUser.email) === CLOUD.superAdmin,
     url: location.origin + location.pathname,
+    sync: syncResume(),
   });
 }
 
@@ -223,6 +231,14 @@ $("grc").onclick = (ev) => {
   else if (a === "inviter") grInviter();
   else if (a === "annuler") grAnnuler(b.dataset.i);
   else if (a === "retirer") grRetirer(b.dataset.u);
+  else if (a === "sync-envoyer" || a === "sync-charger") {
+    const g = grEtat.groupes.find((x) => x.id === grEtat.courant);
+    if (g)
+      (a === "sync-envoyer" ? syncEnvoyerProjet : (i, n) => syncChargerGroupe(i, n, true))(
+        g.id,
+        g.nom
+      );
+  } else if (a === "sync-stop") syncArretLien();
 };
 
 $("grc").onchange = (ev) => {

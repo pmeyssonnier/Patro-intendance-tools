@@ -15,10 +15,10 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.27.0">
+<link rel="stylesheet" href="styles.css?v=1.28.0">
 </head><body><main>
 <div id="vtest" class="np" role="note" hidden>VERSION TEST – les données de ce site sont à part de l'application habituelle.</div>
-<div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
+<div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="sync" aria-label="Synchronisation" hidden>☁️</button><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
 <nav id="drawer" class="np" aria-label="Navigation">
 <div class="dh"><label id="logo" title="Clique pour changer le logo (sur cet appareil)"><img id="logoimg" alt="Logo Patro Sainte-Suzanne" src="assets/logo-pss.jpg"><input type="file" id="logof" accept="image/*" hidden></label><div><div class="dt" id="ttroop">Patro Sainte-Suzanne</div></div></div>
@@ -178,7 +178,7 @@
 <footer>Outil fait par le Patro Sainte-Suzanne pour les patros ⛺<br><span id="appver2"></span></footer>
 </main><div id="pv"></div>
 <div id="live" class="sr" aria-live="polite"></div>
-<div id="warn" class="np" role="alert" hidden><span id="warnt"></span> <button id="warnx">💾 Exporter</button> <button id="warnr" hidden>🔄 Recharger</button> <button id="warnk" class="x" hidden>Garder cet onglet</button> <button id="warnc" class="x" aria-label="Fermer l'avertissement">✕</button></div>
+<div id="warn" class="np" role="alert" hidden><span id="warnt"></span> <button id="warnx">💾 Exporter</button> <button id="warnr" hidden>🔄 Recharger</button> <button id="warnk" class="x" hidden>Garder cet onglet</button> <button id="warng" hidden>☁️ Charger la version du groupe</button> <button id="warnm" class="x" hidden>Garder ma version</button> <button id="warnc" class="x" aria-label="Fermer l'avertissement">✕</button></div>
 <!-- Scripts classiques : l'ordre compte (chaque fichier dépend de ceux qui le précèdent). -->
 <dialog id="ingdlg" class="np" aria-labelledby="ingt">
 <h2 id="ingt" style="margin-top:0">Nouvel ingrédient</h2>
@@ -216,31 +216,33 @@
 <p class="s" id="rym" role="status" style="color:#d33"></p>
 <p><button id="ryno" class="x">Fermer</button></p>
 </dialog>
-<script src="js/data-defaults.js?v=1.27.0"></script>
-<script src="js/utils.js?v=1.27.0"></script>
-<script src="js/storage.js?v=1.27.0"></script>
-<script src="js/state.js?v=1.27.0"></script>
-<script src="js/calculations.js?v=1.27.0"></script>
-<script src="js/shopping-list.js?v=1.27.0"></script>
-<script src="js/documents.js?v=1.27.0"></script>
-<script src="js/share-print.js?v=1.27.0"></script>
-<script src="js/navigation.js?v=1.27.0"></script>
-<script src="js/camps.js?v=1.27.0"></script>
-<script src="js/diets.js?v=1.27.0"></script>
-<script src="js/menu.js?v=1.27.0"></script>
-<script src="js/recipes.js?v=1.27.0"></script>
-<script src="js/ingredient-matching.js?v=1.27.0"></script>
-<script src="js/ingredients.js?v=1.27.0"></script>
-<script src="js/ingredient-merge.js?v=1.27.0"></script>
-<script src="js/price-import.js?v=1.27.0"></script>
-<script src="js/rayons.js?v=1.27.0"></script>
-<script src="js/catalog-ui.js?v=1.27.0"></script>
-<script src="js/recipe-import.js?v=1.27.0"></script>
-<script src="js/changelog.js?v=1.27.0"></script>
-<script src="js/config.js?v=1.27.0"></script>
-<script src="js/groupes.js?v=1.27.0"></script>
-<script src="js/cloud-groups.js?v=1.27.0"></script>
-<script src="js/cloud.js?v=1.27.0"></script>
-<script src="js/pwa.js?v=1.27.0"></script>
-<script src="js/main.js?v=1.27.0"></script>
+<script src="js/data-defaults.js?v=1.28.0"></script>
+<script src="js/utils.js?v=1.28.0"></script>
+<script src="js/storage.js?v=1.28.0"></script>
+<script src="js/state.js?v=1.28.0"></script>
+<script src="js/calculations.js?v=1.28.0"></script>
+<script src="js/shopping-list.js?v=1.28.0"></script>
+<script src="js/documents.js?v=1.28.0"></script>
+<script src="js/share-print.js?v=1.28.0"></script>
+<script src="js/navigation.js?v=1.28.0"></script>
+<script src="js/camps.js?v=1.28.0"></script>
+<script src="js/diets.js?v=1.28.0"></script>
+<script src="js/menu.js?v=1.28.0"></script>
+<script src="js/recipes.js?v=1.28.0"></script>
+<script src="js/ingredient-matching.js?v=1.28.0"></script>
+<script src="js/ingredients.js?v=1.28.0"></script>
+<script src="js/ingredient-merge.js?v=1.28.0"></script>
+<script src="js/price-import.js?v=1.28.0"></script>
+<script src="js/rayons.js?v=1.28.0"></script>
+<script src="js/catalog-ui.js?v=1.28.0"></script>
+<script src="js/recipe-import.js?v=1.28.0"></script>
+<script src="js/changelog.js?v=1.28.0"></script>
+<script src="js/config.js?v=1.28.0"></script>
+<script src="js/groupes.js?v=1.28.0"></script>
+<script src="js/sync-data.js?v=1.28.0"></script>
+<script src="js/cloud-groups.js?v=1.28.0"></script>
+<script src="js/cloud-sync.js?v=1.28.0"></script>
+<script src="js/cloud.js?v=1.28.0"></script>
+<script src="js/pwa.js?v=1.28.0"></script>
+<script src="js/main.js?v=1.28.0"></script>
 </body></html>

@@ -58,6 +58,23 @@ function lienMailInvitation(mail, nomGroupe, url) {
   return `mailto:${encodeURIComponent(normMail(mail))}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(texte)}`;
 }
 
+/** Section « Synchronisation » de la carte pour le groupe affiché : s = { liee, autre, ecriture, texte }. */
+function htmlSync(s) {
+  if (!s) return "";
+  let h = `<h3>Synchronisation</h3>`;
+  if (s.liee)
+    h += `<p class="s">Cet appareil est synchronisé avec ce groupe (${esc(s.texte)}). Les camps, recettes, prix et réglages du groupe sont partagés ; le logo reste sur l'appareil.</p><p><button class="x" data-gr="sync-stop">Arrêter la synchronisation</button></p>`;
+  else if (s.autre)
+    h += `<p class="s">Cet appareil est déjà synchronisé avec un autre groupe. Arrête d'abord cette synchronisation pour en choisir un autre.</p>`;
+  else {
+    h += `<p class="s">Pour l'instant, tes camps, recettes et prix ne sont que sur cet appareil. ${s.ecriture ? "Envoie ton projet si le groupe n'a encore rien, ou charge celui du groupe (il remplace les données de cet appareil, dont une copie de secours est gardée)." : "Charge le projet du groupe pour le consulter (lecture seule)."}</p><p>`;
+    if (s.ecriture)
+      h += `<button class="x" data-gr="sync-envoyer">⬆️ Envoyer mon projet au groupe</button> `;
+    h += `<button class="x" data-gr="sync-charger">⬇️ Charger le projet du groupe</button></p>`;
+  }
+  return h;
+}
+
 /** Contenu de la carte « Mon groupe » pour l'état e :
     { superAdmin, groupes: [{ id, nom, role }], courant, invitations: [{ id, nomGroupe, role }], membres: [{ uid, email, role }], moi, attente: [{ id, email, role }] }. */
 function htmlGroupes(e) {
@@ -75,6 +92,7 @@ function htmlGroupes(e) {
     h += `<div class="g"><div><label for="grsel">Groupe</label><select id="grsel" aria-label="Groupe">${e.groupes.map((x) => `<option value="${esc(x.id)}"${x.id === e.courant ? " selected" : ""}>${esc(x.nom)}</option>`).join("")}</select></div></div><p class="s">Ton rôle : <b>${g ? roleNom(g.role) : "?"}</b>.</p>`;
   if (g) {
     const admin = g.role === "admin";
+    h += htmlSync(e.sync);
     h += `<h3>Membres</h3>`;
     for (const m of e.membres) {
       const verrou = erreurDernierAdmin(e.membres, m.uid) !== "";

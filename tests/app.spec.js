@@ -60,7 +60,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(28);
+  expect(liens.length).toBe(30);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -3338,5 +3338,66 @@ test("groupes : invitation, dernier administrateur et contenu de la carte « Mon
   expect(r.mail).toContain("Sainte-Suzanne".replace(/-/g, "-"));
   await aller(page, "cfg");
   await expect(page.locator("#grc")).toBeHidden();
+  expect(erreurs).toEqual([]);
+});
+
+test("synchronisation : morceaux stables, reconstruction identique, envoi des seuls morceaux modifiés", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const clone = (x) => JSON.parse(JSON.stringify(x));
+    const p = cleanProject(clone(S));
+    const m = morceauxProjet(p);
+    const ids = Object.keys(p.camps);
+    const textes = {};
+    for (const id of ids) textes[id] = m[cleCamp(id)];
+    const apres = cleanProject(
+      projetDepuisGroupe(m.cat, textes, { ...p, logo: "", cur: "inconnu" })
+    );
+    const m2 = morceauxProjet(apres);
+    const h = {};
+    for (const k of Object.keys(m)) h[k] = empreinte(m[k]);
+    // un camp modifié, un camp supprimé
+    const autre = clone(m);
+    autre[cleCamp(ids[0])] = jsonStable({ ...JSON.parse(m[cleCamp(ids[0])]), notes: "changé" });
+    const sans = clone(m);
+    delete sans[cleCamp(ids[0])];
+    const cat = JSON.parse(m.cat);
+    return {
+      stable:
+        jsonStable({ b: 1, a: [2, { d: 1, c: 2 }] }) ===
+        jsonStable({ a: [2, { c: 2, d: 1 }], b: 1 }),
+      indefini: jsonStable({ a: undefined, b: [undefined] }),
+      memeEmpreinte: empreinte("abc") === empreinte("abc"),
+      autreEmpreinte: empreinte("abc") !== empreinte("abd"),
+      cles: Object.keys(m),
+      ids,
+      catLocal: ["camps", "ccur", "logo", "cur"].filter((k) => k in cat),
+      identique: JSON.stringify(m2) === JSON.stringify(m),
+      ccur: apres.ccur === p.ccur,
+      tout: morceauxAEnvoyer(m, {})
+        .map((x) => x.cle)
+        .sort(),
+      rien: morceauxAEnvoyer(m, h),
+      modifie: morceauxAEnvoyer(autre, h),
+      supprime: morceauxAEnvoyer(sans, h),
+      taille: [erreurTaille(m), erreurTaille({ cat: "x".repeat(SYNC_TAILLE_MAX + 1) })],
+    };
+  });
+  expect(r.stable).toBe(true);
+  expect(r.indefini).toBe('{"b":[null]}');
+  expect(r.memeEmpreinte).toBe(true);
+  expect(r.autreEmpreinte).toBe(true);
+  expect(r.cles).toEqual(["cat", ...r.ids.map((i) => "c:" + i)]);
+  expect(r.catLocal).toEqual([]);
+  expect(r.identique).toBe(true);
+  expect(r.ccur).toBe(true);
+  expect(r.tout).toEqual(["cat", ...r.ids.map((i) => "c:" + i)].sort());
+  expect(r.rien).toEqual([]);
+  expect(r.modifie).toEqual([{ cle: "c:" + r.ids[0] }]);
+  expect(r.supprime).toEqual([{ cle: "c:" + r.ids[0], supprime: true }]);
+  expect(r.taille[0]).toBe("");
+  expect(r.taille[1]).toContain("catalogue");
   expect(erreurs).toEqual([]);
 });

@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.28.0",
+    d: "2026-10-07",
+    t: "Version test : synchronisation des camps avec le groupe",
+    l: [
+      "Mon groupe : « Envoyer mon projet au groupe » ou « Charger le projet du groupe ». Ensuite, les changements (camps, recettes, prix, régimes, sections) sont envoyés automatiquement en tâche de fond ; le travail reste possible sans réseau.",
+      "Un indicateur ☁️ en haut de page montre l'état : synchronisé, envoi en cours, hors ligne, version plus récente, conflit.",
+      "Si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours de tes données est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
+    ],
+  },
+  {
     v: "1.27.0",
     d: "2026-10-07",
     t: "Version test : groupes, membres et invitations",

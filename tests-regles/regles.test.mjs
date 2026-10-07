@@ -43,10 +43,10 @@ beforeEach(async () => {
     await setDoc(doc(db, "groupes/g1/membres/a"), { role: "admin", email: "a@x.be" });
     await setDoc(doc(db, "groupes/g1/membres/e"), { role: "editeur", email: "e@x.be" });
     await setDoc(doc(db, "groupes/g1/membres/l"), { role: "lecteur", email: "l@x.be" });
-    await setDoc(doc(db, "groupes/g1/camps/c1"), { version: 1, n: 1 });
+    await setDoc(doc(db, "groupes/g1/camps/c1"), { version: 1, data: "{}" });
     await setDoc(doc(db, "groupes/g2"), { nom: "Uccle" });
     await setDoc(doc(db, "groupes/g2/membres/z"), { role: "admin", email: "z@x.be" });
-    await setDoc(doc(db, "groupes/g2/camps/c9"), { version: 1 });
+    await setDoc(doc(db, "groupes/g2/camps/c9"), { version: 1, data: "{}" });
   });
 });
 
@@ -68,19 +68,27 @@ test("lecture : un membre lit son groupe, pas celui d'un autre", async () => {
 
 test("camps : le lecteur n'écrit pas, l'éditeur écrit avec la version suivante", async () => {
   const ref = (db) => doc(db, "groupes/g1/camps/c1");
-  await assertFails(setDoc(ref(moi("l", "l@x.be")), { version: 2, n: 5 }));
-  await assertSucceeds(setDoc(ref(moi("e", "e@x.be")), { version: 2, n: 5 }));
-  await assertFails(setDoc(ref(moi("e", "e@x.be")), { version: 2, n: 6 })); // version déjà prise
-  await assertFails(setDoc(ref(moi("e", "e@x.be")), { version: 9, n: 6 })); // saut de version
-  await assertSucceeds(setDoc(doc(moi("e", "e@x.be"), "groupes/g1/camps/c2"), { version: 1 }));
-  await assertFails(setDoc(doc(moi("e", "e@x.be"), "groupes/g1/camps/c3"), { version: 4 }));
+  await assertFails(setDoc(ref(moi("l", "l@x.be")), { version: 2, data: "a" }));
+  await assertSucceeds(setDoc(ref(moi("e", "e@x.be")), { version: 2, data: "a" }));
+  await assertFails(setDoc(ref(moi("e", "e@x.be")), { version: 2, data: "b" })); // version déjà prise
+  await assertFails(setDoc(ref(moi("e", "e@x.be")), { version: 9, data: "b" })); // saut de version
+  await assertSucceeds(
+    setDoc(doc(moi("e", "e@x.be"), "groupes/g1/camps/c2"), { version: 1, data: "{}" })
+  );
+  await assertFails(
+    setDoc(doc(moi("e", "e@x.be"), "groupes/g1/camps/c3"), { version: 4, data: "{}" })
+  );
   await assertFails(deleteDoc(ref(moi("e", "e@x.be"))));
   await assertSucceeds(deleteDoc(ref(moi("a", "a@x.be"))));
 });
 
 test("on n'écrit pas dans un autre groupe, ni dans une collection inconnue", async () => {
-  await assertFails(setDoc(doc(moi("e", "e@x.be"), "groupes/g2/camps/c9"), { version: 2 }));
-  await assertFails(setDoc(doc(moi("e", "e@x.be"), "groupes/g1/secrets/s"), { version: 1 }));
+  await assertFails(
+    setDoc(doc(moi("e", "e@x.be"), "groupes/g2/camps/c9"), { version: 2, data: "{}" })
+  );
+  await assertFails(
+    setDoc(doc(moi("e", "e@x.be"), "groupes/g1/secrets/s"), { version: 1, data: "{}" })
+  );
   await assertFails(setDoc(doc(moi("e", "e@x.be"), "autre/x"), { a: 1 }));
 });
 
@@ -242,4 +250,26 @@ test("changer le rôle : la fiche du membre et sa copie « mes groupes » se mod
   c.set(doc(e, "groupes/g1/membres/l"), { role: "admin", email: "l@x.be" });
   c.set(doc(e, "utilisateurs/l/groupes/g1"), { role: "admin", nom: "Sainte-Suzanne" });
   await assertFails(c.commit());
+});
+
+test("morceaux : seuls les champs prévus, avec un texte de taille raisonnable ; suppression par marque", async () => {
+  const e = moi("e", "e@x.be");
+  const c = (id) => doc(e, "groupes/g1/camps/" + id);
+  await assertFails(setDoc(c("n1"), { version: 1, data: "{}", intrus: 1 }));
+  await assertFails(setDoc(c("n2"), { version: 1, data: 42 }));
+  await assertFails(setDoc(c("n3"), { version: 1 }));
+  await assertFails(setDoc(c("n4"), { version: 1, data: "x".repeat(900001) }));
+  await assertFails(setDoc(c("n5"), { version: "1", data: "{}" }));
+  await assertSucceeds(setDoc(c("n6"), { version: 1, data: "x".repeat(900000), par: "e", le: 1 }));
+  // un éditeur « supprime » un camp en le marquant (il ne peut pas effacer le document)
+  await assertSucceeds(
+    setDoc(doc(e, "groupes/g1/camps/c1"), { version: 2, supprime: true, data: "" })
+  );
+  await assertFails(deleteDoc(doc(e, "groupes/g1/camps/c1")));
+  // le catalogue suit les mêmes règles
+  await assertSucceeds(setDoc(doc(e, "groupes/g1/catalogue/main"), { version: 1, data: "{}" }));
+  await assertSucceeds(
+    setDoc(doc(e, "groupes/g1/catalogue/main"), { version: 2, data: '{"a":1}' })
+  );
+  await assertFails(setDoc(doc(e, "groupes/g1/catalogue/main"), { version: 2, data: "{}" }));
 });

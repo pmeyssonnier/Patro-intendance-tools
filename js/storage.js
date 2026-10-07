@@ -278,6 +278,7 @@ const showWarn = (t) => {
       const texte = JSON.stringify(S);
       localStorage.setItem("intendance2", texte);
       dernierTexte = texte;
+      if (typeof syncApresSave === "function") syncApresSave();
       if (sfail) {
         sfail = 0;
         showWarn("");

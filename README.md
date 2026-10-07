@@ -109,6 +109,11 @@ Aucune dépendance ni étape de compilation :
 | `js/recipe-import.js` | import d'une recette collée (ld+json) |
 | `js/changelog.js` | page « Nouveautés » : historique des versions (à compléter à chaque release) |
 | `js/config.js` | configuration : nom de la troupe, logo, sections |
+| `js/groupes.js` | groupes : rôles, invitations, texte de la carte « Mon groupe » (sans accès à la page ni à Firebase) |
+| `js/sync-data.js` | synchronisation, partie données : découpage du projet en morceaux (catalogue du groupe, un camp), empreintes, reconstruction |
+| `js/cloud-groups.js` | carte « Mon groupe » : groupes, membres et invitations dans Firestore |
+| `js/cloud-sync.js` | synchronisation avec le groupe : envoi en tâche de fond, version vérifiée, conflits, hors ligne |
+| `tests-regles/`, `tests-sync/` | tests à part (émulateurs Firebase) : règles de sécurité et synchronisation de bout en bout |
 | `js/cloud.js` | compte en ligne (version test Firebase) : connexion par lien e-mail, rien n'est chargé tant qu'on ne se connecte pas |
 | `firebase.json`, `.firebaserc`, `firestore.rules` | hébergement et règles de sécurité du projet Firebase de test (`patro-intendance-test`) |
 | `js/pwa.js` | installation et hors connexion |
