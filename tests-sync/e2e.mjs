@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 import { initializeTestEnvironment } from "@firebase/rules-unit-testing";
 import { doc, setDoc, getDoc, getDocs, collection } from "firebase/firestore";
 const ici = path.dirname(new URL(import.meta.url).pathname),
-  ROOT = path.resolve(ici, ".."),
+  ROOT = process.env.APP_ROOT || path.resolve(ici, ".."),
   BUNDLE = process.env.BUNDLE || path.join(ici, "bundle.js"),
   PORT = 4173;
 const require = createRequire(import.meta.url);
@@ -312,6 +312,138 @@ try {
     "rechargement : aucune version fabriquée (catalogue inchangé)",
     vFin.version === (await distant("groupes/g1/catalogue/main")).version &&
       (await B.page.evaluate(() => !syncSale))
+  );
+
+  // 9. historique : une version gardée par morceau au premier envoi, pas à chaque modification
+  const histo = (cle) =>
+    adm(async (db) =>
+      (await getDocs(collection(db, "groupes/g1/historique"))).docs
+        .map((d) => d.data())
+        .filter((d) => !cle || d.cle === cle)
+    );
+  const cleCampA = "c:" + (await A.page.evaluate(() => S.ccur));
+  let hc = await histo(cleCampA);
+  verifier(
+    "historique : une version du camp gardée au premier envoi",
+    hc.length >= 1 && hc.some((x) => x.version === 1),
+    hc.length
+  );
+  verifier("historique : une version du catalogue gardée", (await histo("cat")).length >= 1);
+  const avant = (await histo(cleCampA)).length;
+  await B.page.evaluate(() => {
+    C.notes = "modif rapide 1";
+    save();
+  });
+  await attendre(B.page, () => syncStatut === "ok" && !syncSale);
+  await B.page.evaluate(() => {
+    C.notes = "modif rapide 2";
+    save();
+  });
+  await attendre(B.page, () => syncStatut === "ok" && !syncSale);
+  verifier(
+    "historique : deux modifications rapprochées ne gardent pas de nouvelle version",
+    (await histo(cleCampA)).length === avant,
+    [avant, (await histo(cleCampA)).length]
+  );
+
+  // 10. élagage : au plus 20 versions par morceau
+  for (let i = 0; i < 22; i++) {
+    await B.page.evaluate((i) => {
+      syncLien().hs = {};
+      C.notes = "version " + i;
+      save();
+    }, i);
+    await attendre(B.page, () => syncStatut === "ok" && !syncSale);
+  }
+  await B.page.waitForTimeout(2500);
+  hc = await histo(cleCampA);
+  verifier("historique : 20 versions au plus pour un camp", hc.length === 20, hc.length);
+  verifier(
+    "historique : les plus récentes sont conservées",
+    hc.some((x) => JSON.parse(x.data).notes === "version 21") &&
+      !hc.some((x) => JSON.parse(x.data).notes === "version 0")
+  );
+
+  // 11. retour arrière : A remet une ancienne version du camp
+  await A.page.evaluate(() => syncChargerGroupe("g1", "Test", true));
+  await A.page.waitForLoadState("load");
+  await attendre(
+    A.page,
+    () => typeof cloudUser !== "undefined" && cloudUser && syncStatut === "ok",
+    null,
+    30000
+  );
+  await A.page.evaluate((cle) => hiVoir(cle), cleCampA);
+  await attendre(A.page, () => hiEtat.versions && hiEtat.versions.liste.length > 5);
+  const cible = await A.page.evaluate(
+    () =>
+      hiEtat.versions.liste.find((v) => JSON.parse(hiEtat.donnees[v.id]).notes === "version 10").id
+  );
+  await A.page.evaluate((id) => hiRetour(id), cible);
+  await A.page.waitForLoadState("load");
+  await attendre(
+    A.page,
+    () => typeof cloudUser !== "undefined" && cloudUser && syncStatut === "ok",
+    null,
+    30000
+  );
+  verifier(
+    "retour arrière : A a retrouvé la version 10 sur son appareil",
+    await A.page.evaluate(() => C.notes === "version 10")
+  );
+  await attendre(A.page, () => !syncSale);
+  await A.page.waitForTimeout(3000);
+  [k, c] = await camp();
+  verifier(
+    "retour arrière : le groupe a reçu la version 10 comme nouvelle version",
+    JSON.parse(c.data).notes === "version 10" && c.version > 10,
+    [c.version, JSON.parse(c.data).notes]
+  );
+  hc = await histo(cleCampA);
+  verifier(
+    "retour arrière : l'état d'avant est gardé (annulation possible)",
+    hc.some((x) => x.note === "Avant retour arrière" && JSON.parse(x.data).notes === "version 21"),
+    hc.map((x) => x.note)
+  );
+
+  // 12. camp supprimé : restauration
+  await A.page.evaluate(() => {
+    S.camps.cx2 = JSON.parse(JSON.stringify(C));
+    S.camps.cx2.name = "Camp à retrouver";
+    S.camps.cx2.notes = "précieux";
+    save();
+  });
+  await attendre(A.page, () => syncStatut === "ok" && !syncSale);
+  await A.page.evaluate(() => {
+    delete S.camps.cx2;
+    save();
+  });
+  await attendre(A.page, () => syncStatut === "ok" && !syncSale);
+  await A.page.evaluate(() => hiVoir("cat"));
+  await attendre(A.page, () => hiEtat.supprimes.some((x) => x.nom === "Camp à retrouver"));
+  const idSup = await A.page.evaluate(
+    () => hiEtat.supprimes.find((x) => x.nom === "Camp à retrouver").id
+  );
+  verifier("camp supprimé : proposé à la restauration avec son nom", !!idSup);
+  await A.page.evaluate((id) => hiRestaurer(id), idSup);
+  await A.page.waitForLoadState("load");
+  await attendre(
+    A.page,
+    () => typeof cloudUser !== "undefined" && cloudUser && syncStatut === "ok",
+    null,
+    30000
+  );
+  await attendre(A.page, () => !syncSale);
+  await A.page.waitForTimeout(2500);
+  verifier(
+    "camp restauré : présent sur l'appareil avec son contenu",
+    await A.page.evaluate(() => S.camps.cx2 && S.camps.cx2.notes === "précieux")
+  );
+  cx = await distant("groupes/g1/camps/cx2");
+  verifier(
+    "camp restauré : de nouveau présent dans le groupe (plus marqué supprimé)",
+    cx && !cx.supprime && JSON.parse(cx.data).notes === "précieux",
+    cx && [cx.version, cx.supprime]
   );
   for (const u of [A, B, L]) {
     const e = u.erreurs.filter((x) => !/net::ERR|favicon/.test(x));
