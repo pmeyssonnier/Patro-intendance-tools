@@ -1,6 +1,8 @@
 const { test, expect } = require("@playwright/test");
 const {
   basculerQuantite,
+  ouvrirFiche,
+  fermerFiche,
   ouvrir,
   aller,
   telecharger,
@@ -150,8 +152,7 @@ test("recette : une quantité unique est répartie entre les régimes", async ({
   await deplierRegime(page, "sg");
   await page.locator('input[data-d="sg"][data-s="2"]').fill("2");
   await page.locator('input[data-d="sg"][data-s="3"]').fill("1");
-  await aller(page, "rec");
-  await page.locator("#rsel").selectOption("Croque-monsieur");
+  await ouvrirFiche(page, "Croque-monsieur");
   await basculerQuantite(page, page.locator('#rb tr[data-rk="pain"]'));
   await page.locator('input[data-fx="pain"]').fill("5");
   await page.locator('input[data-fx="pain"]').dispatchEvent("change");
@@ -376,13 +377,13 @@ test("configuration : sections renommées, triées, ajoutées et supprimées par
   await aller(page, "eff");
   await expect(page.locator('[data-n="0"]')).toHaveValue("7");
   await expect(page.locator('[data-n="1"]')).toHaveValue("11");
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   await expect(page.locator("#rh th").nth(2)).toContainText("Louveteaux");
   // ajouter : une colonne de plus dans les recettes
   await aller(page, "cfg");
   await page.locator("#secadd").click();
   await expect(page.locator("#secl .secrow")).toHaveCount(5);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   expect(await page.locator("#rb tr").first().locator("input[type=number]").count()).toBe(5);
   // supprimer la nouvelle section, puis la 1re : 3 colonnes, effectifs recalculés
   await aller(page, "cfg");
@@ -409,7 +410,7 @@ test("configuration : sections renommées, triées, ajoutées et supprimées par
 
 test("configuration : les quantités suivent la section quand on la déplace", async ({ page }) => {
   await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const avant = await page
     .locator("#rb tr")
     .first()
@@ -417,7 +418,7 @@ test("configuration : les quantités suivent la section quand on la déplace", a
     .evaluateAll((l) => l.map((i) => i.value));
   await aller(page, "cfg");
   await page.locator('[data-sm="3"][data-d="-1"]').click();
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const apres = await page
     .locator("#rb tr")
     .first()
@@ -455,7 +456,7 @@ test("recettes : la taille des champs reste stable quand le nombre de sections c
 }) => {
   await ouvrir(page);
   const largeur = async () => {
-    await aller(page, "rec");
+    await ouvrirFiche(page);
     return page
       .locator("#rb tr")
       .first()
@@ -482,6 +483,92 @@ test("effectifs : le total de la troupe suit les champs de section", async ({ pa
   await expect(page.locator("#cnttot")).toHaveText("Total : 1 personne");
 });
 
+test("recettes : la fenêtre reste ouverte au clic à côté ; Enregistrer ne la ferme pas ; les types se masquent", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ouvrirFiche(page, "Spaghetti bolognaise");
+  // clic à côté de la fenêtre (sur le fond) : rien ne se ferme
+  await page.mouse.click(2, 2);
+  await expect(page.locator("#rdlg")).toBeVisible();
+  // Enregistrer garde la fenêtre ouverte, écrit la recette, et Annuler revient à cet état
+  await page.locator("#rename").fill("Spaghetti maison");
+  await page.locator("#rdok").click();
+  await expect(page.locator("#rdlg")).toBeVisible();
+  await expect(page.locator("#rdmsg")).toContainText("Enregistré");
+  expect(await page.evaluate(() => Object.hasOwn(S.rec, "Spaghetti maison"))).toBe(true);
+  await page.locator("#rdesc").fill("Texte non enregistré");
+  await page.locator("#rdno").click();
+  await expect(page.locator("#rdlg")).toBeHidden();
+  expect(await page.evaluate(() => S.rec["Spaghetti maison"].desc)).not.toBe(
+    "Texte non enregistré"
+  );
+  // le tableau n'a pas de défilement propre
+  await ouvrirFiche(page, "Spaghetti maison");
+  const defile = await page.locator("#rdlg .w.sv").evaluate((e) => getComputedStyle(e).overflowY);
+  expect(defile).toBe("visible");
+  // masquer et montrer les types
+  await expect(page.locator("#rtags .chips").first()).toBeVisible();
+  await page.locator("#rtags [data-rtmask]").click();
+  await expect(page.locator("#rtags .chips")).toHaveCount(0);
+  await page.locator("#rtags [data-rtmask]").click();
+  await expect(page.locator("#rtags .chips").first()).toBeVisible();
+  await fermerFiche(page, false);
+});
+
+test("recettes : l'aperçu montre gras, souligné et italique sans les marques, et le bouton I met en italique", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ouvrirFiche(page, "Spaghetti bolognaise");
+  await page.locator("#rdesc").fill("Cuire les pâtes");
+  await page.locator("#rdesc").evaluate((t) => {
+    t.focus();
+    t.setSelectionRange(0, 5);
+  });
+  await page.locator('#rtb [data-fmt="i"]').click();
+  await expect(page.locator("#rdesc")).toHaveValue("*Cuire* les pâtes");
+  await expect(page.locator("#rdv i")).toHaveText("Cuire");
+  await expect(page.locator("#rdv")).not.toContainText("*");
+  await page.locator("#rdesc").fill("**gras** __souligné__ *italique*");
+  await expect(page.locator("#rdv b")).toHaveText("gras");
+  await expect(page.locator("#rdv u")).toHaveText("souligné");
+  await expect(page.locator("#rdv i")).toHaveText("italique");
+  // la description se replie et se déplie
+  await page.locator("#rdd > summary").click();
+  await expect(page.locator("#rdesc")).toBeHidden();
+  await page.locator("#rdd > summary").click();
+  await expect(page.locator("#rdesc")).toBeVisible();
+  // refaire le geste retire l'italique
+  await page.locator("#rdesc").fill("*Cuire* les pâtes");
+  await page.locator("#rdesc").evaluate((t) => {
+    t.focus();
+    t.setSelectionRange(1, 6);
+  });
+  await page.locator('#rtb [data-fmt="i"]').click();
+  await expect(page.locator("#rdesc")).toHaveValue("Cuire les pâtes");
+  await fermerFiche(page, false);
+});
+
+test("catalogue : le filtre « sans prix » n'affiche que les ingrédients sans prix", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const n0 = await page.locator("#ct tr").count();
+  await page.evaluate(() => {
+    const [a, b] = Object.keys(ING).filter((k) => !S.hid.includes(k));
+    S.prices[a] = 0;
+    S.prices[b] = 0;
+    drawCat();
+  });
+  await page.locator("#csans").check();
+  await expect(page.locator("#ct tr")).toHaveCount(2);
+  await expect(page.locator("#csansn")).toHaveText("(2)");
+  await page.locator("#csans").uncheck();
+  await expect(page.locator("#ct tr")).toHaveCount(n0);
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");
@@ -496,18 +583,15 @@ test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) 
 test("tableaux longs : la ligne de titre reste visible quand on défile", async ({ page }) => {
   await ouvrir(page);
   await page.setViewportSize({ width: 390, height: 300 });
-  // recettes : le cadre du tableau défile, le titre reste en haut du cadre
-  await aller(page, "rec");
+  // recettes : le tableau n'a pas de défilement propre, c'est la fenêtre qui défile
+  await ouvrirFiche(page);
   const rec = await page.evaluate(() => {
     const w = document.getElementById("rb").closest(".w");
-    w.scrollTop = 80;
-    return [
-      w.scrollHeight > w.clientHeight,
-      Math.round(w.querySelector("th").getBoundingClientRect().top - w.getBoundingClientRect().top),
-    ];
+    const d = document.getElementById("rdlg");
+    return [getComputedStyle(w).overflowY, d.scrollHeight > d.clientHeight];
   });
-  expect(rec[0], "recettes : défile").toBe(true);
-  expect(rec[1], "recettes : titre collé en haut").toBeLessThan(3);
+  expect(rec[0], "recettes : pas d'ascenseur sur le tableau").toBe("visible");
+  expect(rec[1], "recettes : la fenêtre défile").toBe(true);
   // catalogue et liste de courses : la page défile, le titre se colle sous la barre du haut
   for (const [g, id] of [
     ["cat", "ct"],
@@ -733,7 +817,7 @@ test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la qua
   page,
 }) => {
   await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   await page.locator("#inew").click();
   await page.locator("#ingn").fill("Baguette");
   await page.locator("#ingu").selectOption("pc");
@@ -775,7 +859,7 @@ test("recettes : « 500 g pour 5 personnes » donne 100 g par personne et le tot
   page,
 }) => {
   await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const premiere = () => page.locator("#rb tr").first();
   await basculerQuantite(page, premiere()); // → quantité unique
   const N = await page.evaluate(() => nn());
@@ -796,7 +880,7 @@ test("recettes : passer de « quantité unique » à « par personne » garde le
   page,
 }) => {
   await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const premiere = () => page.locator("#rb tr").first();
   await basculerQuantite(page, premiere()); // → quantité unique
   await premiere().locator("[data-fx]").fill("1"); // 1 kg au total
@@ -818,7 +902,7 @@ test("recettes : le passage à « par personne » suit le nombre de sections", a
   await aller(page, "cfg");
   await page.locator('[data-sx="3"]').click();
   await page.locator('[data-sx="2"]').click(); // 2 sections restantes
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const premiere = () => page.locator("#rb tr").first();
   await basculerQuantite(page, premiere());
   await basculerQuantite(page, premiere());
@@ -830,7 +914,7 @@ test("catalogue : un JSON sans identifiant connu est relié par le nom de l'ingr
 }) => {
   await ouvrir(page);
   // un ingrédient ajouté à la main (identifiant propre à l'appareil)
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   await page.locator("#inew").click();
   await page.locator("#ingn").fill("Poivrons");
   await page.locator("#ingu").selectOption("pc");
@@ -958,7 +1042,7 @@ test("catalogue : « Insérer un ingrédient » ne l'ajoute à aucune recette", 
   });
   expect(r).toEqual([1.99, false]);
   // il est proposé dans la liste « + Ajouter un ingrédient » des recettes
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   await expect(page.locator('#radd option:text("Courgettes")')).toHaveCount(1);
 });
 
@@ -988,7 +1072,7 @@ test("catalogue : un JSON non reconnu ne modifie rien", async ({ page }) => {
 
 test("recettes : en-têtes lisibles sur ordinateur, réduits sur téléphone", async ({ page }) => {
   await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const taille = await page
     .locator("#rh th")
     .nth(1)
@@ -1462,6 +1546,10 @@ test("import de recette : ingrédient existant reconnu, étapes facultatives, er
   const R = await page.evaluate(() => S.rec["Spaghetti express"]);
   expect(R.ing.pates[0]).toBe(125);
   expect(R.desc).toContain("Préparation :\n1. Cuire les pâtes.");
+  // la fiche de la recette importée s'ouvre : on l'enregistre
+  await expect(page.locator("#rdlg")).toBeVisible();
+  await expect(page.locator("#rename")).toHaveValue("Spaghetti express");
+  await fermerFiche(page);
   // un nom déjà pris est refusé
   await page.locator("#rimp").click();
   await page.locator("#rimt").fill(JSON.stringify(json));
@@ -1647,7 +1735,7 @@ test("rayons : ajout au catalogue et en recette, export CSV, export du catalogue
   );
   expect(await page.evaluate((c) => catOf(c), k)).toBe("sur");
   // depuis la page Recettes
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   await page.locator("#inew").click();
   await page.locator("#ingn").fill("Eau gazeuse");
   await page.locator("#ingc").selectOption("boi");
@@ -1724,7 +1812,7 @@ test("recettes : la liste « Ajouter un ingrédient » est triée par ordre alph
   page,
 }) => {
   await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   await page.evaluate(() => {
     createIng("Abricots", "g", "", "fl");
     createIng("Zeste", "g", "", "fl");
@@ -1800,28 +1888,29 @@ test("sauvegarde : l'export du projet affiche un message, et propose de copier s
   await expect(page.locator("#jmsg")).toContainText(/Projet copié|Copie impossible/);
 });
 
-test("recettes : renommer une recette garde sa place, ses ingrédients et son menu ; la description s'enregistre en tapant", async ({
+test("recettes : renommer une recette garde sa place, ses ingrédients et son menu ; rien n'est gardé avant « Enregistrer »", async ({
   page,
 }) => {
   await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page, "Spaghetti bolognaise");
   const avant = await page.evaluate(() => ({
     noms: Object.keys(S.rec),
     total: LAST.sum,
     ing: Object.keys(S.rec["Spaghetti bolognaise"].ing),
   }));
-  await page.locator("#redit").click();
   await expect(page.locator("#rename")).toHaveValue("Spaghetti bolognaise");
   // un nom déjà pris ou vide est refusé
   await page.locator("#rename").fill("Croque-monsieur");
-  await page.locator("#reok").click();
-  await expect(page.locator("#remsg")).toContainText("porte déjà ce nom");
+  await page.locator("#rdok").click();
+  await expect(page.locator("#rdmsg")).toContainText("porte déjà ce nom");
   await page.locator("#rename").fill("   ");
-  await page.locator("#reok").click();
-  await expect(page.locator("#remsg")).toContainText("ne peut pas être vide");
+  await page.locator("#rdok").click();
+  await expect(page.locator("#rdmsg")).toContainText("ne peut pas être vide");
   await page.locator("#rename").fill("Spaghetti maison");
-  await page.locator("#reok").click();
-  await expect(page.locator("#rsel")).toHaveValue("Spaghetti maison");
+  await page.locator("#rdesc").fill("Nouvelle description de la recette");
+  await page.locator("#rdokc").click();
+  await expect(page.locator("#rdlg")).toBeHidden();
+  await expect(page.locator("#rlist .rln", { hasText: "Spaghetti maison" })).toBeVisible();
   const apres = await page.evaluate(() => ({
     noms: Object.keys(S.rec),
     total: LAST.sum,
@@ -1837,20 +1926,20 @@ test("recettes : renommer une recette garde sa place, ses ingrédients et son me
   expect(apres.cur).toBe("Spaghetti maison");
   expect(apres.menus).toContain("Spaghetti maison");
   expect(apres.menus).not.toContain("Spaghetti bolognaise");
-  // Échap annule
-  await page.locator("#redit").click();
+  // Annuler : ni le nouveau nom ni la nouvelle description ne sont gardés
+  await ouvrirFiche(page, "Spaghetti maison");
   await page.locator("#rename").fill("Autre");
-  await page.locator("#rename").press("Escape");
-  await expect(page.locator("#reform")).toBeHidden();
-  expect(await page.evaluate(() => S.cur)).toBe("Spaghetti maison");
-  // la description est enregistrée dès la frappe (mode édition), sans quitter le champ
-  await page.locator("#redit").click();
-  await page.locator("#rdesc").fill("Nouvelle description de la recette");
+  await page.locator("#rdesc").fill("Brouillon");
+  await fermerFiche(page, false);
+  expect(await page.evaluate(() => S.rec["Spaghetti maison"].desc)).toBe(
+    "Nouvelle description de la recette"
+  );
+  expect(await page.evaluate(() => "Autre" in S.rec)).toBe(false);
+  // la description enregistrée survit au rechargement
   await page.reload();
   expect(await page.evaluate(() => S.rec["Spaghetti maison"].desc)).toBe(
     "Nouvelle description de la recette"
   );
-  expect(await page.evaluate(() => S.cur)).toBe("Spaghetti maison");
 });
 
 test("thème : un bouton à côté de la configuration bascule entre clair et sombre, et se souvient du choix", async ({
@@ -1960,7 +2049,7 @@ test("recettes : retirer un ingrédient d'une recette demande une confirmation",
   page,
 }) => {
   await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const nb = () => page.evaluate(() => Object.keys(S.rec[S.cur].ing).length);
   const avant = await nb();
   const messages = [];
@@ -2001,41 +2090,21 @@ test("thème : changer de mode ne fait pas disparaître la page affichée", asyn
   }
 });
 
-test("recettes : la description est verrouillée hors du mode édition (✎), et « Annuler » la restaure", async ({
+test("recettes : la description n'est gardée qu'avec « Enregistrer » ; « Annuler » la restaure", async ({
   page,
 }) => {
   await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const desc = () => page.evaluate(() => S.rec[S.cur].desc);
   const avant = await desc();
-  // verrouillée par défaut
-  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
-  await expect(page.locator("#rdesc")).toBeHidden();
-  await page.locator("#rdv").click();
-  await page.keyboard.type("XYZ");
-  expect(await desc()).toBe(avant);
-  // mode édition : modifiable
-  await page.locator("#redit").click();
-  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", false);
   await page.locator("#rdesc").fill("Texte provisoire");
-  expect(await desc()).toBe("Texte provisoire");
-  // Annuler : retour à la description d'avant, de nouveau verrouillée
-  await page.locator("#reno").click();
+  await fermerFiche(page, false);
   expect(await desc()).toBe(avant);
+  await ouvrirFiche(page);
   await expect(page.locator("#rdesc")).toHaveValue(avant);
-  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
-  await expect(page.locator("#reform")).toBeHidden();
-  // Enregistrer : la nouvelle description reste, verrouillée
-  await page.locator("#redit").click();
   await page.locator("#rdesc").fill("Description finale");
-  await page.locator("#reok").click();
+  await fermerFiche(page, true);
   expect(await desc()).toBe("Description finale");
-  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
-  // changer de recette referme le mode édition
-  await page.locator("#redit").click();
-  await page.locator("#rsel").selectOption({ index: 1 });
-  await expect(page.locator("#rdesc")).toHaveJSProperty("readOnly", true);
-  await expect(page.locator("#reform")).toBeHidden();
 });
 
 test("catalogue : une liste déroulante triée filtre les prix des ingrédients par rayon", async ({
@@ -2257,7 +2326,8 @@ test("liens produit : enregistrés dans le projet, adresses étrangères refusé
 
 /** Ouvre la fenêtre « Nouvel ingrédient » depuis la page demandée (« cat » ou « rec ») et valide un nom / une unité. */
 async function ajouterIngredient(page, depuis, nom, unite) {
-  await aller(page, depuis);
+  if (depuis === "rec") await ouvrirFiche(page);
+  else await aller(page, depuis);
   await page.locator(depuis === "cat" ? "#cins" : "#inew").click();
   await page.locator("#ingn").fill(nom);
   await page.locator("#ingu").selectOption(unite);
@@ -2323,7 +2393,7 @@ test("nouvel ingrédient depuis une recette : « Utiliser l'existant » ajoute l
 }) => {
   await ouvrir(page);
   await ajouterIngredient(page, "cat", "Sirop", "ml");
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   await page.locator("#inew").click();
   await page.locator("#ingn").fill("sirops");
   await page.locator("#ingu").selectOption("ml");
@@ -2438,7 +2508,7 @@ test("nouvel ingrédient depuis une recette : « Utiliser » est aussi proposé 
 }) => {
   await ouvrir(page);
   await ajouterIngredient(page, "cat", "Huile d'olive", "ml");
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   await page.locator("#inew").click();
   await page.locator("#ingn").fill("huile d'olive");
   await page.locator("#ingu").selectOption("pc");
@@ -2473,7 +2543,7 @@ test("liste de courses : des articles hors recettes (liquide vaisselle…) s'ajo
   await expect(ligne).toHaveCount(1);
   expect(Math.round(((await total()) - avant) * 100) / 100).toBe(5);
   // il n'est pas proposé dans les ingrédients d'une recette, mais il est dans le catalogue
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   expect(await page.locator("#radd option", { hasText: "Liquide vaisselle" }).count()).toBe(0);
   await aller(page, "cat");
   await expect(page.locator("#ct tr", { hasText: "Liquide vaisselle" })).toHaveCount(1);
@@ -2897,7 +2967,7 @@ test("recettes : la poignée ⠿ d'un ingrédient change son ordre (clavier et g
   page,
 }) => {
   const erreurs = await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const ordre = () => page.evaluate(() => Object.keys(S.rec[S.cur].ing).join(","));
   const stocke = () =>
     page.evaluate(() => {
@@ -2927,7 +2997,8 @@ test("recettes : la poignée ⠿ d'un ingrédient change son ordre (clavier et g
   const apres = (await ordre()).split(",");
   expect(apres[n - 1]).toBe(cles[0]);
   expect(apres.slice(0, n - 1)).toEqual(cles.slice(1));
-  // permanent : enregistré, relu après rechargement, et dans les documents
+  // permanent : enregistré avec « Enregistrer », relu après rechargement, et dans les documents
+  await fermerFiche(page);
   expect(await stocke()).toBe(apres.join(","));
   await page.reload();
   expect(await ordre()).toBe(apres.join(","));
@@ -2950,7 +3021,7 @@ test("recettes : le nom d'un ingrédient ouvre sa fiche (comme le catalogue), un
   page,
 }) => {
   const erreurs = await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const cles = (await page.evaluate(() => Object.keys(S.rec[S.cur].ing))).slice(0, 2);
   // fermée par défaut : ni champs de modification, ni « quantité unique » sur la ligne
   await expect(page.locator("#rb .ced")).toHaveCount(0);
@@ -3178,11 +3249,8 @@ test("recettes : mettre des mots de la description en gras ou souligné (boutons
   page,
 }) => {
   const erreurs = await ouvrir(page);
-  await aller(page, "rec");
+  await ouvrirFiche(page);
   const desc = () => page.evaluate(() => S.rec[S.cur].desc);
-  // la barre de mise en forme n'existe qu'en mode édition
-  await expect(page.locator("#rtb")).toBeHidden();
-  await page.locator("#redit").click();
   await expect(page.locator("#rtb")).toBeVisible();
   await page.locator("#rdesc").fill("Cuire les pâtes 10 minutes puis servir");
   const selectionner = (mot) =>
@@ -3205,19 +3273,22 @@ test("recettes : mettre des mots de la description en gras ou souligné (boutons
   expect(await desc()).toBe("Cuire les pâtes __10 minutes__ puis servir");
   await selectionner("servir");
   await page.keyboard.press("Control+b");
-  await page.locator("#reok").click();
+  await fermerFiche(page, true);
   // lecture : mise en forme visible, rien d'autre que du texte échappé
-  await expect(page.locator("#rdv")).toBeVisible();
-  await expect(page.locator("#rdv b")).toHaveText("servir");
-  await expect(page.locator("#rdv u")).toHaveText("10 minutes");
-  await page.evaluate(() => {
-    S.rec[S.cur].desc = '<img src=x onerror="window.__x=1"> **gras**\nligne 2';
-    drawRec();
-  });
-  await expect(page.locator("#rdv img")).toHaveCount(0);
-  await expect(page.locator("#rdv")).toContainText("<img src=x");
-  await expect(page.locator("#rdv br")).toHaveCount(1);
-  expect(await page.evaluate(() => window.__x)).toBeUndefined();
+  const html = await page.evaluate(() => fmtDesc(S.rec[S.cur].desc));
+  expect(html).toContain("<b>servir</b>");
+  expect(html).toContain("<u>10 minutes</u>");
+  const hostile = await page.evaluate(() =>
+    fmtDesc('<img src=x onerror="window.__x=1"> **gras**\nligne 2')
+  );
+  expect(hostile).not.toContain("<img");
+  expect(hostile).toContain("&lt;img src=x");
+  expect(hostile.match(/<br>/g)).toHaveLength(1);
+  // italique : *mot* (une étoile isolée ou entourée d'espaces reste du texte)
+  expect(await page.evaluate(() => fmtDesc("un *mot* **gras** 2 * 3 * 4"))).toBe(
+    "un <i>mot</i> <b>gras</b> 2 * 3 * 4"
+  );
+  expect(await page.evaluate(() => descTexte("un *mot* et **gras**"))).toBe("un mot et gras");
   // texte à partager et CSV : sans les marques
   expect(await page.evaluate(() => descTexte("**a** et __b__ **"))).toBe("a et b **");
   expect(erreurs).toEqual([]);
@@ -3634,7 +3705,7 @@ test("recettes : la liste (page Recettes, menu et export) est triée par ordre a
     drawMenu();
   });
   await aller(page, "rec");
-  const options = await page.locator("#rsel option").allTextContents();
+  const options = await page.locator("#rlist .rln").allTextContents();
   const attendu = [...options].sort((a, b) =>
     a.localeCompare(b, "fr", { sensitivity: "base", numeric: true })
   );
@@ -3697,7 +3768,7 @@ test("recettes : des types et thèmes se proposent d'après la description, sans
   expect(r.vide).toEqual([]);
   // rien n'est coché tant qu'on ne clique pas : la proposition est dans la fiche
   await aller(page, "rec");
-  await page.locator("#rsel").selectOption("Spaghetti bolognaise");
+  await ouvrirFiche(page, "Spaghetti bolognaise");
   expect(await page.evaluate(() => S.rec[S.cur].tags)).toBeUndefined();
   await expect(page.locator("#rtags .chip.sug")).toContainText(["＋ Italien"]);
   await page.locator('#rtags [data-rts="Italien"]').click();
@@ -3719,7 +3790,7 @@ test("recettes : créer un type, le cocher, filtrer la liste (visible ou pas) et
   const erreurs = await ouvrir(page);
   await aller(page, "rec");
   // un type créé par l'utilisateur, avec Entrée
-  await page.locator("#rsel").selectOption("Soupe de légumes + pain");
+  await ouvrirFiche(page, "Soupe de légumes + pain");
   await page.locator("#tnew").fill("  soirée   feu  ");
   await page.locator("#tnew").press("Enter");
   await page.locator('#rtags [data-rt="Entrée"]').click();
@@ -3729,20 +3800,22 @@ test("recettes : créer un type, le cocher, filtrer la liste (visible ou pas) et
     "true"
   );
   // un second type, pour une autre recette
-  await page.locator("#rsel").selectOption("Riz au lait (dessert)");
+  await fermerFiche(page);
+  await ouvrirFiche(page, "Riz au lait (dessert)");
   await page.locator('#rtags [data-rt="Dessert"]').click();
   await page.locator('#rtags [data-rt="Froid"]').click();
+  await fermerFiche(page);
   // la barre du filtre ne montre que les types utilisés, avec leur nombre de recettes ; « Sans type » pour le reste
   const barre = page.locator("#rfilt");
   await expect(barre.locator('[data-ft="Dessert"]')).toContainText("(1)");
   await expect(barre.locator('[data-ft="soirée feu"]')).toBeVisible();
   await expect(barre.locator('[data-ft="Plat"]')).toHaveCount(0);
   await expect(barre.locator('[data-ft="__sans__"]')).toContainText("(5)");
-  const toutes = await page.locator("#rsel option").count();
+  const toutes = await page.locator("#rlist .rln").count();
   expect(toutes).toBe(7);
-  // 1. on n'affiche que les desserts : la recette ouverte reste dans la liste
+  // 1. on n'affiche que les desserts
   await barre.locator('[data-ft="Dessert"]').click();
-  expect(await page.locator("#rsel option").allTextContents()).toEqual(["Riz au lait (dessert)"]);
+  expect(await page.locator("#rlist .rln").allTextContents()).toEqual(["Riz au lait (dessert)"]);
   await expect(page.locator("#rfilt")).toContainText("1 recette sur 7");
   await expect(page.locator('#rfilt [data-ft="Dessert"]')).toHaveAttribute("aria-pressed", "true");
   // le menu propose le même choix, avec la même barre
@@ -3765,25 +3838,26 @@ test("recettes : créer un type, le cocher, filtrer la liste (visible ou pas) et
   // le filtre est un réglage de l'appareil : il survit au rechargement, mais n'est pas dans le projet
   await page.reload();
   await aller(page, "rec");
-  expect(await page.locator("#rsel option").count()).toBe(2);
+  expect(await page.locator("#rlist .rln").count()).toBe(2);
   expect(await page.evaluate(() => JSON.stringify(S).includes("pss-types-filtre"))).toBe(false);
   // 3. recettes sans type
   await page.locator('#rfilt [data-ft="Dessert"]').click();
   await page.locator('#rfilt [data-ft="Entrée"]').click();
   await page.locator('#rfilt [data-ft="__sans__"]').click();
-  // les 5 recettes sans type, et la recette ouverte (toujours gardée dans la liste)
-  expect(await page.locator("#rsel option").count()).toBe(6);
+  // les 5 recettes sans type
+  expect(await page.locator("#rlist .rln").count()).toBe(5);
   // 4. tout réafficher
   await page.locator('#rfilt [data-ftc="1"]').click();
-  expect(await page.locator("#rsel option").count()).toBe(7);
+  expect(await page.locator("#rlist .rln").count()).toBe(7);
   expect(await page.evaluate(() => filtreTypes)).toEqual([]);
   // un type que plus aucune recette ne porte disparaît du filtre (aucune recette ne se perd)
   await page.locator('#rfilt [data-ft="Dessert"]').click();
-  await page.locator("#rsel").selectOption("Riz au lait (dessert)");
+  await ouvrirFiche(page, "Riz au lait (dessert)");
   await page.locator('#rtags [data-rt="Dessert"]').click();
   await page.locator('#rtags [data-rt="Froid"]').click();
+  await fermerFiche(page);
   expect(await page.evaluate(() => filtreTypes)).toEqual([]);
-  expect(await page.locator("#rsel option").count()).toBe(7);
+  expect(await page.locator("#rlist .rln").count()).toBe(7);
   expect(erreurs).toEqual([]);
 });
 
@@ -3850,10 +3924,11 @@ test("sauvegarde : les types des recettes sont enregistrés, nettoyés et gardé
   expect(r.sans).toBeUndefined();
   // export puis import
   await aller(page, "rec");
-  await page.locator("#rsel").selectOption("Croque-monsieur");
+  await ouvrirFiche(page, "Croque-monsieur");
   await page.locator('#rtags [data-rt="Chaud"]').click();
   await page.locator("#tnew").fill("Camp d'été");
   await page.locator("#tnew").press("Enter");
+  await fermerFiche(page);
   await aller(page, "pj");
   const fichier = await telecharger(page, "#exp");
   expect(JSON.parse(fichier.texte).rec["Croque-monsieur"].tags).toEqual(["Chaud", "Camp d'été"]);

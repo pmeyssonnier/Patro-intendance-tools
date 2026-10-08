@@ -318,10 +318,11 @@ def normaliser(item):
     }
 
 # %% Catalogue exporté de l'appli (facultatif : ingrédients ajoutés à la main dans les recettes)
-# Dans l'appli : Catalogue de prix > « 💾 Exporter le catalogue », puis mettre UTILISER_CATALOGUE = True.
+# Dans l'appli : Catalogue de prix > « 💾 Exporter le catalogue » ; Colab demande ce fichier au lancement de la cellule
+# (UTILISER_CATALOGUE = True par défaut ; mettre False pour n'utiliser que la liste INGREDIENTS ci-dessus).
 # Le script cherche alors chaque ingrédient du catalogue (les 31 de base ET ceux ajoutés à la main, de la forme c_xxxx)
 # et produit un JSON relié aux mêmes identifiants : à recharger dans l'appli SUR LE MÊME APPAREIL.
-UTILISER_CATALOGUE = False
+UTILISER_CATALOGUE = True
 SEULEMENT_PERSO = False  # True : ne collecter que les ingrédients ajoutés à la main (moins cher)
 # Recherche à utiliser à la place du nom de l'ingrédient (identifiant -> texte cherché sur Colruyt) :
 REQUETES_PERSO = {}  # ex. {"c_xxxxxxx": "cotelettes de porc"}
@@ -361,10 +362,15 @@ def appliquer_catalogue(cat):
 
 
 if UTILISER_CATALOGUE:
+    print("Choisis le fichier « catalogue-prix-….json » exporté de l'appli (annule pour n'utiliser que la liste de base).")
     envoye = files.upload()  # choisir « catalogue-prix-….json »
-    # on lit le contenu envoyé, pas le fichier du même nom : Colab renomme un fichier déjà présent
-    # (« … (1) (2).json ») mais renvoie le nom d'origine, ce qui ferait relire un ancien fichier
-    appliquer_catalogue(json.loads(next(iter(envoye.values())).decode("utf-8")))
+    if envoye:
+        # on lit le contenu envoyé, pas le fichier du même nom : Colab renomme un fichier déjà présent
+        # (« … (1) (2).json ») mais renvoie le nom d'origine, ce qui ferait relire un ancien fichier
+        appliquer_catalogue(json.loads(next(iter(envoye.values())).decode("utf-8")))
+    else:
+        UTILISER_CATALOGUE = False
+        print("Aucun fichier : seuls les ingrédients de base (INGREDIENTS) sont collectés.")
 
 # %% Liste commune (ingrédients partagés par tous les utilisateurs de l'appli)
 # La liste commune est un fichier du dépôt : prix/ingredients_communs.json. Elle complète INGREDIENTS : ses produits sont

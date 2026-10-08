@@ -12,8 +12,25 @@ async function ouvrir(page) {
   return erreurs;
 }
 
+/** Va sur la page Recettes et ouvre la fiche (fenêtre d'édition) d'une recette ; sans nom, la recette courante. */
+async function ouvrirFiche(page, nom) {
+  await aller(page, "rec");
+  if (!nom) nom = await page.evaluate(() => S.cur || Object.keys(S.rec)[0]);
+  const exact = new RegExp("^" + nom.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$");
+  await page.locator("#rlist .rln").filter({ hasText: exact }).click();
+  await page.locator("#rdlg[open]").waitFor();
+}
+
+/** Referme la fiche d'une recette : « Enregistrer » (par défaut) ou « Annuler ». */
+async function fermerFiche(page, enregistrer = true) {
+  await page.locator(enregistrer ? "#rdokc" : "#rdno").click();
+  await page.locator("#rdlg").waitFor({ state: "hidden" });
+}
+
 /** Va sur une page du menu ☰ (eff, reg, menu, rec, cat, list, sh, pj), sur ordinateur comme sur téléphone. */
 async function aller(page, id) {
+  // une fiche de recette ouverte bloque la page : on la referme (sans enregistrer)
+  if (await page.locator("#rdlg[open]").count()) await fermerFiche(page, false);
   const burger = page.locator("#burger");
   if (await burger.isVisible()) {
     if (await page.locator("#drawer").evaluate((d) => d.inert)) await burger.click();
@@ -54,6 +71,8 @@ const montant = (txt) => parseFloat(txt.replace(/[^\d,]/g, "").replace(",", ".")
 
 module.exports = {
   basculerQuantite,
+  ouvrirFiche,
+  fermerFiche,
   ouvrir,
   aller,
   telecharger,

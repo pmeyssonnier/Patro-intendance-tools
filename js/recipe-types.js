@@ -220,6 +220,15 @@ $("mfilt").addEventListener("click", surFiltre);
 
 /* ---- Types et thèmes de la recette ouverte ---- */
 
+/** Zone des types repliée dans la fenêtre de recette ? (réglage retenu dans ce navigateur) */
+let tagsMasques = (() => {
+  try {
+    return localStorage.getItem("pss-tags-masques") === "1";
+  } catch {
+    return false;
+  }
+})();
+
 /** Pastilles de la recette ouverte : chaque étiquette connue se coche ou se décoche ; les propositions d'après la description s'ajoutent d'un clic. */
 function drawTags() {
   const R = S.rec[S.cur];
@@ -238,8 +247,14 @@ function drawTags() {
     const on = mes.some((x) => plain(x) === plain(t));
     return `<button type="button" class="chip${on ? " on" : ""}" data-rt="${esc(t)}" aria-pressed="${on}">${esc(t)}</button>`;
   };
+  const bascule = `<button type="button" class="x" data-rtmask="1" aria-expanded="${!tagsMasques}">${tagsMasques ? "Afficher" : "Masquer"}</button>`;
+  if (tagsMasques) {
+    $("rtags").innerHTML =
+      `<div><b>Types, thèmes et mots-clés</b> ${bascule} <span class="s">${mes.length ? esc(mes.join(", ")) : "aucun"}</span></div>`;
+    return;
+  }
   $("rtags").innerHTML =
-    `<div><b>Types, thèmes et mots-clés</b> <span class="s">(touche pour cocher ou décocher ; sert à filtrer la liste des recettes)</span></div>` +
+    `<div><b>Types, thèmes et mots-clés</b> ${bascule} <span class="s">(touche pour cocher ou décocher ; sert à filtrer la liste des recettes)</span></div>` +
     `<div class="chips">${tagsConnus().map(pastille).join("")}</div>` +
     (sug.length
       ? `<div class="chips"><span class="s">💡 D'après la description :</span>${sug.map((t) => `<button type="button" class="chip sug" data-rts="${esc(t)}" aria-label="Ajouter le type ${esc(t)}">＋ ${esc(t)}</button>`).join("")}<button type="button" class="x" data-rtall="1">Tout ajouter</button></div>`
@@ -257,7 +272,8 @@ function basculerType(t, forcer) {
   if (i >= 0 && !forcer) a.splice(i, 1);
   else if (i < 0) {
     if (a.length >= TYPES_PAR_RECETTE) {
-      $("remsg").textContent = `${TYPES_PAR_RECETTE} types au plus par recette.`;
+      $("rdmsg").style.color = "#d33";
+      $("rdmsg").textContent = `${TYPES_PAR_RECETTE} types au plus par recette.`;
       return;
     }
     a.push(t);
@@ -275,9 +291,17 @@ function ajouterTypeSaisi() {
 }
 
 $("rtags").addEventListener("click", (e) => {
-  const b = e.target.closest("[data-rt], [data-rts], [data-rtall], #tadd");
+  const b = e.target.closest("[data-rt], [data-rts], [data-rtall], [data-rtmask], #tadd");
   if (!b) return;
-  if (b.id === "tadd") ajouterTypeSaisi();
+  if (b.dataset.rtmask) {
+    tagsMasques = !tagsMasques;
+    try {
+      localStorage.setItem("pss-tags-masques", tagsMasques ? "1" : "0");
+    } catch {
+      /* sans stockage : l'état n'est pas retenu */
+    }
+    drawTags();
+  } else if (b.id === "tadd") ajouterTypeSaisi();
   else if (b.dataset.rtall) {
     const R = S.rec[S.cur];
     for (const t of typesProbables(

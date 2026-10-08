@@ -81,24 +81,16 @@
 
 <div class="pg" id="g-rec"><section class="card"><h2>Recettes</h2>
 <div id="rfilt"></div>
-<div class="row rrow"><select id="rsel" aria-label="Recette"></select><button id="rnew" class="x" title="Nouvelle recette" aria-label="Nouvelle recette">+</button><button id="redit" class="x" title="Modifier le nom et la description" aria-label="Modifier le nom et la description de la recette">✎</button><button id="rdel" class="x" title="Supprimer cette recette" aria-label="Supprimer cette recette">✕</button></div>
+<div class="rbar"><button id="rnew" title="Créer une recette">+ Nouvelle recette</button> <button id="rimp" class="x">📥 Importer une recette</button> <span class="s" id="rimm" role="status"></span></div>
 <div class="row" id="rform" style="display:none;grid-template-columns:1fr auto auto"><input id="rname" maxlength="100" aria-label="Nom de la nouvelle recette" placeholder="Nom de la recette"><button id="rok">Créer</button><button id="rno" class="x">Annuler</button></div>
-<div class="row" id="reform" style="display:none;grid-template-columns:1fr auto auto"><input id="rename" aria-label="Nouveau nom de la recette" placeholder="Nom de la recette" maxlength="100"><button id="reok">Enregistrer</button><button id="reno" class="x">Annuler</button></div>
-<p class="s" id="remsg" role="status"></p>
-<div id="rtags" class="rtags"></div>
-<label>Description / déroulé</label>
-<div class="rtb" id="rtb" style="display:none"><button type="button" class="x" data-fmt="b" title="Gras (Ctrl+B) : sélectionne des mots puis clique" aria-label="Mettre en gras"><b>G</b></button><button type="button" class="x" data-fmt="u" title="Souligné (Ctrl+U) : sélectionne des mots puis clique" aria-label="Souligner"><u>S</u></button><span class="s">Sélectionne des mots puis clique sur G (gras) ou S (souligné).</span></div>
-<textarea id="rdesc" aria-label="Description de la recette" rows="4"></textarea>
-<div id="rdv" class="rdv" role="region" aria-label="Description de la recette"></div>
-<p class="s">Quantité <b>par personne</b> et par section (g, ml ou pièces). Pour une quantité <b>unique</b> (ex. 5 pains, 5 L de lait), clique sur le nom de l'ingrédient pour ouvrir sa fiche, puis sur « → quantité unique ». Elle est répartie au prorata des régimes (désactivable).</p>
-<div class="rw"><div class="w sv"><table class="fit rec"><thead id="rh"></thead><tbody id="rb"></tbody></table></div></div>
-<p><select id="radd" aria-label="Ajouter un ingrédient à la recette" style="max-width:260px;display:inline-block"></select> <button id="inew" class="x">+ Nouvel ingrédient</button></p>
-<p><button id="rimp" class="x">📥 Importer une recette</button> <span class="s" id="rimm" role="status"></span></p>
 <div id="rimpf" style="display:none"><p class="s">Sur la page d'une recette, ouvre le code source (clic droit → « Afficher le code source »), cherche <b>ld+json</b> et colle ici le bloc <b>&lt;script type="application/ld+json"&gt;…&lt;/script&gt;</b> qui contient « Recipe ». Si la page n'a pas de bloc « Recipe » (article, site sans données structurées), copie plutôt la <b>liste des ingrédients</b>, une ligne par ingrédient. L'appli ne lit que ce que tu colles, elle n'appelle aucun site.</p>
 <textarea id="rimt" rows="5" aria-label="Données de la recette (ld+json)" placeholder='{"@type":"Recipe","name":"…","recipeIngredient":["400 g …"]}'></textarea>
 <input id="rimu" type="text" aria-label="Adresse de la recette (facultatif)" placeholder="Adresse de la recette, pour garder la source (facultatif)" style="margin-top:6px">
 <p><button id="rimlire">Lire la recette</button> <button id="rimfer" class="x">Annuler</button></p>
 <div id="rimv"></div></div>
+<p class="s" id="remsg" role="status"></p>
+<div id="rlist" class="rlist" role="list" aria-label="Recettes"></div>
+<p class="s">Touche une recette pour la modifier : nom, types et mots-clés, description, ingrédients et quantités.</p>
 </section></div>
 
 <div class="pg" id="g-cat"><section class="card"><h2>Catalogue de prix</h2>
@@ -117,6 +109,7 @@
 <h2 style="margin-top:14px">Prix des ingrédients</h2>
 <div class="row rayrow"><select id="crayon" aria-label="Filtrer les ingrédients par rayon"></select><button id="rygere" class="x">⚙️ Gérer les rayons</button></div>
 <input type="search" id="cfilt" aria-label="Filtrer les ingrédients par nom ou nom de produit" placeholder="🔍 Filtrer par ingrédient ou produit…" autocomplete="off" style="margin-bottom:8px">
+<p class="s" style="margin:0 0 8px"><label><input type="checkbox" id="csans"> Afficher seulement les ingrédients <b>sans prix</b> <span id="csansn"></span></label></p>
 <div class="w st"><table class="fit"><thead><tr><th>Ingrédient</th><th>Unité</th><th class="num">Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
 <p><button id="cins" class="x">➕ Insérer un ingrédient</button> <span class="s" id="cinm" role="status"></span></p>
 <p><button id="hrs" class="x">Restaurer les ingrédients de base</button></p></section></div>
@@ -211,6 +204,23 @@
 <p class="s" id="mgp"></p>
 <p class="s" id="mgm" role="status" style="color:#d33"></p>
 <p><button id="mgok">Fusionner</button> <button id="mgno" class="x">Annuler</button></p>
+</dialog>
+<dialog id="rdlg" class="np" aria-labelledby="rdt">
+<h2 id="rdt" tabindex="-1" style="margin-top:0">Modifier la recette</h2>
+<label for="rename">Nom de la recette</label>
+<input id="rename" maxlength="100" aria-label="Nom de la recette" placeholder="Nom de la recette" autocomplete="off">
+<p class="s" id="rdmsg" role="status" style="color:#d33"></p>
+<div id="rtags" class="rtags"></div>
+<details id="rdd" open><summary><b>Description / déroulé</b></summary>
+<div class="rtb" id="rtb"><button type="button" class="x" data-fmt="b" title="Gras (Ctrl+B) : sélectionne des mots puis clique" aria-label="Mettre en gras"><b>G</b></button><button type="button" class="x" data-fmt="u" title="Souligné (Ctrl+U) : sélectionne des mots puis clique" aria-label="Souligner"><u>S</u></button><button type="button" class="x" data-fmt="i" title="Italique (Ctrl+I) : sélectionne des mots puis clique" aria-label="Mettre en italique"><i>I</i></button><span class="s">Sélectionne des mots puis clique sur G (gras), S (souligné) ou I (italique).</span></div>
+<textarea id="rdesc" aria-label="Description de la recette" rows="4"></textarea>
+<div id="rdvw"><span class="s">Aperçu avec la mise en forme :</span><div id="rdv" class="rdv"></div></div>
+</details>
+<p class="s">Quantité <b>par personne</b> et par section (g, ml ou pièces). Pour une quantité <b>unique</b> (ex. 5 pains, 5 L de lait), clique sur le nom de l'ingrédient pour ouvrir sa fiche, puis sur « → quantité unique ». Elle est répartie au prorata des régimes (désactivable).</p>
+<div class="rw"><div class="w sv"><table class="fit rec"><thead id="rh"></thead><tbody id="rb"></tbody></table></div></div>
+<p><select id="radd" aria-label="Ajouter un ingrédient à la recette" style="max-width:260px;display:inline-block"></select> <button id="inew" class="x">+ Nouvel ingrédient</button></p>
+<p class="s">Les prix, noms et unités modifiés dans la fiche d'un ingrédient sont ceux du catalogue : ils restent même si tu annules.</p>
+<div class="rdb"><button id="rdok">Enregistrer</button> <button id="rdokc">Enregistrer et fermer</button> <button id="rdno" class="x">Annuler</button></div>
 </dialog>
 <dialog id="rydlg" class="np" aria-labelledby="ryt">
 <h2 id="ryt" style="margin-top:0">Gérer les rayons</h2>

@@ -53,15 +53,19 @@ function drawCat() {
   // l'exemple ne sert qu'à démarrer : inutile dès que des produits sont déjà associés aux ingrédients
   $("csvx").style.display = Object.values(S.pn).some(Boolean) ? "none" : "";
   const q = plain($("cfilt").value.trim());
+  const sans = $("csans").checked;
+  const nSans = Object.keys(ING).filter((k) => !S.hid.includes(k) && !price(k)).length;
+  $("csansn").textContent = `(${nSans})`;
   const keys = Object.keys(ING).filter(
     (k) =>
       !S.hid.includes(k) &&
+      (!sans || !price(k)) &&
       (!catRayon || catOf(k) === catRayon) &&
       (!q || plain(ING[k][0] + " " + (S.pn[k] || "")).includes(q))
   );
   $("ct").innerHTML =
     lignesCat(keys) ||
-    `<tr><td>${q || catRayon ? "Aucun ingrédient ne correspond au filtre." : "Aucun ingrédient."}</td></tr>`;
+    `<tr><td>${q || catRayon || sans ? "Aucun ingrédient ne correspond au filtre." : "Aucun ingrédient."}</td></tr>`;
 }
 
 /** Fiche de modification d'un ingrédient (nom, unité, prix, régime, rayon, boutons), la même dans le catalogue et dans les recettes.
@@ -82,6 +86,8 @@ function lignesCat(keys) {
 }
 
 $("cfilt").addEventListener("input", drawCat);
+
+$("csans").addEventListener("change", drawCat);
 
 $("crayon").onchange = () => {
   catRayon = $("crayon").value;
