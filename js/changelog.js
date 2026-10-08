@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.33.0",
+    d: "2026-10-08",
+    t: "Menu : repas en blanc, plus de barre de types ; total des effectifs",
+    l: [
+      "La barre « Afficher : Plat, Dessert… » est retirée de la page Menu. Le filtre par types reste sur la page Recettes ; « + Ajouter un plat… » propose toutes les recettes, par ordre alphabétique.",
+      "Menu : le nom des repas (Matin, Midi…) et leur effectif sont toujours en blanc, quelle que soit la couleur du repas.",
+      "Camp & effectifs : le total de la troupe s'affiche sous les champs de section.",
+    ],
+  },
+  {
     v: "1.32.0",
     d: "2026-10-08",
     t: "Recettes et catalogue : plus compacts",

@@ -567,6 +567,17 @@ test("catalogue : le filtre « sans prix » n'affiche que les ingrédients sans 
   await expect(page.locator("#ct tr")).toHaveCount(n0);
 });
 
+test("effectifs : le total de la troupe suit les champs de section", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "eff");
+  const champs = page.locator("#cnt input");
+  const n = await champs.count();
+  for (let i = 0; i < n; i++) await champs.nth(i).fill(i === 0 ? "12" : "0");
+  await expect(page.locator("#cnttot")).toHaveText("Total : 12 personnes");
+  await champs.nth(0).fill("1");
+  await expect(page.locator("#cnttot")).toHaveText("Total : 1 personne");
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");
@@ -3530,23 +3541,22 @@ test("recettes : créer un type, le cocher, filtrer la liste (visible ou pas) et
   expect(await page.locator("#rlist .rln").allTextContents()).toEqual(["Riz au lait (dessert)"]);
   await expect(page.locator("#rfilt")).toContainText("1 recette sur 7");
   await expect(page.locator('#rfilt [data-ft="Dessert"]')).toHaveAttribute("aria-pressed", "true");
-  // le menu propose le même choix, avec la même barre
+  // le menu n'a pas de barre de filtre et propose toutes les recettes
   await aller(page, "menu");
-  await expect(page.locator("#mfilt [data-ft='Dessert']")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#mfilt")).toHaveCount(0);
   const plats = await page
     .locator('select[data-add="1"]')
     .first()
     .locator("option")
     .allTextContents();
-  expect(plats.slice(1)).toEqual(["Riz au lait (dessert)"]);
+  expect(plats.slice(1)).toHaveLength(7);
   // 2. plusieurs types cochés : au moins un des deux
-  await page.locator("#mfilt [data-ft='Entrée']").click();
-  const deux = await page
-    .locator('select[data-add="1"]')
-    .first()
-    .locator("option")
-    .allTextContents();
-  expect(deux.slice(1)).toEqual(["Riz au lait (dessert)", "Soupe de légumes + pain"]);
+  await aller(page, "rec");
+  await page.locator('#rfilt [data-ft="Entrée"]').click();
+  expect(await page.locator("#rlist .rln").allTextContents()).toEqual([
+    "Riz au lait (dessert)",
+    "Soupe de légumes + pain",
+  ]);
   // le filtre est un réglage de l'appareil : il survit au rechargement, mais n'est pas dans le projet
   await page.reload();
   await aller(page, "rec");
