@@ -1305,35 +1305,6 @@ th.num,
     grid-template-columns: 1fr;
   }
 }
-#rydlg {
-  width: min(640px, calc(100vw - 24px));
-  max-height: calc(100vh - 24px);
-  overflow: auto;
-  padding: 14px;
-  border: 1px solid var(--bd);
-  border-radius: 12px;
-  background: var(--card);
-  color: var(--tx);
-  box-sizing: border-box;
-}
-#rydlg::backdrop {
-  background: rgba(0, 0, 0, 0.5);
-}
-.ryr,
-.ryadd {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  margin: 6px 0;
-}
-.ryr input,
-.ryadd input {
-  flex: 1;
-  min-width: 0;
-}
-.ryr .s {
-  white-space: nowrap;
-}
 .ryx {
   margin: 0 0 8px;
   padding: 8px;
@@ -1343,20 +1314,6 @@ th.num,
 .ryx select {
   width: auto;
   max-width: 100%;
-}
-@media (max-width: 560px) {
-  /* petit écran : le nom du rayon prend toute la ligne, les boutons passent dessous */
-  .ryr {
-    flex-wrap: wrap;
-  }
-  .ryr input {
-    order: -1;
-    flex: 1 1 100%;
-  }
-  .ryr .s {
-    flex: 1;
-    text-align: right;
-  }
 }
 
 /* Description d'une recette : lecture mise en forme (gras, souligné) et barre de mise en forme en édition */
@@ -1760,12 +1717,11 @@ table.fit.tcat {
   min-height: 26px;
 }
 
-/* Fenêtre « Gérer les types » */
-#tydlg {
-  width: min(560px, calc(100vw - 16px));
+/* Fenêtres de listes modifiables (Gérer les rayons, Gérer les types) : titre et liste qui défilent, pied toujours visible */
+.ldlg {
+  width: min(600px, calc(100vw - 16px));
   max-height: calc(100dvh - 16px);
-  overflow: auto;
-  padding: 14px;
+  padding: 0;
   border: 1px solid var(--bd);
   border-radius: 12px;
   background: var(--card);
@@ -1773,6 +1729,116 @@ table.fit.tcat {
   box-sizing: border-box;
 }
 
-#tydlg::backdrop {
+.ldlg[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.ldlg::backdrop {
   background: rgba(0, 0, 0, 0.5);
+}
+
+.ldlg-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 14px 4px;
+}
+
+.ldlg-body h2 {
+  margin-top: 0;
+}
+
+.ldlg-foot {
+  padding: 8px 14px 12px;
+  border-top: 1px solid var(--bd);
+  background: var(--card);
+}
+
+.ldlg-foot p {
+  margin: 4px 0;
+}
+
+.lrow,
+.ladd {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.lrow input,
+.ladd input {
+  flex: 1;
+  min-width: 0;
+}
+
+.lrow .ln {
+  white-space: nowrap;
+  min-width: 5.6em;
+  text-align: right;
+}
+
+.lrow .lvide {
+  width: 38px;
+}
+
+.lbtn {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Téléphone : fenêtre pleine largeur, lignes compactes sur une seule ligne, effectif réduit à son nombre */
+@media (max-width: 700px) {
+  .ldlg {
+    width: calc(100vw - 8px);
+    max-height: calc(100dvh - 8px);
+  }
+
+  .ldlg-body {
+    padding: 10px 10px 2px;
+  }
+
+  .ldlg-body h2 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+  }
+
+  .ldlg-body > p.s {
+    font-size: 0.8rem;
+    margin: 0 0 6px;
+  }
+
+  .lrow {
+    gap: 4px;
+    margin: 3px 0;
+  }
+
+  .lrow button.x {
+    min-width: 34px;
+    min-height: 34px;
+    padding: 2px 6px;
+  }
+
+  .lrow input {
+    padding: 6px 8px;
+  }
+
+  .lrow .lw {
+    display: none;
+  }
+
+  .lrow .ln {
+    min-width: 1.4em;
+    text-align: right;
+  }
+
+  .lrow .lvide {
+    width: 34px;
+  }
+
+  .ldlg-foot {
+    padding: 6px 10px 8px;
+  }
 }

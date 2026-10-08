@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.38.0",
+    d: "2026-10-08",
+    t: "Fenêtres « Gérer les rayons / les types » : un seul modèle, plus compact sur téléphone",
+    l: [
+      "Les fenêtres « Gérer les rayons » et « Gérer les types et thèmes » partagent maintenant le même modèle (mise en page, lignes et pied de fenêtre).",
+      "Sur téléphone : chaque ligne tient sur une seule ligne (▲ ▼, nom, nombre, 🗑), le texte d'aide est réduit, et le pied de la fenêtre (ajout, bouton Fermer) reste toujours visible pendant que la liste défile.",
+    ],
+  },
+  {
     v: "1.37.0",
     d: "2026-10-08",
     t: "Gérer les types : même présentation que les rayons",
