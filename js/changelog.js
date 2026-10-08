@@ -7,12 +7,13 @@ const CHANGELOG = [
   {
     v: "1.30.0",
     d: "2026-10-08",
-    t: "Description de recette : italique, aperçu et volet repliable",
+    t: "Description de recette : italique, aperçu et volet repliable ; catalogue sans prix",
     l: [
       "Nouveau bouton I (ou Ctrl+I) : met la sélection en italique, noté *mot*.",
       "Sous le champ de saisie, un aperçu montre la description avec sa mise en forme (gras, souligné, italique), sans les marques.",
       "La description se replie et se déplie comme les types et thèmes (réglage retenu).",
       "Tableau des ingrédients : titre « Ingrédients » et plus de tranche d'âge sous le nom des sections, pour gagner de la place.",
+      "Prix des ingrédients : une case « Afficher seulement les ingrédients sans prix » (avec leur nombre) pour repérer ce qu'il reste à renseigner. Elle se combine avec le rayon et la recherche.",
     ],
   },
   {

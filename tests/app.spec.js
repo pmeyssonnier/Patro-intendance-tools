@@ -539,6 +539,25 @@ test("recettes : l'aperçu montre gras, souligné et italique sans les marques, 
   await fermerFiche(page, false);
 });
 
+test("catalogue : le filtre « sans prix » n'affiche que les ingrédients sans prix", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const n0 = await page.locator("#ct tr").count();
+  await page.evaluate(() => {
+    const [a, b] = Object.keys(ING).filter((k) => !S.hid.includes(k));
+    S.prices[a] = 0;
+    S.prices[b] = 0;
+    drawCat();
+  });
+  await page.locator("#csans").check();
+  await expect(page.locator("#ct tr")).toHaveCount(2);
+  await expect(page.locator("#csansn")).toHaveText("(2)");
+  await page.locator("#csans").uncheck();
+  await expect(page.locator("#ct tr")).toHaveCount(n0);
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");
