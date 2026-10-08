@@ -57,7 +57,7 @@ function drawMenu() {
               )
               .join(
                 ""
-              )}</div><select data-add="1" data-day="${i}" data-slot="${esc(k)}" aria-label="Ajouter un plat : ${esc(lab)}, ${esc(dlab(d))}"><option value="">+ Ajouter un plat…</option>${recettesAffichees()
+              )}</div><select data-add="1" data-day="${i}" data-slot="${esc(k)}" aria-label="Ajouter un plat : ${esc(lab)}, ${esc(dlab(d))}"><option value="">+ Ajouter un plat…</option>${recettesTriees()
               .map((n) => `<option>${esc(n)}</option>`)
               .join(
                 ""

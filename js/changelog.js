@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.33.0",
+    v: "1.35.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,26 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.34.0",
+    d: "2026-10-08",
+    t: "Listes plus compactes et même police partout",
+    l: [
+      "Page Recettes : la liste utilise la même police que les tableaux de saisie (14 px, graisse normale), avec des lignes serrées.",
+      "Ingrédients d'une recette : nom sur une ligne plus basse et plus petite, champs et bouton ✕ plus compacts : environ 35 px par ligne au lieu de 48, pour en voir plus à l'écran.",
+      "Pied de la fenêtre de recette : les boutons Enregistrer, Enregistrer et fermer, Annuler tiennent sur une ligne sur téléphone.",
+    ],
+  },
+  {
+    v: "1.33.0",
+    d: "2026-10-08",
+    t: "Menu : repas en blanc, plus de barre de types ; total des effectifs",
+    l: [
+      "La barre « Afficher : Plat, Dessert… » est retirée de la page Menu. Le filtre par types reste sur la page Recettes ; « + Ajouter un plat… » propose toutes les recettes, par ordre alphabétique.",
+      "Menu : le nom des repas (Matin, Midi…) et leur effectif sont toujours en blanc, quelle que soit la couleur du repas.",
+      "Camp & effectifs : le total de la troupe s'affiche sous les champs de section.",
     ],
   },
   {

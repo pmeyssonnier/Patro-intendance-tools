@@ -162,10 +162,10 @@ function htmlFiltre() {
   return h ? `<div class="rfiltre">${h}</div>` : "";
 }
 
-/** Redessine la barre du filtre (page Recettes et page Menu). */
+/** Redessine la barre du filtre (page Recettes). */
 function drawFiltres() {
   const h = htmlFiltre();
-  $("rfilt").innerHTML = $("mfilt").innerHTML = h;
+  $("rfilt").innerHTML = h;
 }
 
 /** Applique à chaque recette sans type les étiquettes proposées d'après son contenu. Renvoie le nombre de recettes complétées. */
@@ -215,8 +215,6 @@ function surFiltre(e) {
 }
 
 $("rfilt").addEventListener("click", surFiltre);
-
-$("mfilt").addEventListener("click", surFiltre);
 
 /* ---- Types et thèmes de la recette ouverte ---- */
 
