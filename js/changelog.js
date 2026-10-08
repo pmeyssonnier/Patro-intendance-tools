@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.35.0",
+    d: "2026-10-08",
+    t: "Téléphone : plus de débordement",
+    l: [
+      "Fiche de recette : le tableau des ingrédients défile de côté dans son cadre, avec le nom de l'ingrédient qui reste visible, au lieu de faire déborder toute la fenêtre.",
+      "Catalogue de prix : le filtre « sans prix » passe à la ligne au lieu de dépasser de l'écran.",
+      "Boutons ⧉ ✎ ✕ de la liste des recettes et nom des repas du menu : zones de toucher plus hautes (24 px au moins).",
+    ],
+  },
+  {
     v: "1.34.0",
     d: "2026-10-08",
     t: "Listes plus compactes et même police partout",
