@@ -642,6 +642,63 @@ test("recettes : gérer les types d'origine (renommer, déplacer, supprimer, ajo
   expect(erreurs).toEqual([]);
 });
 
+test("sauvegarde : « Partager » essaie le .json, puis un .txt, puis le texte, et signale une vraie erreur", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.__partages = [];
+    window.__mode = "json";
+    navigator.canShare = (d) =>
+      !!d.files &&
+      d.files.every(
+        (f) =>
+          (window.__mode === "json" ? true : f.name.endsWith(".txt")) && window.__mode !== "texte"
+      );
+    navigator.share = async (d) => {
+      if (window.__mode === "erreur") throw new Error("refusé");
+      if (window.__mode === "annule") throw Object.assign(new Error("x"), { name: "AbortError" });
+      window.__partages.push({ fichier: d.files ? d.files[0].name : null, texte: !!d.text });
+    };
+  });
+  await ouvrir(page);
+  await aller(page, "pj");
+  await expect(page.locator("#exps")).toBeVisible();
+  // 1. le navigateur accepte le .json
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText("Projet partagé");
+  expect((await page.evaluate(() => window.__partages))[0].fichier).toMatch(/\.json$/);
+  // 2. il refuse le .json : on partage le même contenu en .txt
+  await page.evaluate(() => (window.__mode = "txt"));
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText(".txt");
+  expect((await page.evaluate(() => window.__partages))[1].fichier).toMatch(/\.txt$/);
+  // 3. aucun fichier accepté : texte seul
+  await page.evaluate(() => (window.__mode = "texte"));
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText("en texte");
+  expect((await page.evaluate(() => window.__partages))[2].texte).toBe(true);
+  // fermer la fenêtre de partage n'affiche pas d'erreur
+  await page.evaluate(() => (window.__mode = "annule"));
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).not.toContainText("impossible");
+  // une vraie erreur est signalée
+  await page.evaluate(() => (window.__mode = "erreur"));
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText("Partage impossible");
+});
+
+test("sauvegarde : sans partage dans le navigateur, le bouton « Partager » est masqué", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "share", { value: undefined, configurable: true });
+  });
+  await ouvrir(page);
+  await aller(page, "pj");
+  await expect(page.locator("#exps")).toBeHidden();
+  await expect(page.locator("#expc")).toBeVisible();
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");
