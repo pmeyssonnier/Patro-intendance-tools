@@ -1719,7 +1719,7 @@ test("import de recette : aperçu, correspondances puis création par personne",
       sections: SEC.length,
       gyros: par("Gyros de volaille"),
       avocat: par("Avocat"),
-      huile: par("Huile d'olive extra vierge"),
+      huile: par("Huile d’olive"),
       desc: R.desc,
       cur: S.cur,
     };
@@ -2831,19 +2831,18 @@ test("catalogue : « Vérifier les doublons » repère un nom plus court inclus 
 }) => {
   await ouvrir(page);
   await aller(page, "cat");
-  const ids = await page.evaluate(() => {
-    const a = createIng("Huile d'olive", "ml", "", "epi"),
-      c = createIng("Huile d'olive bio", "pc", "", "epi");
+  // « Huile d’olive » existe dans le catalogue de base
+  await page.evaluate(() => {
+    createIng("Huile d'olive extra vierge", "ml", "", "epi");
+    createIng("Huile d'olive bio", "pc", "", "epi");
     refreshIng();
-    return [a, c, Object.keys(ING).find((k) => ING[k][0] === "Huile d'olive extra vierge")];
   });
   await page.locator("#cdbl").click();
   await expect(page.locator("#dpl .dpg")).toHaveCount(1);
-  await expect(page.locator("#dpl")).toContainText("« Huile d'olive extra vierge »");
-  await expect(page.locator("#dpl")).toContainText("« Huile d'olive » (ml)");
+  await expect(page.locator("#dpl")).toContainText("« Huile d'olive extra vierge » (ml)");
+  await expect(page.locator("#dpl")).toContainText("« Huile d’olive » (ml)");
   // l'unité différente est signalée à part
   await expect(page.locator("#dpm")).toContainText("« Huile d'olive bio » (pc)");
-  expect(ids[2]).toBeTruthy();
 });
 
 test("catalogue : « Vérifier les doublons » liste les doublons et fusionne dans le sens choisi (A → B ou B → A)", async ({
