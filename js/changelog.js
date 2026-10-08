@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.42.0",
+    d: "2026-10-08",
+    t: "Sauvegarde : « Partager » contourne le refus « Permission denied »",
+    l: [
+      "Certains téléphones Android refusent le partage d'un fichier avec « Permission denied ». « Partager » essaie maintenant d'abord un fichier .txt (le mieux accepté), puis .json, puis le texte : après un refus, un nouvel appui sur « Partager » essaie le format suivant, et le message le dit.",
+    ],
+  },
+  {
     v: "1.41.0",
     d: "2026-10-08",
     t: "WhatsApp : un texte long arrive en entier",
