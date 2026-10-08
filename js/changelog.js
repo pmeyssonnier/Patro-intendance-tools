@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.34.0",
+    d: "2026-10-08",
+    t: "Listes plus compactes et même police partout",
+    l: [
+      "Page Recettes : la liste utilise la même police que les tableaux de saisie (14 px, graisse normale), avec des lignes serrées.",
+      "Ingrédients d'une recette : nom sur une ligne plus basse et plus petite, champs et bouton ✕ plus compacts : environ 35 px par ligne au lieu de 48, pour en voir plus à l'écran.",
+      "Pied de la fenêtre de recette : les boutons Enregistrer, Enregistrer et fermer, Annuler tiennent sur une ligne sur téléphone.",
+    ],
+  },
+  {
     v: "1.33.0",
     d: "2026-10-08",
     t: "Menu : repas en blanc, plus de barre de types ; total des effectifs",
