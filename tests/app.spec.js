@@ -494,8 +494,10 @@ test("recettes : la fenêtre reste ouverte au clic à côté ; Enregistrer ne la
   );
   // le tableau n'a pas de défilement propre
   await ouvrirFiche(page, "Spaghetti maison");
-  const defile = await page.locator("#rdlg .w.sv").evaluate((e) => getComputedStyle(e).overflowY);
-  expect(defile).toBe("visible");
+  const sansAscenseur = await page
+    .locator("#rdlg .w.sv")
+    .evaluate((e) => e.scrollHeight <= e.clientHeight + 1);
+  expect(sansAscenseur).toBe(true);
   // masquer et montrer les types
   await expect(page.locator("#rtags .chips").first()).toBeVisible();
   await page.locator("#rtd > summary").click();
@@ -597,9 +599,9 @@ test("tableaux longs : la ligne de titre reste visible quand on défile", async 
   const rec = await page.evaluate(() => {
     const w = document.getElementById("rb").closest(".w");
     const d = document.getElementById("rdlg");
-    return [getComputedStyle(w).overflowY, d.scrollHeight > d.clientHeight];
+    return [w.scrollHeight <= w.clientHeight + 1, d.scrollHeight > d.clientHeight];
   });
-  expect(rec[0], "recettes : pas d'ascenseur sur le tableau").toBe("visible");
+  expect(rec[0], "recettes : pas d'ascenseur vertical sur le tableau").toBe(true);
   expect(rec[1], "recettes : la fenêtre défile").toBe(true);
   // catalogue et liste de courses : la page défile, le titre se colle sous la barre du haut
   for (const [g, id] of [
