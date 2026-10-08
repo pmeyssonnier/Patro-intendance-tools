@@ -89,7 +89,7 @@ Facultatif : sans connexion, l'application fonctionne comme avant et tout reste 
 - Si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version ou de garder la tienne. L'historique (carte « Mon groupe ») permet de revenir à une version précédente (une toutes les 10 minutes, 20 au plus) et de restaurer un camp supprimé.
 - Rôles : administrateur (gère les membres et le nom du groupe), éditeur (modifie), lecteur (consulte seulement).
 
-**Mise en place (une fois, par l'administrateur de l'application)**
+**Mise en place (une fois, par l'administrateur de l'application)** : la marche à suivre détaillée, avec les deux scénarios (adresse Firebase ou nom de domaine propre), est dans [`MISE-EN-PRODUCTION.md`](MISE-EN-PRODUCTION.md). En résumé :
 1. Projet Firebase (offre gratuite) avec Authentication (« Lien envoyé par e-mail »), Firestore en région européenne et Hosting. La configuration web est dans `js/cloud.js` (elle n'est pas secrète : la sécurité repose sur les règles).
 2. Règles de sécurité : copier `firestore.rules` dans Firestore > Règles > Publier. À refaire à chaque changement de ce fichier. Elles se testent avec `tests-regles/`.
 3. Authentication > Paramètres > Domaines autorisés : ajouter le domaine du site (par exemple `pmeyssonnier.github.io`). `localhost` et les domaines Firebase y sont déjà.
