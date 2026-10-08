@@ -3167,7 +3167,7 @@ test("rayons : créer, renommer, réordonner et supprimer un rayon depuis le cat
   const erreurs = await ouvrir(page);
   await aller(page, "cat");
   await page.locator("#rygere").click();
-  const lignes = page.locator("#ryl .ryr");
+  const lignes = page.locator("#ryl .lrow");
   const n0 = await lignes.count();
   expect(n0).toBe(9);
   // « Autre » ne peut pas être supprimé

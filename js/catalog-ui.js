@@ -190,7 +190,23 @@ function drawRayons() {
               ""
             )}</select> <button data-rxok="${id}">Supprimer le rayon</button> <button class="x" data-rxno="1">Annuler</button></div>`
         : "";
-    return `<div class="ryr"><button class="x" data-ru="${id}" aria-label="Monter ${esc(nom)}"${i === 0 ? " disabled" : ""}>▲</button><button class="x" data-rd="${id}" aria-label="Descendre ${esc(nom)}"${i === CATS.length - 1 ? " disabled" : ""}>▼</button><input type="text" value="${esc(nom)}" data-rn="${id}" maxlength="${RAYON_NOM_MAX}" aria-label="Nom du rayon ${esc(nom)}"><span class="s">${produits}</span>${id === "aut" ? "" : `<button class="x" data-rx="${id}" aria-label="Supprimer le rayon ${esc(nom)}" title="Supprimer ce rayon">🗑</button>`}</div>${accueil}`;
+    const ligne = ligneListe({
+      nom,
+      titre: "Nom du rayon",
+      max: RAYON_NOM_MAX,
+      n,
+      mot: "produit",
+      premier: i === 0,
+      dernier: i === CATS.length - 1,
+      suppr: id !== "aut",
+      a: {
+        haut: `data-ru="${id}"`,
+        bas: `data-rd="${id}"`,
+        nom: `data-rn="${id}"`,
+        suppr: `data-rx="${id}"`,
+      },
+    });
+    return ligne + accueil;
   }).join("");
 }
 

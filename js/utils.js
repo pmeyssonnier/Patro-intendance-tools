@@ -33,6 +33,11 @@ const descTexte = (t) =>
     .replace(/__(.+?)__/g, "$1")
     .replace(/\*(?=\S)(.+?)(?<=\S)\*/g, "$1");
 
+/** Ligne d'une liste modifiable (fenêtres « Gérer les rayons » et « Gérer les types ») : ▲ ▼, nom modifiable, effectif, 🗑.
+    `a` donne les attributs data-* de chaque élément : { haut, bas, nom, suppr } (ex. { haut: 'data-ru="fl"' }) ; `suppr: false` pour une ligne qu'on ne peut pas supprimer. */
+const ligneListe = ({ nom, titre, max, n, mot, premier, dernier, suppr = true, a }) =>
+  `<div class="lrow"><button class="x" ${a.haut} aria-label="Monter ${esc(nom)}"${premier ? " disabled" : ""}>▲</button><button class="x" ${a.bas} aria-label="Descendre ${esc(nom)}"${dernier ? " disabled" : ""}>▼</button><input type="text" value="${esc(nom)}" ${a.nom} maxlength="${max}" aria-label="${titre} ${esc(nom)}"><span class="s ln"><b>${n}</b><span class="lw"> ${mot}${n > 1 ? "s" : ""}</span></span>${suppr ? `<button class="x" ${a.suppr} aria-label="Supprimer ${esc(nom)}" title="Supprimer">🗑</button>` : '<span class="lvide"></span>'}</div>`;
+
 /** Nom de produit sans la marque répétée au début (Colruyt : « EVERYDAY EVERYDAY spaghetti 500g » → « EVERYDAY spaghetti 500g »). */
 const nomProduit = (t) =>
   String(t).replace(/^([A-ZÀ-Ý0-9'.&-]+(?: [A-ZÀ-Ý0-9'.&-]+)*?) \1(?= )/, "$1");

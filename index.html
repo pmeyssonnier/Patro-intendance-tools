@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.38.0">
+<link rel="stylesheet" href="styles.css?v=1.39.0">
 </head><body><main>
 <div id="vtest" class="np" role="note" hidden>VERSION TEST – les données de ce site sont à part de l'application habituelle.</div>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="sync" aria-label="Synchronisation" hidden>☁️</button><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
@@ -220,51 +220,51 @@
 <p class="s">Les prix, noms et unités modifiés dans la fiche d'un ingrédient sont ceux du catalogue : ils restent même si tu annules.</p>
 <div class="rdb"><button id="rdok">Enregistrer</button> <button id="rdokc">Enregistrer et fermer</button> <button id="rdno" class="x">Annuler</button></div>
 </dialog>
-<dialog id="tydlg" class="np" aria-labelledby="tyt">
-<h2 id="tyt" style="margin-top:0">Gérer les types et thèmes</h2>
+<dialog id="tydlg" class="np ldlg" aria-labelledby="tyt">
+<div class="ldlg-body"><h2 id="tyt">Gérer les types et thèmes</h2>
 <p class="s">Renomme, déplace ou supprime les types proposés dans les recettes, y compris ceux d'origine, ou ajoute-en. Renommer ou supprimer un type le change dans toutes les recettes qui le portent.</p>
-<div id="tyl"></div>
-<p class="ryadd"><input id="tyn" maxlength="24" placeholder="Nouveau type ou thème" aria-label="Nom du nouveau type ou thème" autocomplete="off"><button id="tyok">+ Ajouter</button></p>
+<div id="tyl"></div></div>
+<div class="ldlg-foot"><p class="ladd"><input id="tyn" maxlength="24" placeholder="Nouveau type ou thème" aria-label="Nom du nouveau type ou thème" autocomplete="off"><button id="tyok">+ Ajouter</button></p>
 <p class="s" id="tym" role="status" style="color:#d33"></p>
-<p><button id="tyno" class="x">Fermer</button> <button id="tyre" class="x">Rétablir la liste d'origine</button></p>
+<p class="lbtn"><button id="tyno" class="x">Fermer</button> <button id="tyre" class="x">Rétablir la liste d'origine</button></p></div>
 </dialog>
-<dialog id="rydlg" class="np" aria-labelledby="ryt">
-<h2 id="ryt" style="margin-top:0">Gérer les rayons</h2>
+<dialog id="rydlg" class="np ldlg" aria-labelledby="ryt">
+<div class="ldlg-body"><h2 id="ryt">Gérer les rayons</h2>
 <p class="s">Les rayons sont les mêmes pour tous les camps. Renommer un rayon garde ses produits. L'ordre est celui de la liste de courses et des exports. « Autre » est le rayon de secours : il reste toujours.</p>
-<div id="ryl"></div>
-<p class="ryadd"><input id="ryn" maxlength="40" placeholder="Nom du nouveau rayon" aria-label="Nom du nouveau rayon" autocomplete="off"><button id="ryok">+ Ajouter</button></p>
+<div id="ryl"></div></div>
+<div class="ldlg-foot"><p class="ladd"><input id="ryn" maxlength="40" placeholder="Nom du nouveau rayon" aria-label="Nom du nouveau rayon" autocomplete="off"><button id="ryok">+ Ajouter</button></p>
 <p class="s" id="rym" role="status" style="color:#d33"></p>
-<p><button id="ryno" class="x">Fermer</button></p>
+<p class="lbtn"><button id="ryno" class="x">Fermer</button></p></div>
 </dialog>
-<script src="js/data-defaults.js?v=1.38.0"></script>
-<script src="js/utils.js?v=1.38.0"></script>
-<script src="js/storage.js?v=1.38.0"></script>
-<script src="js/state.js?v=1.38.0"></script>
-<script src="js/calculations.js?v=1.38.0"></script>
-<script src="js/shopping-list.js?v=1.38.0"></script>
-<script src="js/documents.js?v=1.38.0"></script>
-<script src="js/share-print.js?v=1.38.0"></script>
-<script src="js/navigation.js?v=1.38.0"></script>
-<script src="js/camps.js?v=1.38.0"></script>
-<script src="js/diets.js?v=1.38.0"></script>
-<script src="js/menu.js?v=1.38.0"></script>
-<script src="js/recipes.js?v=1.38.0"></script>
-<script src="js/recipe-types.js?v=1.38.0"></script>
-<script src="js/ingredient-matching.js?v=1.38.0"></script>
-<script src="js/ingredients.js?v=1.38.0"></script>
-<script src="js/ingredient-merge.js?v=1.38.0"></script>
-<script src="js/price-import.js?v=1.38.0"></script>
-<script src="js/rayons.js?v=1.38.0"></script>
-<script src="js/catalog-ui.js?v=1.38.0"></script>
-<script src="js/recipe-import.js?v=1.38.0"></script>
-<script src="js/changelog.js?v=1.38.0"></script>
-<script src="js/config.js?v=1.38.0"></script>
-<script src="js/groupes.js?v=1.38.0"></script>
-<script src="js/sync-data.js?v=1.38.0"></script>
-<script src="js/cloud-groups.js?v=1.38.0"></script>
-<script src="js/cloud-sync.js?v=1.38.0"></script>
-<script src="js/cloud-history.js?v=1.38.0"></script>
-<script src="js/cloud.js?v=1.38.0"></script>
-<script src="js/pwa.js?v=1.38.0"></script>
-<script src="js/main.js?v=1.38.0"></script>
+<script src="js/data-defaults.js?v=1.39.0"></script>
+<script src="js/utils.js?v=1.39.0"></script>
+<script src="js/storage.js?v=1.39.0"></script>
+<script src="js/state.js?v=1.39.0"></script>
+<script src="js/calculations.js?v=1.39.0"></script>
+<script src="js/shopping-list.js?v=1.39.0"></script>
+<script src="js/documents.js?v=1.39.0"></script>
+<script src="js/share-print.js?v=1.39.0"></script>
+<script src="js/navigation.js?v=1.39.0"></script>
+<script src="js/camps.js?v=1.39.0"></script>
+<script src="js/diets.js?v=1.39.0"></script>
+<script src="js/menu.js?v=1.39.0"></script>
+<script src="js/recipes.js?v=1.39.0"></script>
+<script src="js/recipe-types.js?v=1.39.0"></script>
+<script src="js/ingredient-matching.js?v=1.39.0"></script>
+<script src="js/ingredients.js?v=1.39.0"></script>
+<script src="js/ingredient-merge.js?v=1.39.0"></script>
+<script src="js/price-import.js?v=1.39.0"></script>
+<script src="js/rayons.js?v=1.39.0"></script>
+<script src="js/catalog-ui.js?v=1.39.0"></script>
+<script src="js/recipe-import.js?v=1.39.0"></script>
+<script src="js/changelog.js?v=1.39.0"></script>
+<script src="js/config.js?v=1.39.0"></script>
+<script src="js/groupes.js?v=1.39.0"></script>
+<script src="js/sync-data.js?v=1.39.0"></script>
+<script src="js/cloud-groups.js?v=1.39.0"></script>
+<script src="js/cloud-sync.js?v=1.39.0"></script>
+<script src="js/cloud-history.js?v=1.39.0"></script>
+<script src="js/cloud.js?v=1.39.0"></script>
+<script src="js/pwa.js?v=1.39.0"></script>
+<script src="js/main.js?v=1.39.0"></script>
 </body></html>

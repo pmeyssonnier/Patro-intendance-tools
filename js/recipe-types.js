@@ -400,7 +400,21 @@ function drawTypesListe() {
   $("tyl").innerHTML = tagsConnus()
     .map((t, i, l) => {
       const n = nbRecettesType(t);
-      return `<div class="ryr"><button class="x" data-tyu="${esc(t)}" aria-label="Monter ${esc(t)}"${i ? "" : " disabled"}>▲</button><button class="x" data-tyd="${esc(t)}" aria-label="Descendre ${esc(t)}"${i < l.length - 1 ? "" : " disabled"}>▼</button><input data-tyn="${esc(t)}" value="${esc(t)}" maxlength="${TYPE_MAX}" aria-label="Nom du type ${esc(t)}"><span class="s">${n} recette${n > 1 ? "s" : ""}</span><button class="x" data-tyx="${esc(t)}" aria-label="Supprimer ${esc(t)}" title="Supprimer ce type">🗑</button></div>`;
+      return ligneListe({
+        nom: t,
+        titre: "Nom du type",
+        max: TYPE_MAX,
+        n,
+        mot: "recette",
+        premier: !i,
+        dernier: i === l.length - 1,
+        a: {
+          haut: `data-tyu="${esc(t)}"`,
+          bas: `data-tyd="${esc(t)}"`,
+          nom: `data-tyn="${esc(t)}"`,
+          suppr: `data-tyx="${esc(t)}"`,
+        },
+      });
     })
     .join("");
 }
