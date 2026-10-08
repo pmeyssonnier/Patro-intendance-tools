@@ -1559,3 +1559,13 @@ th.num,
     border: 0;
   }
 }
+
+/* Aperçu de la description (gras, souligné, italique) sous le champ de saisie */
+#rdv {
+  margin: 2px 0 8px;
+  padding: 8px 10px;
+  border: 1px dashed var(--bd);
+  border-radius: 8px;
+  background: var(--bg);
+  overflow-wrap: anywhere;
+}
