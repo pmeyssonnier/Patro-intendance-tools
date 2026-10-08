@@ -1815,19 +1815,3 @@ table.fit.tcat {
 #tydlg::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
-
-.tyrow {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto auto;
-  gap: 6px;
-  align-items: center;
-  margin: 4px 0;
-}
-
-.tyrow input {
-  min-width: 0;
-}
-
-.tyrow .s {
-  white-space: nowrap;
-}
