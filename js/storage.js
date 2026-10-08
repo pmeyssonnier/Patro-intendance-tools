@@ -123,6 +123,14 @@ function cleanProject(x) {
   for (const [n, r] of ent(x.rec)) {
     if (!n || n.length > 100 || n === "__proto__" || !obj(r)) continue;
     const R = { desc: str(r.desc, 5000), ing: {} };
+    // types et thèmes : étiquettes courtes, sans doublon (10 au plus)
+    const tags = [];
+    for (const t of Array.isArray(r.tags) ? r.tags.slice(0, 30) : []) {
+      const nt = typeof t === "string" ? t.trim().replace(/\s+/g, " ").slice(0, 24) : "";
+      if (nt && tags.length < 10 && !tags.some((x) => x.toLowerCase() === nt.toLowerCase()))
+        tags.push(nt);
+    }
+    if (tags.length) R.tags = tags;
     for (const [k, a] of ent(r.ing)) if (okid(k) && Array.isArray(a)) R.ing[k] = qn(a, N);
     if (obj(r.fx)) {
       R.fx = {};
