@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.44.0",
+    d: "2026-10-08",
+    t: "Catalogue : huile d'olive ajoutée",
+    l: [
+      "Le catalogue de base inclut maintenant l'huile d'olive extra vierge EVERYDAY 1 L à 6,99 €/L, rayon Épicerie & conserves, avec sa fiche Colruyt.",
+    ],
+  },
+  {
     v: "1.43.0",
     d: "2026-10-08",
     t: "Boutons plus compacts sur téléphone",

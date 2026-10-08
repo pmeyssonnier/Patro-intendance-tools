@@ -2,7 +2,7 @@
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
 // Numéro de version affiché dans le menu : à mettre à jour à chaque release (avec "version" dans package.json).
-const APP_VERSION = "1.43.0";
+const APP_VERSION = "1.44.0";
 
 // Nom de la troupe par défaut (modifiable dans Configuration).
 const TROOP0 = "Patro Sainte-Suzanne";
@@ -27,6 +27,7 @@ const ING = {
   poulet: ["Blanc de poulet", "g", 7.5, "poulet"],
   leg: ["Légumes", "g", 2.2, "courgette|légumes"],
   coco: ["Lait de coco", "ml", 3.5, "coco"],
+  huile: ["Huile d'olive extra vierge", "ml", 6.99, "huile d.?olive|olive.*extra vierge|extra vierge"],
   pdt: ["Pommes de terre", "g", 1.1, "pommes de terre"],
   sauc: ["Saucisses", "g", 7, "saucisse"],
   car: ["Carottes", "g", 1.2, "carotte"],
@@ -90,6 +91,7 @@ const CAT0 = {
   poulet: "bou",
   leg: "fl",
   coco: "epi",
+  huile: "epi",
   pdt: "fl",
   sauc: "fri",
   car: "fl",
@@ -191,7 +193,9 @@ const DEF = {
   n: [10, 8, 6, 6],
   wa: 10,
   prices: {},
-  pn: {},
+  pn: {
+    huile: "EVERYDAY huile d'olive extra vierge 1L",
+  },
   rec: REC0,
   meals: [
     ["Vendredi souper", "Spaghetti bolognaise"],
@@ -213,5 +217,7 @@ const DEF = {
   ov: {},
   cat: {},
   promo: {},
-  url: {},
+  url: {
+    huile: "https://www.colruyt.be/fr/produits/13120",
+  },
 };

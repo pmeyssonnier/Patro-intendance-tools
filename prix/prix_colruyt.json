@@ -473,6 +473,27 @@
         }
       ]
     },
+    "huile": {
+      "requete": "huile d'olive",
+      "categorie": "epi",
+      "unite": "l",
+      "prix_unitaire": 6.99,
+      "lien": "https://www.colruyt.be/fr/produits/13120",
+      "produit": {
+        "produit_id": "13120",
+        "nom": "EVERYDAY huile d'olive extra vierge 1L",
+        "marque": "EVERYDAY",
+        "categorie_colruyt": "Epicerie",
+        "prix": 6.99,
+        "prix_unitaire": 6.99,
+        "unite": "l",
+        "url": "https://www.colruyt.be/fr/produits/13120",
+        "promo": null,
+        "promo_prix": null,
+        "en_stock": true
+      },
+      "alternatives": []
+    },
     "pdt": {
       "requete": "pommes de terre",
       "categorie": "fl",
