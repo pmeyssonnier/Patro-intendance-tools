@@ -149,10 +149,19 @@ function renameRecipe(ancien, nom) {
   S.rec = rec;
   if (S.cur === ancien) S.cur = nom;
   // les menus (de tous les camps) désignent les recettes par leur nom
-  for (const c of Object.values(S.camps))
+  for (const c of Object.values(S.camps)) {
     for (const jour of Object.values(c.menu))
       for (const k in jour)
         if (Array.isArray(jour[k])) jour[k] = jour[k].map((n) => (n === ancien ? nom : n));
+    // les textes d'adaptations du menu imprimable sont rangés sous « jour|repas|plat »
+    const adn = {};
+    for (const [cle, texte] of Object.entries(c.adn || {})) {
+      const p = cle.split("|");
+      adn[p.length > 2 && p.slice(2).join("|") === ancien ? p[0] + "|" + p[1] + "|" + nom : cle] =
+        texte;
+    }
+    c.adn = adn;
+  }
   for (const k of Object.keys(RATIO))
     if (k.startsWith(ancien + "|")) {
       RATIO[nom + k.slice(ancien.length)] = RATIO[k];
