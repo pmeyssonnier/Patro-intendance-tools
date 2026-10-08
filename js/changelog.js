@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.47.0",
+    d: "2026-10-09",
+    t: "Prix saisi à la main : le lien du produit est conservé",
+    l: [
+      "Modifier le prix d'un ingrédient (catalogue, fiche ✎ ou liste de courses) ne fait plus disparaître le lien du produit. Le nom du produit retenu à l'import et la promotion, eux, sont toujours oubliés.",
+    ],
+  },
+  {
     v: "1.46.0",
     d: "2026-10-09",
     t: "Catalogue : lien du produit dans la fiche d'un ingrédient",
