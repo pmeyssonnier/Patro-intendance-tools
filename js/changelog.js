@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.33.0",
+    d: "2026-10-08",
+    t: "Menu : plus de barre de types",
+    l: [
+      "La barre « Afficher : Plat, Dessert… » est retirée de la page Menu. Le filtre par types reste sur la page Recettes ; « + Ajouter un plat… » propose toutes les recettes, par ordre alphabétique.",
+    ],
+  },
+  {
     v: "1.32.0",
     d: "2026-10-08",
     t: "Recettes et catalogue : plus compacts",
