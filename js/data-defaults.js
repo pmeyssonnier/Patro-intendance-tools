@@ -198,9 +198,7 @@ const DEF = {
   n: [10, 8, 6, 6],
   wa: 10,
   prices: {},
-  pn: {
-    huile: "EVERYDAY huile d'olive extra vierge 1L",
-  },
+  pn: {},
   rec: REC0,
   meals: [
     ["Vendredi souper", "Spaghetti bolognaise"],
@@ -222,7 +220,5 @@ const DEF = {
   ov: {},
   cat: {},
   promo: {},
-  url: {
-    huile: "https://www.colruyt.be/fr/produits/13120",
-  },
+  url: {},
 };
