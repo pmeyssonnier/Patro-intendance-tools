@@ -1719,7 +1719,7 @@ test("import de recette : aperçu, correspondances puis création par personne",
       sections: SEC.length,
       gyros: par("Gyros de volaille"),
       avocat: par("Avocat"),
-      huile: par("Huile d’olive"),
+      huile: par("Huile d'olive extra vierge"),
       desc: R.desc,
       cur: S.cur,
     };

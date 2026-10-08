@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.43.0",
+    v: "1.45.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,23 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.44.0",
+    d: "2026-10-08",
+    t: "Catalogue : huile d'olive ajoutée",
+    l: [
+      "Le catalogue de base inclut maintenant l'huile d'olive extra vierge EVERYDAY 1 L à 6,99 €/L, rayon Épicerie & conserves, avec sa fiche Colruyt.",
+    ],
+  },
+  {
+    v: "1.43.0",
+    d: "2026-10-08",
+    t: "Boutons plus compacts sur téléphone",
+    l: [
+      "Catalogue de prix : les 4 boutons tiennent sur 2 lignes (libellés courts) au lieu de 4.",
+      "Recettes : les 3 boutons tiennent sur une seule ligne et les pastilles de filtre sont plus petites.",
     ],
   },
   {
