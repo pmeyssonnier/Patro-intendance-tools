@@ -1415,3 +1415,32 @@ th.num,
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+#mprev .adb {
+  padding: 0 6px;
+  font-size: 0.8rem;
+  margin-left: 4px;
+  font-style: normal;
+}
+
+#mprev .ade {
+  margin: 4px 0;
+  font-style: normal;
+  min-width: min(240px, 60vw);
+}
+
+#mprev .ade textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+#mprev .ade .x {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+}
+
+#mprev {
+  overflow-x: auto;
+}

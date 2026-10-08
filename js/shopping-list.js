@@ -87,7 +87,7 @@ function calc() {
         `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${eur(r[2])}</td><td class="s" style="white-space:normal">${esc(r[3].join(" · "))}</td></tr>`
     )
     .join("");
-  $("mprev").innerHTML = menuHTML();
+  $("mprev").innerHTML = menuHTML(true);
   drawCat();
   save();
 }

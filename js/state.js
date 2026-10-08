@@ -61,6 +61,7 @@ function mkCamp(name, o) {
       types: DEFT(),
       off: {},
       pres: {},
+      adn: {},
       col: { ...SCOL },
       mt: "Menu du camp",
     },

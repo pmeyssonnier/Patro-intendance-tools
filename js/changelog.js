@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.32.0",
+    d: "2026-10-08",
+    t: "Menu imprimable : adaptations des régimes modifiables",
+    l: [
+      "Menu du camp, aperçu du menu imprimable : un crayon ✎ à côté des adaptations (régimes) de chaque plat permet de les remplacer par son propre texte, ou de les masquer. « Texte automatique » rétablit le calcul.",
+      "Le texte choisi est utilisé dans l'impression, le fichier HTML et le CSV du menu. Il est rangé par camp, jour, repas et plat ; il suit si une recette est renommée, et il est synchronisé avec le groupe.",
+    ],
+  },
+  {
     v: "1.31.0",
     d: "2026-10-07",
     t: "Groupes en ligne : synchronisation, invitations et historique",
