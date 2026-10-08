@@ -3902,3 +3902,33 @@ test("sauvegarde : les types des recettes sont enregistrés, nettoyés et gardé
   expect(await page.evaluate(() => S.rec["Croque-monsieur"].tags)).toEqual(["Chaud", "Camp d'été"]);
   expect(erreurs).toEqual([]);
 });
+
+test("catalogue : la fiche d'un ingrédient permet de saisir, corriger et effacer le lien du produit", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const lien = "https://www.colruyt.be/fr/produits/13120";
+  const ouvrirFiche = async () => {
+    await page.locator('[data-ced="pates"]').click();
+    return page.locator('[data-el="pates"]');
+  };
+  let champ = await ouvrirFiche();
+  await champ.fill("https://exemple.com/x");
+  await page.locator('[data-eok="pates"]').click();
+  await expect(page.locator('[data-ei="pates"]')).toContainText("Lien invalide");
+  await champ.fill(lien);
+  await page.locator('[data-eok="pates"]').click();
+  expect(await page.evaluate(() => S.url.pates)).toBe(lien);
+  // la fiche rouverte montre le lien ; changer le prix à la main le garde
+  champ = await ouvrirFiche();
+  await expect(champ).toHaveValue(lien);
+  await page.locator('[data-ep="pates"]').fill("1.5");
+  await page.locator('[data-eok="pates"]').click();
+  expect(await page.evaluate(() => [S.url.pates, S.prices.pates])).toEqual([lien, 1.5]);
+  // champ vidé : le lien est supprimé
+  champ = await ouvrirFiche();
+  await champ.fill("");
+  await page.locator('[data-eok="pates"]').click();
+  expect(await page.evaluate(() => S.url.pates)).toBeUndefined();
+});

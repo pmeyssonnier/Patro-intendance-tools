@@ -1067,7 +1067,8 @@ th.num,
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
 }
-.edg .eg-nom {
+.edg .eg-nom,
+.edg .eg-lien {
   grid-column: span 6;
 }
 .edg .eg-uni,

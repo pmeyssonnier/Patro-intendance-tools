@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.46.0",
+    d: "2026-10-09",
+    t: "Catalogue : lien du produit dans la fiche d'un ingrédient",
+    l: [
+      "La fiche de modification d'un ingrédient (✎) a un champ « Lien du produit (colruyt.be) » : on peut le saisir, le corriger ou l'effacer. Seules les adresses https://www.colruyt.be/… sont acceptées.",
+    ],
+  },
+  {
     v: "1.45.0",
     d: "2026-10-08",
     t: "Vérifier les doublons : noms proches",
