@@ -85,33 +85,101 @@ $("sx").onclick = () => dlCsv(shk()[0], shk()[3]());
 
 $("lcsv").onclick = () => dlCsv("Liste de courses", csvList());
 
+/* Longueur d'un lien : les messageries coupent les textes trop longs (WhatsApp, et surtout les logiciels de mail : environ 2 000 caractères une fois encodé).
+   Au-delà, on envoie le début (coupé à une fin de ligne), et le texte complet est copié pour être collé à la suite. */
+const LIEN_MAX = { wa: 3000, mail: 1800 };
+
+/** Texte à mettre dans un lien : entier s'il est assez court, sinon coupé à une fin de ligne avec une mention. Renvoie { texte, coupe }. */
+function texteDeLien(t, max, reste) {
+  if (encodeURIComponent(t).length <= max) return { texte: t, coupe: false };
+  const fin = "\n… (suite : colle le texte complet, copié)",
+    place = max - encodeURIComponent(fin).length - reste;
+  let n = t.length;
+  while (n > 0 && encodeURIComponent(t.slice(0, n)).length > place) n = Math.floor(n * 0.9);
+  const cut = t.lastIndexOf("\n", n);
+  return { texte: t.slice(0, cut > 0 ? cut : n) + fin, coupe: true };
+}
+
+/** Lien WhatsApp (wa.me) et lien mail pour un texte, avec le texte réellement envoyé. */
+function lienWhatsApp(t) {
+  const r = texteDeLien(t, LIEN_MAX.wa, "https://wa.me/?text=".length);
+  return { url: "https://wa.me/?text=" + encodeURIComponent(r.texte), coupe: r.coupe };
+}
+
+function lienMail(t, sujet) {
+  const debut = "mailto:?subject=" + encodeURIComponent(sujet) + "&body=",
+    r = texteDeLien(t, LIEN_MAX.mail, debut.length);
+  return { url: debut + encodeURIComponent(r.texte), coupe: r.coupe };
+}
+
+/** Copie un texte : API moderne, sinon repli par un champ temporaire (navigateurs intégrés à une appli, pages sans HTTPS). Résout true si c'est copié. */
+function copierTexte(t) {
+  const repli = () => {
+    const a = document.createElement("textarea");
+    a.value = t;
+    a.setAttribute("readonly", "");
+    a.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+    document.body.appendChild(a);
+    a.select();
+    try {
+      return document.execCommand("copy");
+    } catch (_) {
+      return false;
+    } finally {
+      a.remove();
+    }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    return navigator.clipboard.writeText(t).then(
+      () => true,
+      () => repli()
+    );
+  return Promise.resolve(repli());
+}
+
 $("sw").onclick = () => {
   const t = shtxt();
-  if (t) window.open("https://wa.me/?text=" + encodeURIComponent(t), "_blank", "noopener");
+  if (!t) return;
+  const l = lienWhatsApp(t);
+  if (l.coupe)
+    copierTexte(t).then((ok) =>
+      shmsg(
+        ok
+          ? "Texte long : début envoyé, texte complet copié."
+          : "Texte long : seul le début est envoyé."
+      )
+    );
+  window.open(l.url, "_blank", "noopener");
 };
 
 $("sm").onclick = () => {
   const t = shtxt();
-  if (t)
-    location.href =
-      "mailto:?subject=" +
-      encodeURIComponent(troop() + " – " + shk()[0]) +
-      "&body=" +
-      encodeURIComponent(t);
+  if (!t) return;
+  const l = lienMail(t, troop() + " – " + shk()[0]);
+  if (l.coupe)
+    copierTexte(t).then((ok) =>
+      shmsg(
+        ok
+          ? "Texte long : début dans le mail, texte complet copié."
+          : "Texte long : seul le début est dans le mail."
+      )
+    );
+  else shmsg("Pas de messagerie qui s'ouvre ? Utilise « Copier ».");
+  location.href = l.url;
 };
 
 if (!navigator.share) $("sn").style.display = "none";
 
 $("sn").onclick = () => {
   const t = shtxt();
-  if (t) navigator.share({ title: troop() + " – " + shk()[0], text: t }).catch(() => {});
+  if (!t) return;
+  navigator.share({ title: troop() + " – " + shk()[0], text: t }).catch((e) => {
+    if (e && e.name !== "AbortError") shmsg("Partage impossible : utilise « Copier ».");
+  });
 };
 
 $("sc").onclick = () => {
   const t = shtxt();
   if (!t) return;
-  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(
-    () => shmsg("Copié ✅"),
-    () => shmsg("Copie impossible")
-  );
+  copierTexte(t).then((ok) => shmsg(ok ? "Copié ✅" : "Copie impossible"));
 };

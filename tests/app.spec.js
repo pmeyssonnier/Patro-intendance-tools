@@ -642,6 +642,134 @@ test("recettes : gérer les types d'origine (renommer, déplacer, supprimer, ajo
   expect(erreurs).toEqual([]);
 });
 
+test("sauvegarde : « Partager » essaie le .json, puis un .txt, puis le texte, et signale une vraie erreur", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.__partages = [];
+    window.__mode = "json";
+    navigator.canShare = (d) =>
+      !!d.files &&
+      d.files.every(
+        (f) =>
+          (window.__mode === "json" ? true : f.name.endsWith(".txt")) && window.__mode !== "texte"
+      );
+    navigator.share = async (d) => {
+      if (window.__mode === "erreur") throw new Error("refusé");
+      if (window.__mode === "annule") throw Object.assign(new Error("x"), { name: "AbortError" });
+      window.__partages.push({ fichier: d.files ? d.files[0].name : null, texte: !!d.text });
+    };
+  });
+  await ouvrir(page);
+  await aller(page, "pj");
+  await expect(page.locator("#exps")).toBeVisible();
+  // 1. le navigateur accepte le .json
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText("Projet partagé");
+  expect((await page.evaluate(() => window.__partages))[0].fichier).toMatch(/\.json$/);
+  // 2. il refuse le .json : on partage le même contenu en .txt
+  await page.evaluate(() => (window.__mode = "txt"));
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText(".txt");
+  expect((await page.evaluate(() => window.__partages))[1].fichier).toMatch(/\.txt$/);
+  // 3. aucun fichier accepté : texte seul
+  await page.evaluate(() => (window.__mode = "texte"));
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText("en texte");
+  expect((await page.evaluate(() => window.__partages))[2].texte).toBe(true);
+  // fermer la fenêtre de partage n'affiche pas d'erreur
+  await page.evaluate(() => (window.__mode = "annule"));
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).not.toContainText("impossible");
+  // une vraie erreur est signalée
+  await page.evaluate(() => (window.__mode = "erreur"));
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText("Partage impossible");
+});
+
+test("sauvegarde : sans partage dans le navigateur, le bouton « Partager » est masqué", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "share", { value: undefined, configurable: true });
+  });
+  await ouvrir(page);
+  await aller(page, "pj");
+  await expect(page.locator("#exps")).toBeHidden();
+  await expect(page.locator("#expc")).toBeVisible();
+});
+
+test("partager / imprimer : liens WhatsApp et mail raccourcis quand le texte est long, copie avec repli", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "sh");
+  const r = await page.evaluate(() => {
+    const court = "Liste de courses\n- 2 kg de riz\n- 1 L de lait";
+    const long = Array.from(
+      { length: 400 },
+      (_, i) => "- ingrédient numéro " + i + " : " + i + " kg"
+    ).join("\n");
+    const wc = lienWhatsApp(court),
+      wl = lienWhatsApp(long),
+      mc = lienMail(court, "Camp – Liste"),
+      ml = lienMail(long, "Camp – Liste");
+    return {
+      wc: [wc.coupe, wc.url.length, decodeURIComponent(wc.url.split("text=")[1]) === court],
+      wl: [
+        wl.coupe,
+        wl.url.length,
+        decodeURIComponent(wl.url.split("text=")[1]).startsWith("- ingrédient numéro 0"),
+      ],
+      mc: [mc.coupe, mc.url.startsWith("mailto:?subject=")],
+      ml: [
+        ml.coupe,
+        ml.url.length,
+        decodeURIComponent(ml.url.split("&body=")[1]).includes("suite"),
+      ],
+    };
+  });
+  // texte court : envoyé tel quel ; long : coupé, lien sous les limites
+  expect(r.wc).toEqual([false, r.wc[1], true]);
+  expect(r.wl[0]).toBe(true);
+  expect(r.wl[1]).toBeLessThanOrEqual(3100);
+  expect(r.wl[2]).toBe(true);
+  expect(r.mc).toEqual([false, true]);
+  expect(r.ml[0]).toBe(true);
+  expect(r.ml[1]).toBeLessThanOrEqual(1900);
+  expect(r.ml[2]).toBe(true);
+  // WhatsApp avec un texte long : la fenêtre s'ouvre sur le lien court et le texte complet est copié (repli sans API presse-papiers)
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    window.__copie = null;
+    document.execCommand = (c) => {
+      window.__copie = document.querySelector("textarea[readonly]").value;
+      return c === "copy";
+    };
+    window.__ouvert = null;
+    window.open = (u) => {
+      window.__ouvert = u;
+      return null;
+    };
+    S.rec["Grande recette"] = {
+      desc: "x".repeat(4000),
+      ing: {},
+    };
+    $("shw").value = "recs";
+    $("sw").click();
+  });
+  await expect(page.locator("#shm")).toContainText("texte complet copié");
+  const out = await page.evaluate(() => ({
+    ouvert: window.__ouvert.length,
+    copie: window.__copie.length,
+  }));
+  expect(out.ouvert).toBeLessThanOrEqual(3100);
+  expect(out.copie).toBeGreaterThan(4000);
+  // le bouton Copier utilise le même repli
+  await page.locator("#sc").click();
+  await expect(page.locator("#shm")).toContainText("Copié");
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");

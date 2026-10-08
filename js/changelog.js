@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.39.0",
+    v: "1.41.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,26 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.40.0",
+    d: "2026-10-08",
+    t: "Partager / imprimer : textes longs et copie plus fiables",
+    l: [
+      "WhatsApp et Mail : quand le texte est trop long pour un lien (les messageries le coupent), le début est envoyé, coupé à une fin de ligne, et le texte complet est copié pour être collé à la suite.",
+      "Copier : si le navigateur refuse l'accès au presse-papiers (navigateur intégré à une appli, page sans HTTPS), un second moyen est essayé.",
+      "Partager… : une vraie erreur est maintenant signalée au lieu d'être ignorée. Mail : un rappel d'utiliser « Copier » si aucune messagerie ne s'ouvre.",
+    ],
+  },
+  {
+    v: "1.39.0",
+    d: "2026-10-08",
+    t: "Sauvegarde : « Partager » marche sur plus d'appareils",
+    l: [
+      "« Partager » essaie d'abord le fichier .json ; si le navigateur le refuse (Chrome sur Android), il partage le même contenu en fichier .txt, puis en texte seul.",
+      "L'import accepte maintenant les fichiers .json et .txt.",
+      "Quand le navigateur n'a pas de partage (Firefox, certains navigateurs de bureau), le bouton est masqué ; « Exporter » et « Copier le projet » restent disponibles. Une vraie erreur de partage est maintenant affichée.",
     ],
   },
   {
