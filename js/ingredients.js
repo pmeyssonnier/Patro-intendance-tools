@@ -96,12 +96,11 @@ function editIng(k, nom, unite, dg, cat) {
   return "";
 }
 
-/** Prix saisi à la main : il remplace le produit retenu à l'import (nom, promotion et lien du produit sont oubliés). */
+/** Prix saisi à la main : il remplace le produit retenu à l'import (nom et promotion sont oubliés) ; le lien du produit est gardé. */
 function poserPrix(k, p) {
   S.prices[k] = p;
   delete S.pn[k];
   delete S.promo[k];
-  delete S.url[k];
 }
 
 /** Message qui explique pourquoi un ingrédient ne peut pas être supprimé (utilisé dans des recettes), ou "" s'il le peut. */

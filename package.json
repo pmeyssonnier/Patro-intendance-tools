@@ -1,6 +1,6 @@
 {
   "name": "patro-intendance-tools",
-  "version": "1.46.0",
+  "version": "1.47.0",
   "private": true,
   "description": "Intendance de camp du Patro Sainte-Suzanne – tests de bout en bout",
   "license": "MIT",

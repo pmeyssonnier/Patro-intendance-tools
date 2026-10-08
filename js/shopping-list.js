@@ -104,7 +104,6 @@ $("list").addEventListener("change", (e) => {
     S.prices[k] = saisie(e.target.value, 1e5);
     delete S.pn[k];
     delete S.promo[k];
-    delete S.url[k];
     calc();
   }
 });
@@ -146,7 +145,6 @@ $("xok").onclick = () => {
     S.prices[k] = p;
     delete S.pn[k];
     delete S.promo[k];
-    delete S.url[k];
   }
   C.extra[k] = Math.round(((C.extra[k] || 0) + q * fxu(k)) * 1000) / 1000;
   $("xn").value = "";
