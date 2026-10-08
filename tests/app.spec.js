@@ -1817,7 +1817,7 @@ test("import de recette : une page sans « Recipe » (article) est refusée, sa 
         "1 l d'huile de friture pour la cuisson (tournesol ou arachide)",
         "Pour la panure croustillante :",
         "• 100 g de farine tamisée",
-        "1 càs d'huile d'olive",
+        "1 càs d'huile de colza",
       ].join("\n")
     );
   await page.locator("#rimlire").click();
@@ -2644,8 +2644,8 @@ test("catalogue : deux doublons utilisés dans des recettes se fusionnent (quant
   await ouvrir(page);
   await aller(page, "cat");
   await page.evaluate(() => {
-    const a = createIng("Huile d'olive", "ml", "", "aut"),
-      b = createIng("huile olive", "ml", "", "aut");
+    const a = createIng("Huile de colza", "ml", "", "aut"),
+      b = createIng("huile colza", "ml", "", "aut");
     S.prices[b] = 6;
     S.rec[S.cur].ing[a] = SEC.map(() => 10);
     S.rec[S.cur].ing[b] = SEC.map(() => 5);
@@ -2653,7 +2653,7 @@ test("catalogue : deux doublons utilisés dans des recettes se fusionnent (quant
     refreshIng();
   });
   const [a, b] = await page.evaluate(() => window.__ids);
-  // b (huile olive, avec prix) est fusionné dans a (sans prix) : a garde son nom et reprend le prix de b
+  // b (huile colza, avec prix) est fusionné dans a (sans prix) : a garde son nom et reprend le prix de b
   await page.locator(`#ct [data-ced="${b}"]`).click();
   await page.locator(`#ct [data-emg="${b}"]`).click();
   await expect(page.locator("#mgdlg")).toBeVisible();
@@ -2739,22 +2739,24 @@ test("nouvel ingrédient depuis une recette : « Utiliser » est aussi proposé 
   page,
 }) => {
   await ouvrir(page);
-  await ajouterIngredient(page, "cat", "Huile d'olive", "ml");
+  await ajouterIngredient(page, "cat", "Huile de colza", "ml");
   await ouvrirFiche(page);
   await page.locator("#inew").click();
-  await page.locator("#ingn").fill("huile d'olive");
+  await page.locator("#ingn").fill("huile de colza");
   await page.locator("#ingu").selectOption("pc");
   await page.locator("#ingok").click();
   await expect(page.locator("#ingdupt")).toContainText("mais en liquide");
   await expect(page.locator("#inguse")).toBeVisible();
   await expect(page.locator("#inguse")).toContainText(
-    "Utiliser « Huile d'olive » (en liquide, ml)"
+    "Utiliser « Huile de colza » (en liquide, ml)"
   );
   await page.locator("#inguse").click();
   expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(1);
   expect(
     await page.evaluate(() =>
-      Object.keys(S.rec[S.cur].ing).some((k) => ING[k][0] === "Huile d'olive" && ING[k][1] === "ml")
+      Object.keys(S.rec[S.cur].ing).some(
+        (k) => ING[k][0] === "Huile de colza" && ING[k][1] === "ml"
+      )
     )
   ).toBe(true);
 });
@@ -2856,9 +2858,9 @@ test("catalogue : « Vérifier les doublons » liste les doublons et fusionne da
   await page.locator("#dpno").click();
   // deux doublons (A utilisé en recette) et un nom identique avec une autre unité
   await page.evaluate(() => {
-    const a = createIng("Sirop d'érable", "ml", "", "aut"),
-      b = createIng("sirop erable", "ml", "", "aut");
-    createIng("Sirop erables", "pc", "", "aut");
+    const a = createIng("Huile de colza", "ml", "", "aut"),
+      b = createIng("huile colza", "ml", "", "aut");
+    createIng("Huile colzas", "pc", "", "aut");
     S.rec[S.cur].ing[a] = SEC.map(() => 10);
     S.prices[b] = 6;
     window.__ids = [a, b];
@@ -2867,11 +2869,11 @@ test("catalogue : « Vérifier les doublons » liste les doublons et fusionne da
   const [a, b] = await page.evaluate(() => window.__ids);
   await page.locator("#cdbl").click();
   await expect(page.locator("#dpl .dpg")).toHaveCount(1);
-  await expect(page.locator("#dpl")).toContainText("« Sirop d'érable »");
+  await expect(page.locator("#dpl")).toContainText("« Huile de colza »");
   await expect(page.locator("#dpl")).toContainText("1 recette");
   // l'unité différente est signalée à part
   await expect(page.locator("#dpm")).toContainText("unités différentes");
-  // « sirop erable » → « Sirop d'érable » : le doublon b disparaît, a garde son nom et reprend le prix
+  // « huile colza » → « Huile de colza » : le doublon b disparaît, a garde son nom et reprend le prix
   await page.locator(`#dpl [data-dsrc="${b}"][data-ddst="${a}"]`).click();
   await expect(page.locator("#dpl")).toContainText("Aucun doublon");
   const etat = await page.evaluate(([a, b]) => [!!ING[a], !!ING[b], S.prices[a]], [a, b]);
