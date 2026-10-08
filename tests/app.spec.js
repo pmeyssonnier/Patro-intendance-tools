@@ -770,6 +770,40 @@ test("partager / imprimer : liens WhatsApp et mail raccourcis quand le texte est
   await expect(page.locator("#shm")).toContainText("Copié");
 });
 
+test("partager / imprimer : WhatsApp avec un texte long passe par le menu de partage, entier", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.__partage = null;
+    window.__ouvert = null;
+    navigator.share = async (d) => {
+      window.__partage = d.text.length;
+    };
+    window.open = (u) => {
+      window.__ouvert = u;
+      return null;
+    };
+  });
+  await ouvrir(page);
+  await aller(page, "sh");
+  const total = await page.evaluate(() => {
+    S.rec["Grande recette"] = { desc: "x".repeat(4000), ing: {} };
+    $("shw").value = "recs";
+    $("sw").click();
+    return SH.recs[1]().length;
+  });
+  await expect(page.locator("#shm")).toContainText("choisis WhatsApp");
+  // le texte entier est partagé, et aucun lien tronqué n'est ouvert
+  expect(await page.evaluate(() => window.__partage)).toBe(total);
+  expect(await page.evaluate(() => window.__ouvert)).toBeNull();
+  // texte court : lien WhatsApp direct, comme avant
+  await page.evaluate(() => {
+    $("shw").value = "menu";
+    $("sw").click();
+  });
+  expect(await page.evaluate(() => window.__ouvert)).toContain("https://wa.me/?text=");
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");

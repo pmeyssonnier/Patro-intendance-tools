@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.41.0",
+    d: "2026-10-08",
+    t: "WhatsApp : un texte long arrive en entier",
+    l: [
+      "Quand le texte est trop long pour un lien WhatsApp (par exemple toutes les recettes), le bouton WhatsApp ouvre le menu de partage du téléphone : il suffit d'y choisir WhatsApp, le texte arrive en entier. Sans menu de partage (certains ordinateurs), le début est envoyé et le texte complet est copié.",
+    ],
+  },
+  {
     v: "1.40.0",
     d: "2026-10-08",
     t: "Partager / imprimer : textes longs et copie plus fiables",
