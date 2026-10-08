@@ -1842,3 +1842,57 @@ table.fit.tcat {
     padding: 6px 10px 8px;
   }
 }
+
+/* Barres de boutons (catalogue, recettes) : libellés courts et une seule rangée sur téléphone */
+.co {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .barb .lo {
+    display: none;
+  }
+
+  .barb .co {
+    display: inline;
+  }
+
+  .barb {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin: 6px 0;
+  }
+
+  .rbar.barb {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .barb button {
+    padding: 6px 8px;
+    font-size: 0.92rem;
+    white-space: nowrap;
+  }
+
+  .barb .s {
+    grid-column: 1 / -1;
+  }
+
+  .barb .s:empty {
+    display: none;
+  }
+
+  /* pastilles du filtre : plus petites, pour tenir sur moins de lignes */
+  .rfiltre .chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .rfiltre .chip {
+    margin: 0;
+    padding: 2px 8px;
+    font-size: 0.85rem;
+  }
+}

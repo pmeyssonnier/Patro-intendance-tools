@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.42.0">
+<link rel="stylesheet" href="styles.css?v=1.43.0">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -79,7 +79,7 @@
 
 <div class="pg" id="g-rec"><section class="card"><h2>Recettes</h2>
 <div id="rfilt"></div>
-<div class="rbar"><button id="rnew" title="Créer une recette">+ Nouvelle recette</button> <button id="rimp" class="x">📥 Importer une recette</button> <button id="rtypes" class="x">⚙️ Gérer les types</button> <span class="s" id="rimm" role="status"></span></div>
+<div class="rbar barb"><button id="rnew" title="Créer une recette" aria-label="Nouvelle recette">+ <span class="lo">Nouvelle recette</span><span class="co">Nouvelle</span></button> <button id="rimp" class="x" aria-label="Importer une recette">📥 <span class="lo">Importer une recette</span><span class="co">Importer</span></button> <button id="rtypes" class="x" aria-label="Gérer les types">⚙️ <span class="lo">Gérer les types</span><span class="co">Types</span></button> <span class="s" id="rimm" role="status"></span></div>
 <div class="row" id="rform" style="display:none;grid-template-columns:1fr auto auto"><input id="rname" maxlength="100" aria-label="Nom de la nouvelle recette" placeholder="Nom de la recette"><button id="rok">Créer</button><button id="rno" class="x">Annuler</button></div>
 <div id="rimpf" style="display:none"><p class="s">Sur la page d'une recette, ouvre le code source (clic droit → « Afficher le code source »), cherche <b>ld+json</b> et colle ici le bloc <b>&lt;script type="application/ld+json"&gt;…&lt;/script&gt;</b> qui contient « Recipe ». Si la page n'a pas de bloc « Recipe » (article, site sans données structurées), copie plutôt la <b>liste des ingrédients</b>, une ligne par ingrédient. L'appli ne lit que ce que tu colles, elle n'appelle aucun site.</p>
 <textarea id="rimt" rows="5" aria-label="Données de la recette (ld+json)" placeholder='{"@type":"Recipe","name":"…","recipeIngredient":["400 g …"]}'></textarea>
@@ -93,7 +93,7 @@
 
 <div class="pg" id="g-cat"><section class="card"><h2>Catalogue de prix</h2>
 <p class="s np">Tape le prix directement dans le tableau ci-dessous (ou dans la liste de courses), ou importe des prix : un fichier, la dernière collecte publiée, ou une liste collée.</p>
-<p class="np"><input type="file" id="file" aria-label="Fichier de prix (CSV, texte ou JSON)" accept=".csv,.txt,.json" hidden> <button id="iopen" class="x">📥 Importer des prix</button> <button id="pfetch" class="x">🌐 Récupérer les derniers prix</button> <button id="cexp" class="x">💾 Exporter le catalogue</button> <button id="cdbl" class="x">🔍 Vérifier les doublons</button> <span class="s" id="impres" role="status"></span></p>
+<p class="np barb"><input type="file" id="file" aria-label="Fichier de prix (CSV, texte ou JSON)" accept=".csv,.txt,.json" hidden> <button id="iopen" class="x" aria-label="Importer des prix">📥 <span class="lo">Importer des prix</span><span class="co">Importer</span></button> <button id="pfetch" class="x" aria-label="Récupérer les derniers prix">🌐 <span class="lo">Récupérer les derniers prix</span><span class="co">Derniers prix</span></button> <button id="cexp" class="x" aria-label="Exporter le catalogue">💾 <span class="lo">Exporter le catalogue</span><span class="co">Exporter</span></button> <button id="cdbl" class="x" aria-label="Vérifier les doublons">🔍 <span class="lo">Vérifier les doublons</span><span class="co">Doublons</span></button> <span class="s" id="impres" role="status"></span></p>
 <dialog id="impdlg" class="np" aria-labelledby="impt">
 <h2 id="impt" style="margin-top:0">Importer des prix</h2>
 <p class="s"><b>À quoi ça sert ?</b> À remplir les prix sans les taper un par un. Importe une liste de produits d'un magasin : une ligne par produit, <b>nom ; prix</b>. L'appli lit le poids dans le nom (« Riz 1kg ; 1,95 » → 1,95 €/kg) et prend, pour chaque ingrédient, le produit <b>le moins cher</b> qui correspond. Un fichier <b>.json</b> de prix (collecte) est lu tel quel.</p>
@@ -226,29 +226,29 @@
 <p class="s" id="rym" role="status" style="color:#d33"></p>
 <p class="lbtn"><button id="ryno" class="x">Fermer</button></p></div>
 </dialog>
-<script src="js/data-defaults.js?v=1.42.0"></script>
-<script src="js/utils.js?v=1.42.0"></script>
-<script src="js/storage.js?v=1.42.0"></script>
-<script src="js/state.js?v=1.42.0"></script>
-<script src="js/calculations.js?v=1.42.0"></script>
-<script src="js/shopping-list.js?v=1.42.0"></script>
-<script src="js/documents.js?v=1.42.0"></script>
-<script src="js/share-print.js?v=1.42.0"></script>
-<script src="js/navigation.js?v=1.42.0"></script>
-<script src="js/camps.js?v=1.42.0"></script>
-<script src="js/diets.js?v=1.42.0"></script>
-<script src="js/menu.js?v=1.42.0"></script>
-<script src="js/recipes.js?v=1.42.0"></script>
-<script src="js/recipe-types.js?v=1.42.0"></script>
-<script src="js/ingredient-matching.js?v=1.42.0"></script>
-<script src="js/ingredients.js?v=1.42.0"></script>
-<script src="js/ingredient-merge.js?v=1.42.0"></script>
-<script src="js/price-import.js?v=1.42.0"></script>
-<script src="js/rayons.js?v=1.42.0"></script>
-<script src="js/catalog-ui.js?v=1.42.0"></script>
-<script src="js/recipe-import.js?v=1.42.0"></script>
-<script src="js/changelog.js?v=1.42.0"></script>
-<script src="js/config.js?v=1.42.0"></script>
-<script src="js/pwa.js?v=1.42.0"></script>
-<script src="js/main.js?v=1.42.0"></script>
+<script src="js/data-defaults.js?v=1.43.0"></script>
+<script src="js/utils.js?v=1.43.0"></script>
+<script src="js/storage.js?v=1.43.0"></script>
+<script src="js/state.js?v=1.43.0"></script>
+<script src="js/calculations.js?v=1.43.0"></script>
+<script src="js/shopping-list.js?v=1.43.0"></script>
+<script src="js/documents.js?v=1.43.0"></script>
+<script src="js/share-print.js?v=1.43.0"></script>
+<script src="js/navigation.js?v=1.43.0"></script>
+<script src="js/camps.js?v=1.43.0"></script>
+<script src="js/diets.js?v=1.43.0"></script>
+<script src="js/menu.js?v=1.43.0"></script>
+<script src="js/recipes.js?v=1.43.0"></script>
+<script src="js/recipe-types.js?v=1.43.0"></script>
+<script src="js/ingredient-matching.js?v=1.43.0"></script>
+<script src="js/ingredients.js?v=1.43.0"></script>
+<script src="js/ingredient-merge.js?v=1.43.0"></script>
+<script src="js/price-import.js?v=1.43.0"></script>
+<script src="js/rayons.js?v=1.43.0"></script>
+<script src="js/catalog-ui.js?v=1.43.0"></script>
+<script src="js/recipe-import.js?v=1.43.0"></script>
+<script src="js/changelog.js?v=1.43.0"></script>
+<script src="js/config.js?v=1.43.0"></script>
+<script src="js/pwa.js?v=1.43.0"></script>
+<script src="js/main.js?v=1.43.0"></script>
 </body></html>

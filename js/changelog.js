@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.43.0",
+    d: "2026-10-08",
+    t: "Boutons plus compacts sur téléphone",
+    l: [
+      "Catalogue de prix : les 4 boutons tiennent sur 2 lignes (libellés courts) au lieu de 4.",
+      "Recettes : les 3 boutons tiennent sur une seule ligne et les pastilles de filtre sont plus petites.",
+    ],
+  },
+  {
     v: "1.42.0",
     d: "2026-10-08",
     t: "Sauvegarde : « Partager » contourne le refus « Permission denied »",
