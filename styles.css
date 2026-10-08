@@ -1521,8 +1521,22 @@ th.num,
   box-sizing: border-box;
 }
 
+/* Pas de défilement propre au tableau : c'est la fenêtre qui défile */
 #rdlg .w.sv {
-  max-height: max(220px, calc(100dvh - 400px));
+  max-height: none;
+  overflow: visible;
+}
+
+/* Lignes d'ingrédients un peu plus serrées */
+#rdlg .fit.rec th,
+#rdlg .fit.rec td {
+  padding: 2px 3px;
+  line-height: 1.15;
+}
+
+#rdlg .fit.rec td input[type="number"] {
+  padding: 2px 2px;
+  line-height: 1.1;
 }
 
 #rdlg .rdb {
@@ -1544,4 +1558,14 @@ th.num,
     border-radius: 0;
     border: 0;
   }
+}
+
+/* Aperçu de la description (gras, souligné, italique) sous le champ de saisie */
+#rdv {
+  margin: 2px 0 8px;
+  padding: 8px 10px;
+  border: 1px dashed var(--bd);
+  border-radius: 8px;
+  background: var(--bg);
+  overflow-wrap: anywhere;
 }

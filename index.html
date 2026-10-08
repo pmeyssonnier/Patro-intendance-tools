@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.28.0">
+<link rel="stylesheet" href="styles.css?v=1.30.0">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -200,14 +200,16 @@
 <input id="rename" maxlength="100" aria-label="Nom de la recette" placeholder="Nom de la recette" autocomplete="off">
 <p class="s" id="rdmsg" role="status" style="color:#d33"></p>
 <div id="rtags" class="rtags"></div>
-<label for="rdesc">Description / déroulé</label>
-<div class="rtb" id="rtb"><button type="button" class="x" data-fmt="b" title="Gras (Ctrl+B) : sélectionne des mots puis clique" aria-label="Mettre en gras"><b>G</b></button><button type="button" class="x" data-fmt="u" title="Souligné (Ctrl+U) : sélectionne des mots puis clique" aria-label="Souligner"><u>S</u></button><span class="s">Sélectionne des mots puis clique sur G (gras) ou S (souligné).</span></div>
+<details id="rdd" open><summary><b>Description / déroulé</b></summary>
+<div class="rtb" id="rtb"><button type="button" class="x" data-fmt="b" title="Gras (Ctrl+B) : sélectionne des mots puis clique" aria-label="Mettre en gras"><b>G</b></button><button type="button" class="x" data-fmt="u" title="Souligné (Ctrl+U) : sélectionne des mots puis clique" aria-label="Souligner"><u>S</u></button><button type="button" class="x" data-fmt="i" title="Italique (Ctrl+I) : sélectionne des mots puis clique" aria-label="Mettre en italique"><i>I</i></button><span class="s">Sélectionne des mots puis clique sur G (gras), S (souligné) ou I (italique).</span></div>
 <textarea id="rdesc" aria-label="Description de la recette" rows="4"></textarea>
+<div id="rdvw"><span class="s">Aperçu avec la mise en forme :</span><div id="rdv" class="rdv"></div></div>
+</details>
 <p class="s">Quantité <b>par personne</b> et par section (g, ml ou pièces). Pour une quantité <b>unique</b> (ex. 5 pains, 5 L de lait), clique sur le nom de l'ingrédient pour ouvrir sa fiche, puis sur « → quantité unique ». Elle est répartie au prorata des régimes (désactivable).</p>
 <div class="rw"><div class="w sv"><table class="fit rec"><thead id="rh"></thead><tbody id="rb"></tbody></table></div></div>
 <p><select id="radd" aria-label="Ajouter un ingrédient à la recette" style="max-width:260px;display:inline-block"></select> <button id="inew" class="x">+ Nouvel ingrédient</button></p>
 <p class="s">Les prix, noms et unités modifiés dans la fiche d'un ingrédient sont ceux du catalogue : ils restent même si tu annules.</p>
-<div class="rdb"><button id="rdok">Enregistrer</button> <button id="rdno" class="x">Annuler</button></div>
+<div class="rdb"><button id="rdok">Enregistrer</button> <button id="rdokc">Enregistrer et fermer</button> <button id="rdno" class="x">Annuler</button></div>
 </dialog>
 <dialog id="rydlg" class="np" aria-labelledby="ryt">
 <h2 id="ryt" style="margin-top:0">Gérer les rayons</h2>
@@ -217,29 +219,29 @@
 <p class="s" id="rym" role="status" style="color:#d33"></p>
 <p><button id="ryno" class="x">Fermer</button></p>
 </dialog>
-<script src="js/data-defaults.js?v=1.28.0"></script>
-<script src="js/utils.js?v=1.28.0"></script>
-<script src="js/storage.js?v=1.28.0"></script>
-<script src="js/state.js?v=1.28.0"></script>
-<script src="js/calculations.js?v=1.28.0"></script>
-<script src="js/shopping-list.js?v=1.28.0"></script>
-<script src="js/documents.js?v=1.28.0"></script>
-<script src="js/share-print.js?v=1.28.0"></script>
-<script src="js/navigation.js?v=1.28.0"></script>
-<script src="js/camps.js?v=1.28.0"></script>
-<script src="js/diets.js?v=1.28.0"></script>
-<script src="js/menu.js?v=1.28.0"></script>
-<script src="js/recipes.js?v=1.28.0"></script>
-<script src="js/recipe-types.js?v=1.28.0"></script>
-<script src="js/ingredient-matching.js?v=1.28.0"></script>
-<script src="js/ingredients.js?v=1.28.0"></script>
-<script src="js/ingredient-merge.js?v=1.28.0"></script>
-<script src="js/price-import.js?v=1.28.0"></script>
-<script src="js/rayons.js?v=1.28.0"></script>
-<script src="js/catalog-ui.js?v=1.28.0"></script>
-<script src="js/recipe-import.js?v=1.28.0"></script>
-<script src="js/changelog.js?v=1.28.0"></script>
-<script src="js/config.js?v=1.28.0"></script>
-<script src="js/pwa.js?v=1.28.0"></script>
-<script src="js/main.js?v=1.28.0"></script>
+<script src="js/data-defaults.js?v=1.30.0"></script>
+<script src="js/utils.js?v=1.30.0"></script>
+<script src="js/storage.js?v=1.30.0"></script>
+<script src="js/state.js?v=1.30.0"></script>
+<script src="js/calculations.js?v=1.30.0"></script>
+<script src="js/shopping-list.js?v=1.30.0"></script>
+<script src="js/documents.js?v=1.30.0"></script>
+<script src="js/share-print.js?v=1.30.0"></script>
+<script src="js/navigation.js?v=1.30.0"></script>
+<script src="js/camps.js?v=1.30.0"></script>
+<script src="js/diets.js?v=1.30.0"></script>
+<script src="js/menu.js?v=1.30.0"></script>
+<script src="js/recipes.js?v=1.30.0"></script>
+<script src="js/recipe-types.js?v=1.30.0"></script>
+<script src="js/ingredient-matching.js?v=1.30.0"></script>
+<script src="js/ingredients.js?v=1.30.0"></script>
+<script src="js/ingredient-merge.js?v=1.30.0"></script>
+<script src="js/price-import.js?v=1.30.0"></script>
+<script src="js/rayons.js?v=1.30.0"></script>
+<script src="js/catalog-ui.js?v=1.30.0"></script>
+<script src="js/recipe-import.js?v=1.30.0"></script>
+<script src="js/changelog.js?v=1.30.0"></script>
+<script src="js/config.js?v=1.30.0"></script>
+<script src="js/pwa.js?v=1.30.0"></script>
+<script src="js/main.js?v=1.30.0"></script>
 </body></html>

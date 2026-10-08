@@ -5,6 +5,28 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.30.0",
+    d: "2026-10-08",
+    t: "Description de recette : italique, aperçu et volet repliable",
+    l: [
+      "Nouveau bouton I (ou Ctrl+I) : met la sélection en italique, noté *mot*.",
+      "Sous le champ de saisie, un aperçu montre la description avec sa mise en forme (gras, souligné, italique), sans les marques.",
+      "La description se replie et se déplie comme les types et thèmes (réglage retenu).",
+      "Tableau des ingrédients : titre « Ingrédients » et plus de tranche d'âge sous le nom des sections, pour gagner de la place.",
+    ],
+  },
+  {
+    v: "1.29.0",
+    d: "2026-10-08",
+    t: "Fenêtre de recette : réglages",
+    l: [
+      "Un clic à côté de la fenêtre de recette ne la ferme plus (Échap demande confirmation s'il y a des changements).",
+      "« Enregistrer » garde la fenêtre ouverte pour voir le résultat ; « Enregistrer et fermer » la referme. « Annuler » revient au dernier enregistrement.",
+      "Le tableau des ingrédients n'a plus d'ascenseur : c'est la fenêtre qui défile. Lignes un peu plus serrées pour en voir plus.",
+      "Les types, thèmes et mots-clés se masquent et se montrent d'un bouton (réglage retenu).",
+    ],
+  },
+  {
     v: "1.28.0",
     d: "2026-10-08",
     t: "Recettes : liste compacte et fiche dans une fenêtre",

@@ -472,6 +472,73 @@ test("recettes : la taille des champs reste stable quand le nombre de sections c
   expect(Math.abs(apres - avant)).toBeLessThan(1);
 });
 
+test("recettes : la fenêtre reste ouverte au clic à côté ; Enregistrer ne la ferme pas ; les types se masquent", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ouvrirFiche(page, "Spaghetti bolognaise");
+  // clic à côté de la fenêtre (sur le fond) : rien ne se ferme
+  await page.mouse.click(2, 2);
+  await expect(page.locator("#rdlg")).toBeVisible();
+  // Enregistrer garde la fenêtre ouverte, écrit la recette, et Annuler revient à cet état
+  await page.locator("#rename").fill("Spaghetti maison");
+  await page.locator("#rdok").click();
+  await expect(page.locator("#rdlg")).toBeVisible();
+  await expect(page.locator("#rdmsg")).toContainText("Enregistré");
+  expect(await page.evaluate(() => Object.hasOwn(S.rec, "Spaghetti maison"))).toBe(true);
+  await page.locator("#rdesc").fill("Texte non enregistré");
+  await page.locator("#rdno").click();
+  await expect(page.locator("#rdlg")).toBeHidden();
+  expect(await page.evaluate(() => S.rec["Spaghetti maison"].desc)).not.toBe(
+    "Texte non enregistré"
+  );
+  // le tableau n'a pas de défilement propre
+  await ouvrirFiche(page, "Spaghetti maison");
+  const defile = await page.locator("#rdlg .w.sv").evaluate((e) => getComputedStyle(e).overflowY);
+  expect(defile).toBe("visible");
+  // masquer et montrer les types
+  await expect(page.locator("#rtags .chips").first()).toBeVisible();
+  await page.locator("#rtags [data-rtmask]").click();
+  await expect(page.locator("#rtags .chips")).toHaveCount(0);
+  await page.locator("#rtags [data-rtmask]").click();
+  await expect(page.locator("#rtags .chips").first()).toBeVisible();
+  await fermerFiche(page, false);
+});
+
+test("recettes : l'aperçu montre gras, souligné et italique sans les marques, et le bouton I met en italique", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ouvrirFiche(page, "Spaghetti bolognaise");
+  await page.locator("#rdesc").fill("Cuire les pâtes");
+  await page.locator("#rdesc").evaluate((t) => {
+    t.focus();
+    t.setSelectionRange(0, 5);
+  });
+  await page.locator('#rtb [data-fmt="i"]').click();
+  await expect(page.locator("#rdesc")).toHaveValue("*Cuire* les pâtes");
+  await expect(page.locator("#rdv i")).toHaveText("Cuire");
+  await expect(page.locator("#rdv")).not.toContainText("*");
+  await page.locator("#rdesc").fill("**gras** __souligné__ *italique*");
+  await expect(page.locator("#rdv b")).toHaveText("gras");
+  await expect(page.locator("#rdv u")).toHaveText("souligné");
+  await expect(page.locator("#rdv i")).toHaveText("italique");
+  // la description se replie et se déplie
+  await page.locator("#rdd > summary").click();
+  await expect(page.locator("#rdesc")).toBeHidden();
+  await page.locator("#rdd > summary").click();
+  await expect(page.locator("#rdesc")).toBeVisible();
+  // refaire le geste retire l'italique
+  await page.locator("#rdesc").fill("*Cuire* les pâtes");
+  await page.locator("#rdesc").evaluate((t) => {
+    t.focus();
+    t.setSelectionRange(1, 6);
+  });
+  await page.locator('#rtb [data-fmt="i"]').click();
+  await expect(page.locator("#rdesc")).toHaveValue("Cuire les pâtes");
+  await fermerFiche(page, false);
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");
@@ -486,18 +553,15 @@ test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) 
 test("tableaux longs : la ligne de titre reste visible quand on défile", async ({ page }) => {
   await ouvrir(page);
   await page.setViewportSize({ width: 390, height: 300 });
-  // recettes : le cadre du tableau défile, le titre reste en haut du cadre
+  // recettes : le tableau n'a pas de défilement propre, c'est la fenêtre qui défile
   await ouvrirFiche(page);
   const rec = await page.evaluate(() => {
     const w = document.getElementById("rb").closest(".w");
-    w.scrollTop = 80;
-    return [
-      w.scrollHeight > w.clientHeight,
-      Math.round(w.querySelector("th").getBoundingClientRect().top - w.getBoundingClientRect().top),
-    ];
+    const d = document.getElementById("rdlg");
+    return [getComputedStyle(w).overflowY, d.scrollHeight > d.clientHeight];
   });
-  expect(rec[0], "recettes : défile").toBe(true);
-  expect(rec[1], "recettes : titre collé en haut").toBeLessThan(3);
+  expect(rec[0], "recettes : pas d'ascenseur sur le tableau").toBe("visible");
+  expect(rec[1], "recettes : la fenêtre défile").toBe(true);
   // catalogue et liste de courses : la page défile, le titre se colle sous la barre du haut
   for (const [g, id] of [
     ["cat", "ct"],
@@ -1814,7 +1878,7 @@ test("recettes : renommer une recette garde sa place, ses ingrédients et son me
   await expect(page.locator("#rdmsg")).toContainText("ne peut pas être vide");
   await page.locator("#rename").fill("Spaghetti maison");
   await page.locator("#rdesc").fill("Nouvelle description de la recette");
-  await page.locator("#rdok").click();
+  await page.locator("#rdokc").click();
   await expect(page.locator("#rdlg")).toBeHidden();
   await expect(page.locator("#rlist .rln", { hasText: "Spaghetti maison" })).toBeVisible();
   const apres = await page.evaluate(() => ({
@@ -3190,6 +3254,11 @@ test("recettes : mettre des mots de la description en gras ou souligné (boutons
   expect(hostile).not.toContain("<img");
   expect(hostile).toContain("&lt;img src=x");
   expect(hostile.match(/<br>/g)).toHaveLength(1);
+  // italique : *mot* (une étoile isolée ou entourée d'espaces reste du texte)
+  expect(await page.evaluate(() => fmtDesc("un *mot* **gras** 2 * 3 * 4"))).toBe(
+    "un <i>mot</i> <b>gras</b> 2 * 3 * 4"
+  );
+  expect(await page.evaluate(() => descTexte("un *mot* et **gras**"))).toBe("un mot et gras");
   // texte à partager et CSV : sans les marques
   expect(await page.evaluate(() => descTexte("**a** et __b__ **"))).toBe("a et b **");
   expect(erreurs).toEqual([]);
