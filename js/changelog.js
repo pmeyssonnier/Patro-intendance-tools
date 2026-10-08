@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.40.0",
+    d: "2026-10-08",
+    t: "Partager / imprimer : textes longs et copie plus fiables",
+    l: [
+      "WhatsApp et Mail : quand le texte est trop long pour un lien (les messageries le coupent), le début est envoyé, coupé à une fin de ligne, et le texte complet est copié pour être collé à la suite.",
+      "Copier : si le navigateur refuse l'accès au presse-papiers (navigateur intégré à une appli, page sans HTTPS), un second moyen est essayé.",
+      "Partager… : une vraie erreur est maintenant signalée au lieu d'être ignorée. Mail : un rappel d'utiliser « Copier » si aucune messagerie ne s'ouvre.",
+    ],
+  },
+  {
     v: "1.39.0",
     d: "2026-10-08",
     t: "Sauvegarde : « Partager » marche sur plus d'appareils",
