@@ -31,16 +31,19 @@ function ratioPreview(k, q, n) {
 let EDIT = null;
 
 function drawRec() {
-  const names = Object.keys(S.rec);
+  const names = recettesTriees();
   if (!Object.hasOwn(S.rec, S.cur)) S.cur = names[0] || "";
   // changer de recette ou en supprimer une referme le mode édition
   if (EDIT && EDIT.nom !== S.cur) {
     EDIT = null;
     $("reform").style.display = "none";
   }
-  $("rsel").innerHTML = names
+  // liste par ordre alphabétique, selon le filtre par type / thème (la recette ouverte y reste toujours)
+  $("rsel").innerHTML = recettesAffichees(S.cur)
     .map((d) => `<option${d === S.cur ? " selected" : ""}>${esc(d)}</option>`)
     .join("");
+  drawFiltres();
+  drawTags();
   const R = S.rec[S.cur];
   if (!R || !(recEdit in R.ing)) recEdit = null;
   $("rdesc").value = R ? R.desc : "";

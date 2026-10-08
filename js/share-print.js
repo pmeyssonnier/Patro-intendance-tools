@@ -13,9 +13,9 @@ const SH = {
   ],
   recs: [
     "Recettes",
-    () => Object.keys(S.rec).map(txtRec).join("\n\n"),
-    () => recHTML(Object.keys(S.rec)),
-    () => csvRec(Object.keys(S.rec)),
+    () => recettesTriees().map(txtRec).join("\n\n"),
+    () => recHTML(recettesTriees()),
+    () => csvRec(recettesTriees()),
   ],
 };
 

@@ -60,7 +60,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(25);
+  expect(liens.length).toBe(26);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -3324,5 +3324,243 @@ test("menu imprimable : un texte d'adaptations dont le plat a quitté le repas e
     return Object.entries(cleanProject(p).camps[p.ccur].adn);
   });
   expect(r.map((x) => x[1])).toEqual(["gardé"]);
+  expect(erreurs).toEqual([]);
+});
+
+test("recettes : la liste (page Recettes, menu et export) est triée par ordre alphabétique", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await page.evaluate(() => {
+    for (const n of ["Éclair", "zèbre", "banane", "Abricot"]) S.rec[n] = { desc: "", ing: {} };
+    drawRec();
+    drawMenu();
+  });
+  await aller(page, "rec");
+  const options = await page.locator("#rsel option").allTextContents();
+  const attendu = [...options].sort((a, b) =>
+    a.localeCompare(b, "fr", { sensitivity: "base", numeric: true })
+  );
+  expect(options).toEqual(attendu);
+  // accents et majuscules ignorés : Abricot, banane, Croque-monsieur, Éclair… zèbre en dernier
+  expect(options.indexOf("Abricot")).toBeLessThan(options.indexOf("banane"));
+  expect(options.indexOf("banane")).toBeLessThan(options.indexOf("Croque-monsieur"));
+  expect(options.indexOf("Croque-monsieur")).toBeLessThan(options.indexOf("Éclair"));
+  expect(options.indexOf("Éclair")).toBeLessThan(options.indexOf("Petit-déjeuner"));
+  expect(options.at(-1)).toBe("zèbre");
+  // le menu propose les plats dans le même ordre
+  await aller(page, "menu");
+  const plats = await page
+    .locator('select[data-add="1"]')
+    .first()
+    .locator("option")
+    .allTextContents();
+  expect(plats[0]).toContain("Ajouter un plat");
+  expect(plats.slice(1)).toEqual(options);
+  // « Toutes les recettes » (impression, texte, CSV) dans le même ordre
+  const ordre = await page.evaluate(() =>
+    [...recHTML(recettesTriees()).matchAll(/<h3[^>]*>([^<]+)<\/h3>/g)].map((m) => m[1])
+  );
+  expect(ordre).toEqual(options);
+  // l'ordre enregistré dans le projet n'a pas changé : les recettes ajoutées sont à la fin
+  expect(await page.evaluate(() => Object.keys(S.rec).slice(-4))).toEqual([
+    "Éclair",
+    "zèbre",
+    "banane",
+    "Abricot",
+  ]);
+  expect(erreurs).toEqual([]);
+});
+
+test("recettes : des types et thèmes se proposent d'après la description, sans rien décider à la place", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const p = (n, d, i, deja) => typesProbables(n, d, i, deja);
+    return {
+      spaghetti: p("Spaghetti bolognaise", "Faire revenir oignons et viande, cuire les pâtes.", [
+        "Viande hachée",
+        "Pâtes",
+      ]),
+      fruits: p("Salade de fruits", "Couper les fruits, mélanger.", ["Pomme", "Banane"]),
+      soupe: p("Soupe de légumes", "", []),
+      curry: p("Riz poulet curry-coco", "Poulet saisi, lait de coco et curry.", ["Poulet", "Riz"]),
+      deja: p("Lasagnes", "Au four, avec du parmesan.", ["Pâtes"], ["italien", "Plat"]),
+      vide: p("", "", []),
+    };
+  });
+  expect(r.spaghetti).toEqual(expect.arrayContaining(["Plat", "Chaud", "Italien"]));
+  expect(r.spaghetti).not.toContain("Végétarien"); // de la viande
+  expect(r.fruits).toEqual(["Dessert", "Froid"]);
+  expect(r.soupe).toEqual(["Entrée"]);
+  expect(r.curry).toEqual(expect.arrayContaining(["Plat", "Asiatique"]));
+  expect(r.deja).not.toContain("Italien"); // déjà coché (même sans majuscule)
+  expect(r.deja).not.toContain("Plat");
+  expect(r.vide).toEqual([]);
+  // rien n'est coché tant qu'on ne clique pas : la proposition est dans la fiche
+  await aller(page, "rec");
+  await page.locator("#rsel").selectOption("Spaghetti bolognaise");
+  expect(await page.evaluate(() => S.rec[S.cur].tags)).toBeUndefined();
+  await expect(page.locator("#rtags .chip.sug")).toContainText(["＋ Italien"]);
+  await page.locator('#rtags [data-rts="Italien"]').click();
+  expect(await page.evaluate(() => S.rec[S.cur].tags)).toEqual(["Italien"]);
+  await expect(page.locator('#rtags [data-rt="Italien"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('#rtags [data-rts="Italien"]')).toHaveCount(0);
+  // « Tout ajouter » complète avec le reste des propositions
+  await page.locator('#rtags [data-rtall="1"]').click();
+  expect(await page.evaluate(() => S.rec[S.cur].tags)).toEqual(["Italien", "Plat", "Chaud"]);
+  // un clic sur une étiquette cochée la retire
+  await page.locator('#rtags [data-rt="Chaud"]').click();
+  expect(await page.evaluate(() => S.rec[S.cur].tags)).toEqual(["Italien", "Plat"]);
+  expect(erreurs).toEqual([]);
+});
+
+test("recettes : créer un type, le cocher, filtrer la liste (visible ou pas) et tout réafficher", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "rec");
+  // un type créé par l'utilisateur, avec Entrée
+  await page.locator("#rsel").selectOption("Soupe de légumes + pain");
+  await page.locator("#tnew").fill("  soirée   feu  ");
+  await page.locator("#tnew").press("Enter");
+  await page.locator('#rtags [data-rt="Entrée"]').click();
+  expect(await page.evaluate(() => S.rec[S.cur].tags)).toEqual(["soirée feu", "Entrée"]);
+  await expect(page.locator('#rtags [data-rt="soirée feu"]')).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  // un second type, pour une autre recette
+  await page.locator("#rsel").selectOption("Riz au lait (dessert)");
+  await page.locator('#rtags [data-rt="Dessert"]').click();
+  await page.locator('#rtags [data-rt="Froid"]').click();
+  // la barre du filtre ne montre que les types utilisés, avec leur nombre de recettes ; « Sans type » pour le reste
+  const barre = page.locator("#rfilt");
+  await expect(barre.locator('[data-ft="Dessert"]')).toContainText("(1)");
+  await expect(barre.locator('[data-ft="soirée feu"]')).toBeVisible();
+  await expect(barre.locator('[data-ft="Plat"]')).toHaveCount(0);
+  await expect(barre.locator('[data-ft="__sans__"]')).toContainText("(5)");
+  const toutes = await page.locator("#rsel option").count();
+  expect(toutes).toBe(7);
+  // 1. on n'affiche que les desserts : la recette ouverte reste dans la liste
+  await barre.locator('[data-ft="Dessert"]').click();
+  expect(await page.locator("#rsel option").allTextContents()).toEqual(["Riz au lait (dessert)"]);
+  await expect(page.locator("#rfilt")).toContainText("1 recette sur 7");
+  await expect(page.locator('#rfilt [data-ft="Dessert"]')).toHaveAttribute("aria-pressed", "true");
+  // le menu propose le même choix, avec la même barre
+  await aller(page, "menu");
+  await expect(page.locator("#mfilt [data-ft='Dessert']")).toHaveAttribute("aria-pressed", "true");
+  const plats = await page
+    .locator('select[data-add="1"]')
+    .first()
+    .locator("option")
+    .allTextContents();
+  expect(plats.slice(1)).toEqual(["Riz au lait (dessert)"]);
+  // 2. plusieurs types cochés : au moins un des deux
+  await page.locator("#mfilt [data-ft='Entrée']").click();
+  const deux = await page
+    .locator('select[data-add="1"]')
+    .first()
+    .locator("option")
+    .allTextContents();
+  expect(deux.slice(1)).toEqual(["Riz au lait (dessert)", "Soupe de légumes + pain"]);
+  // le filtre est un réglage de l'appareil : il survit au rechargement, mais n'est pas dans le projet
+  await page.reload();
+  await aller(page, "rec");
+  expect(await page.locator("#rsel option").count()).toBe(2);
+  expect(await page.evaluate(() => JSON.stringify(S).includes("pss-types-filtre"))).toBe(false);
+  // 3. recettes sans type
+  await page.locator('#rfilt [data-ft="Dessert"]').click();
+  await page.locator('#rfilt [data-ft="Entrée"]').click();
+  await page.locator('#rfilt [data-ft="__sans__"]').click();
+  // les 5 recettes sans type, et la recette ouverte (toujours gardée dans la liste)
+  expect(await page.locator("#rsel option").count()).toBe(6);
+  // 4. tout réafficher
+  await page.locator('#rfilt [data-ftc="1"]').click();
+  expect(await page.locator("#rsel option").count()).toBe(7);
+  expect(await page.evaluate(() => filtreTypes)).toEqual([]);
+  // un type que plus aucune recette ne porte disparaît du filtre (aucune recette ne se perd)
+  await page.locator('#rfilt [data-ft="Dessert"]').click();
+  await page.locator("#rsel").selectOption("Riz au lait (dessert)");
+  await page.locator('#rtags [data-rt="Dessert"]').click();
+  await page.locator('#rtags [data-rt="Froid"]').click();
+  expect(await page.evaluate(() => filtreTypes)).toEqual([]);
+  expect(await page.locator("#rsel option").count()).toBe(7);
+  expect(erreurs).toEqual([]);
+});
+
+test("recettes : « Proposer des types » complète les recettes sans type, puis les types suivent la recette", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "rec");
+  await expect(page.locator("#rfilt [data-ftp]")).toContainText("7 recettes sans type");
+  await page.locator("#rfilt [data-ftp]").click();
+  const tags = await page.evaluate(() =>
+    Object.fromEntries(Object.entries(S.rec).map(([n, R]) => [n, R.tags]))
+  );
+  expect(tags["Spaghetti bolognaise"]).toEqual(["Plat", "Chaud", "Italien"]);
+  expect(tags["Petit-déjeuner"]).toEqual(["Petit-déjeuner"]);
+  expect(tags["Riz au lait (dessert)"]).toContain("Dessert");
+  await expect(page.locator("#remsg")).toContainText("Types proposés ajoutés");
+  // les pastilles du filtre comptent les recettes
+  await expect(page.locator('#rfilt [data-ft="Plat"]')).toContainText("(4)");
+  // renommer une recette garde ses types ; l'impression et le texte les indiquent
+  const err = await page.evaluate(() => renameRecipe("Spaghetti bolognaise", "Pâtes à la sauce"));
+  expect(err).toBe("");
+  expect(await page.evaluate(() => S.rec["Pâtes à la sauce"].tags)).toEqual([
+    "Plat",
+    "Chaud",
+    "Italien",
+  ]);
+  const html = await page.evaluate(() => recHTML(["Pâtes à la sauce"]));
+  expect(html).toContain("Plat · Chaud · Italien");
+  expect(await page.evaluate(() => txtRec("Pâtes à la sauce"))).toContain(
+    "Types : Plat, Chaud, Italien"
+  );
+  // il n'y a plus de recette sans type : le bouton disparaît
+  await expect(page.locator("#rfilt [data-ftp]")).toHaveCount(0);
+  expect(erreurs).toEqual([]);
+});
+
+test("sauvegarde : les types des recettes sont enregistrés, nettoyés et gardés par l'export et l'import", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const p = JSON.parse(JSON.stringify(S));
+    p.rec["Croque-monsieur"].tags = [
+      " Plat ",
+      "plat", // doublon sans tenir compte des majuscules
+      "x".repeat(40), // trop long : raccourci
+      42, // pas du texte
+      "",
+      ...Array.from({ length: 15 }, (_, i) => "Thème " + i),
+    ];
+    p.rec["Petit-déjeuner"].tags = "pas une liste";
+    const c = cleanProject(p);
+    return {
+      croque: c.rec["Croque-monsieur"].tags,
+      petit: c.rec["Petit-déjeuner"].tags,
+      sans: c.rec["Spaghetti bolognaise"].tags,
+    };
+  });
+  expect(r.croque).toHaveLength(10);
+  expect(r.croque.slice(0, 2)).toEqual(["Plat", "x".repeat(24)]);
+  expect(r.croque.filter((t) => t.toLowerCase() === "plat")).toHaveLength(1);
+  expect(r.petit).toBeUndefined();
+  expect(r.sans).toBeUndefined();
+  // export puis import
+  await aller(page, "rec");
+  await page.locator("#rsel").selectOption("Croque-monsieur");
+  await page.locator('#rtags [data-rt="Chaud"]').click();
+  await page.locator("#tnew").fill("Camp d'été");
+  await page.locator("#tnew").press("Enter");
+  await aller(page, "pj");
+  const fichier = await telecharger(page, "#exp");
+  expect(JSON.parse(fichier.texte).rec["Croque-monsieur"].tags).toEqual(["Chaud", "Camp d'été"]);
+  await importer(page, fichier.chemin);
+  expect(await page.evaluate(() => S.rec["Croque-monsieur"].tags)).toEqual(["Chaud", "Camp d'été"]);
   expect(erreurs).toEqual([]);
 });

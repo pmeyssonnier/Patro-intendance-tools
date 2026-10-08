@@ -5,6 +5,17 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.27.0",
+    d: "2026-10-08",
+    t: "Recettes : tri alphabétique, types et thèmes, filtre",
+    l: [
+      "La liste des recettes (page Recettes et choix d'un plat dans le menu) est triée par ordre alphabétique, sans tenir compte des accents ni des majuscules.",
+      "Chaque recette peut porter des types et des thèmes (Entrée, Plat, Dessert, Chaud, Froid, Italien, Asiatique, Barbecue…) : on les coche dans la fiche, et on peut en créer d'autres. L'appli propose des types d'après le nom, la description et les ingrédients ; un bouton propose aussi des types à toutes les recettes qui n'en ont pas.",
+      "Filtre « visible ou pas » : des pastilles au-dessus de la liste des recettes (et du menu) n'affichent que les recettes qui portent au moins un des types cochés, « Sans type » compris. Le filtre est un réglage de l'appareil.",
+      "Les types sont enregistrés avec la recette (export, import), et apparaissent sur la recette imprimée.",
+    ],
+  },
+  {
     v: "1.26.0",
     d: "2026-10-08",
     t: "Menu imprimable : adaptations des régimes modifiables",
