@@ -1376,6 +1376,12 @@ th.num,
 .rtb button {
   min-width: 40px;
 }
+#rfmt {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
 #mprev .adb {
   padding: 0 6px;
@@ -1568,4 +1574,80 @@ th.num,
   border-radius: 8px;
   background: var(--bg);
   overflow-wrap: anywhere;
+}
+
+/* Catalogue : titre et filtre « sans prix » sur la même ligne, filtre à droite */
+.chead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 14px 0 6px;
+}
+
+.chead h2 {
+  margin: 0;
+}
+
+.csans {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.csans input {
+  margin: 0;
+  width: auto;
+  flex: none;
+}
+
+.csans span {
+  white-space: nowrap;
+}
+
+/* Les colonnes gardent leur largeur, que la liste soit filtrée ou non */
+table.fit.tcat {
+  table-layout: fixed;
+}
+
+.tcat th:nth-child(2),
+.tcat td:nth-child(2) {
+  width: 74px;
+}
+
+.tcat th:nth-child(3),
+.tcat td:nth-child(3) {
+  width: 84px;
+}
+
+.tcat th:nth-child(4),
+.tcat td:nth-child(4) {
+  width: 46px;
+}
+
+/* Page Recettes : lignes aussi serrées que celles du tableau des ingrédients */
+.rlist {
+  gap: 2px;
+}
+
+.rl {
+  padding: 1px 4px 1px 2px;
+  border-radius: 6px;
+}
+
+.rl .rln {
+  padding: 3px 8px;
+  font-size: 0.86rem;
+  line-height: 1.15;
+}
+
+.rl .x {
+  min-width: 30px;
+  padding: 2px 7px;
+  font-size: 0.9rem;
+  line-height: 1.1;
 }
