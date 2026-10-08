@@ -28,7 +28,7 @@ const ING = {
   leg: ["Légumes", "g", 2.2, "courgette|légumes"],
   coco: ["Lait de coco", "ml", 3.5, "coco"],
   huile: [
-    "Huile d'olive extra vierge",
+    "Huile d’olive",
     "ml",
     6.99,
     "huile d.?olive|olive.*extra vierge|extra vierge",
