@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.37.0",
+    d: "2026-10-08",
+    t: "Gérer les types : même présentation que les rayons",
+    l: [
+      "Dans « Gérer les types et thèmes », les flèches ▲ ▼ passent devant le nom, comme dans « Gérer les rayons ».",
+    ],
+  },
+  {
     v: "1.36.0",
     d: "2026-10-08",
     t: "Recettes : gérer les types et thèmes",
