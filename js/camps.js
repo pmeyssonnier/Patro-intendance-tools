@@ -132,6 +132,12 @@ function drawCnt() {
     (s, i) =>
       `<div><label>${esc(s[0])}${s[1] ? " (" + esc(s[1]) + ")" : ""}</label><input type="number" min="0" data-n="${i}" aria-label="Effectif ${esc(s[0])}" value="${C.n[i] || 0}"></div>`
   ).join("");
+  majTotalEffectif();
+}
+
+/** Total de la troupe, sous les champs d'effectif. */
+function majTotalEffectif() {
+  $("cnttot").innerHTML = `<b>Total : ${nn()} personne${nn() > 1 ? "s" : ""}</b>`;
 }
 
 drawCnt();
@@ -139,6 +145,7 @@ drawCnt();
 $("cnt").addEventListener("input", (e) => {
   if (e.target.dataset.n === undefined) return;
   C.n[e.target.dataset.n] = saisie(e.target.value, 1e4);
+  majTotalEffectif();
   checkDiets();
   calc();
 });
