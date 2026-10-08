@@ -505,6 +505,40 @@ test("recettes : la fenêtre reste ouverte au clic à côté ; Enregistrer ne la
   await fermerFiche(page, false);
 });
 
+test("recettes : l'aperçu montre gras, souligné et italique sans les marques, et le bouton I met en italique", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ouvrirFiche(page, "Spaghetti bolognaise");
+  await page.locator("#rdesc").fill("Cuire les pâtes");
+  await page.locator("#rdesc").evaluate((t) => {
+    t.focus();
+    t.setSelectionRange(0, 5);
+  });
+  await page.locator('#rtb [data-fmt="i"]').click();
+  await expect(page.locator("#rdesc")).toHaveValue("*Cuire* les pâtes");
+  await expect(page.locator("#rdv i")).toHaveText("Cuire");
+  await expect(page.locator("#rdv")).not.toContainText("*");
+  await page.locator("#rdesc").fill("**gras** __souligné__ *italique*");
+  await expect(page.locator("#rdv b")).toHaveText("gras");
+  await expect(page.locator("#rdv u")).toHaveText("souligné");
+  await expect(page.locator("#rdv i")).toHaveText("italique");
+  // la description se replie et se déplie
+  await page.locator("#rdd > summary").click();
+  await expect(page.locator("#rdesc")).toBeHidden();
+  await page.locator("#rdd > summary").click();
+  await expect(page.locator("#rdesc")).toBeVisible();
+  // refaire le geste retire l'italique
+  await page.locator("#rdesc").fill("*Cuire* les pâtes");
+  await page.locator("#rdesc").evaluate((t) => {
+    t.focus();
+    t.setSelectionRange(1, 6);
+  });
+  await page.locator('#rtb [data-fmt="i"]').click();
+  await expect(page.locator("#rdesc")).toHaveValue("Cuire les pâtes");
+  await fermerFiche(page, false);
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");
@@ -3220,6 +3254,11 @@ test("recettes : mettre des mots de la description en gras ou souligné (boutons
   expect(hostile).not.toContain("<img");
   expect(hostile).toContain("&lt;img src=x");
   expect(hostile.match(/<br>/g)).toHaveLength(1);
+  // italique : *mot* (une étoile isolée ou entourée d'espaces reste du texte)
+  expect(await page.evaluate(() => fmtDesc("un *mot* **gras** 2 * 3 * 4"))).toBe(
+    "un <i>mot</i> <b>gras</b> 2 * 3 * 4"
+  );
+  expect(await page.evaluate(() => descTexte("un *mot* et **gras**"))).toBe("un mot et gras");
   // texte à partager et CSV : sans les marques
   expect(await page.evaluate(() => descTexte("**a** et __b__ **"))).toBe("a et b **");
   expect(erreurs).toEqual([]);

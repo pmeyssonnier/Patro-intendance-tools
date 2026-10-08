@@ -59,11 +59,10 @@ function drawRecEdit() {
   const R = S.rec[S.cur];
   if (!R || !(recEdit in R.ing)) recEdit = null;
   $("rdesc").value = R ? R.desc : "";
+  majApercu();
   $("rh").innerHTML =
-    "<tr><th>Ingrédient</th>" +
-    SEC.map(
-      (s) => `<th>${esc(s[0]).replace(/-/g, "-<wbr>")}<div class="s">${esc(s[1])}</div></th>`
-    ).join("") +
+    "<tr><th>Ingrédients</th>" +
+    SEC.map((s) => `<th>${esc(s[0]).replace(/-/g, "-<wbr>")}</th>`).join("") +
     "<th></th></tr>";
   $("rb").innerHTML = R
     ? Object.entries(R.ing)
@@ -84,35 +83,54 @@ function drawRecEdit() {
       .join("");
 }
 
+/** Aperçu de la description avec sa mise en forme (gras, souligné, italique), sous le champ de saisie. */
+function majApercu() {
+  const t = $("rdesc").value;
+  $("rdv").innerHTML = t.trim() ? fmtDesc(t) : "";
+  $("rdvw").style.display = t.trim() ? "" : "none";
+}
+
 /** Enregistre la description au fil de la saisie (et pas seulement quand le champ perd le focus : sur téléphone, on quitte souvent la page sans cela). */
 function saveDesc() {
+  majApercu();
   if (S.rec[S.cur]) {
     S.rec[S.cur].desc = $("rdesc").value;
     save();
   }
 }
 
-/** Met en gras (**…**) ou souligne (__…__) la sélection de la description ; refait le geste pour l'enlever. Sans sélection, place les marques autour du curseur. */
+/** Met en gras (**…**), souligne (__…__) ou met en italique (*…*) la sélection de la description ; refait le geste pour l'enlever. Sans sélection, place les marques autour du curseur. */
 function mettreEnForme(type) {
-  const m = type === "b" ? "**" : "__",
+  const m = type === "b" ? "**" : type === "i" ? "*" : "__",
+    n = m.length,
     ta = $("rdesc"),
     v = ta.value,
     s = ta.selectionStart,
     e = ta.selectionEnd,
     sel = v.slice(s, e);
+  // pour l'italique, une étoile qui fait partie d'un ** (gras) n'est pas une marque d'italique
   let nv, ns, ne;
-  if (v.slice(s - 2, s) === m && v.slice(e, e + 2) === m) {
-    nv = v.slice(0, s - 2) + sel + v.slice(e + 2);
-    ns = s - 2;
-    ne = e - 2;
-  } else if (sel.length > 4 && sel.startsWith(m) && sel.endsWith(m)) {
-    nv = v.slice(0, s) + sel.slice(2, -2) + v.slice(e);
+  if (
+    v.slice(s - n, s) === m &&
+    v.slice(e, e + n) === m &&
+    (n > 1 || (v[s - 2] !== "*" && v[e + 1] !== "*"))
+  ) {
+    nv = v.slice(0, s - n) + sel + v.slice(e + n);
+    ns = s - n;
+    ne = e - n;
+  } else if (
+    sel.length > 2 * n &&
+    sel.startsWith(m) &&
+    sel.endsWith(m) &&
+    (n > 1 || (sel[1] !== "*" && sel.at(-2) !== "*"))
+  ) {
+    nv = v.slice(0, s) + sel.slice(n, -n) + v.slice(e);
     ns = s;
-    ne = e - 4;
+    ne = e - 2 * n;
   } else {
     nv = v.slice(0, s) + m + sel + m + v.slice(e);
-    ns = s + 2;
-    ne = e + 2;
+    ns = s + n;
+    ne = e + n;
   }
   ta.value = nv;
   ta.focus();
@@ -127,7 +145,14 @@ $("rtb").addEventListener("click", (e) => {
 
 $("rdesc").addEventListener("keydown", (e) => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
-  const t = e.key.toLowerCase() === "b" ? "b" : e.key.toLowerCase() === "u" ? "u" : "";
+  const t =
+    e.key.toLowerCase() === "b"
+      ? "b"
+      : e.key.toLowerCase() === "u"
+        ? "u"
+        : e.key.toLowerCase() === "i"
+          ? "i"
+          : "";
   if (!t) return;
   e.preventDefault();
   mettreEnForme(t);
@@ -588,3 +613,18 @@ function createIng(n, unit, dgKey, cat) {
   });
   return k;
 }
+
+/** Description repliable (réglage retenu dans ce navigateur). */
+try {
+  if (localStorage.getItem("pss-desc-repliee") === "1") $("rdd").open = false;
+} catch {
+  /* sans stockage : la description reste dépliée */
+}
+
+$("rdd").addEventListener("toggle", () => {
+  try {
+    localStorage.setItem("pss-desc-repliee", $("rdd").open ? "0" : "1");
+  } catch {
+    /* sans stockage : l'état n'est pas retenu */
+  }
+});
