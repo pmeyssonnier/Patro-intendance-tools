@@ -2826,6 +2826,25 @@ test("liste de courses : un article au nom déjà connu (même unité) reprend l
   expect(await page.evaluate(() => Object.keys(ING).length)).toBe(nb);
 });
 
+test("catalogue : « Vérifier les doublons » repère un nom plus court inclus dans un nom plus long (huile d'olive / extra vierge)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  // « Huile d’olive » existe dans le catalogue de base
+  await page.evaluate(() => {
+    createIng("Huile d'olive extra vierge", "ml", "", "epi");
+    createIng("Huile d'olive bio", "pc", "", "epi");
+    refreshIng();
+  });
+  await page.locator("#cdbl").click();
+  await expect(page.locator("#dpl .dpg")).toHaveCount(1);
+  await expect(page.locator("#dpl")).toContainText("« Huile d'olive extra vierge » (ml)");
+  await expect(page.locator("#dpl")).toContainText("« Huile d’olive » (ml)");
+  // l'unité différente est signalée à part
+  await expect(page.locator("#dpm")).toContainText("« Huile d'olive bio » (pc)");
+});
+
 test("catalogue : « Vérifier les doublons » liste les doublons et fusionne dans le sens choisi (A → B ou B → A)", async ({
   page,
 }) => {
@@ -3882,4 +3901,34 @@ test("sauvegarde : les types des recettes sont enregistrés, nettoyés et gardé
   await importer(page, fichier.chemin);
   expect(await page.evaluate(() => S.rec["Croque-monsieur"].tags)).toEqual(["Chaud", "Camp d'été"]);
   expect(erreurs).toEqual([]);
+});
+
+test("catalogue : la fiche d'un ingrédient permet de saisir, corriger et effacer le lien du produit", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  const lien = "https://www.colruyt.be/fr/produits/13120";
+  const ouvrirFiche = async () => {
+    await page.locator('[data-ced="pates"]').click();
+    return page.locator('[data-el="pates"]');
+  };
+  let champ = await ouvrirFiche();
+  await champ.fill("https://exemple.com/x");
+  await page.locator('[data-eok="pates"]').click();
+  await expect(page.locator('[data-ei="pates"]')).toContainText("Lien invalide");
+  await champ.fill(lien);
+  await page.locator('[data-eok="pates"]').click();
+  expect(await page.evaluate(() => S.url.pates)).toBe(lien);
+  // la fiche rouverte montre le lien ; changer le prix à la main le garde
+  champ = await ouvrirFiche();
+  await expect(champ).toHaveValue(lien);
+  await page.locator('[data-ep="pates"]').fill("1.5");
+  await page.locator('[data-eok="pates"]').click();
+  expect(await page.evaluate(() => [S.url.pates, S.prices.pates])).toEqual([lien, 1.5]);
+  // champ vidé : le lien est supprimé
+  champ = await ouvrirFiche();
+  await champ.fill("");
+  await page.locator('[data-eok="pates"]').click();
+  expect(await page.evaluate(() => S.url.pates)).toBeUndefined();
 });
