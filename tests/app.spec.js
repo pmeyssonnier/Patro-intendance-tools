@@ -567,6 +567,17 @@ test("catalogue : le filtre « sans prix » n'affiche que les ingrédients sans 
   await expect(page.locator("#ct tr")).toHaveCount(n0);
 });
 
+test("effectifs : le total de la troupe suit les champs de section", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "eff");
+  const champs = page.locator("#cnt input");
+  const n = await champs.count();
+  for (let i = 0; i < n; i++) await champs.nth(i).fill(i === 0 ? "12" : "0");
+  await expect(page.locator("#cnttot")).toHaveText("Total : 12 personnes");
+  await champs.nth(0).fill("1");
+  await expect(page.locator("#cnttot")).toHaveText("Total : 1 personne");
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");
