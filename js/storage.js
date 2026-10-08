@@ -243,6 +243,8 @@ let S = JSON.parse(JSON.stringify(DEF)),
 let dernierTexte = null;
 /** true : un autre onglet a modifié les données ; cet onglet n'enregistre plus tant que l'utilisateur n'a pas choisi. */
 let conflitOnglet = false;
+/** true : la fenêtre d'édition d'une recette est ouverte ; rien n'est enregistré avant « Enregistrer » (ou « Annuler », qui remet la recette). */
+let enregistrementSuspendu = false;
 
 try {
   const x = localStorage.getItem("intendance2");
@@ -286,7 +288,7 @@ const showWarn = (t) => {
     $("warnr").hidden = $("warnk").hidden = false;
   },
   save = () => {
-    if (conflitOnglet) return;
+    if (conflitOnglet || enregistrementSuspendu) return;
     try {
       // un autre onglet a enregistré depuis notre dernière lecture : on n'écrase pas son travail
       const actuel = localStorage.getItem("intendance2");

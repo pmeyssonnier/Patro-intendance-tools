@@ -418,6 +418,7 @@ $("rimv").addEventListener("click", (e) => {
     $("rimpf").style.display = "none";
     refreshIng();
     $("rimm").textContent =
-      `Recette « ${nom} » créée : ajuste les quantités par section d'âge si besoin.`;
+      `Recette « ${nom} » créée : ajuste les quantités par section d'âge si besoin, puis enregistre.`;
+    ouvrirRecette(nom, { neuf: true });
   }
 });

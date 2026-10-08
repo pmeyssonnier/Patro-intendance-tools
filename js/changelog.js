@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.28.0",
+    d: "2026-10-08",
+    t: "Recettes : liste compacte et fiche dans une fenêtre",
+    l: [
+      "La page Recettes montre les filtres, puis la liste des recettes filtrée et triée par ordre alphabétique : une ligne par recette, avec les boutons ⧉ (dupliquer), ✎ (modifier) et ✕ (supprimer).",
+      "Un clic sur une recette ouvre sa fiche dans une fenêtre : nom, types et mots-clés, description, tableau des ingrédients, « Ajouter un ingrédient » et « + Nouvel ingrédient ». Rien n'est gardé avant « Enregistrer » ; « Annuler » rétablit la recette (les changements faits dans la fiche d'un ingrédient du catalogue, eux, restent).",
+      "« + Nouvelle recette » et « 📥 Importer une recette » sont au-dessus de la liste, hors de la fenêtre.",
+    ],
+  },
+  {
     v: "1.27.0",
     d: "2026-10-08",
     t: "Recettes : tri alphabétique, types et thèmes, filtre",

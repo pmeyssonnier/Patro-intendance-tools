@@ -27,36 +27,38 @@ function ratioPreview(k, q, n) {
     : "Renseigne d'abord les effectifs (page « Camp & effectifs »).";
 }
 
-/** Mode édition du nom et de la description : { nom, desc } de la recette au moment où il a commencé (pour « Annuler »), ou null. */
-let EDIT = null;
+/** Fenêtre d'édition d'une recette : { nom, copie, neuf } tant qu'elle est ouverte, sinon null.
+    `copie` : la recette telle qu'elle était à l'ouverture (« Annuler » la remet) ; `neuf` : recette créée ou importée à l'instant (« Annuler » la supprime). */
+let RDRAFT = null;
 
+/** Page Recettes : filtre, puis liste des recettes (par ordre alphabétique, selon le filtre) ; la fenêtre d'édition est redessinée si elle est ouverte. */
 function drawRec() {
   const names = recettesTriees();
   if (!Object.hasOwn(S.rec, S.cur)) S.cur = names[0] || "";
-  // changer de recette ou en supprimer une referme le mode édition
-  if (EDIT && EDIT.nom !== S.cur) {
-    EDIT = null;
-    $("reform").style.display = "none";
-  }
-  // liste par ordre alphabétique, selon le filtre par type / thème (la recette ouverte y reste toujours)
-  $("rsel").innerHTML = recettesAffichees(S.cur)
-    .map((d) => `<option${d === S.cur ? " selected" : ""}>${esc(d)}</option>`)
-    .join("");
   drawFiltres();
+  drawRecList();
+  if (RDRAFT) drawRecEdit();
+}
+
+/** Une ligne par recette : son nom (ouvre la fiche) et les boutons dupliquer, modifier, supprimer. */
+function drawRecList() {
+  const noms = recettesAffichees();
+  $("rlist").innerHTML = noms.length
+    ? noms
+        .map(
+          (n) =>
+            `<div class="rl${n === S.cur ? " on" : ""}" role="listitem"><button type="button" class="rln" data-ro="${esc(n)}" title="Ouvrir la fiche de cette recette">${esc(n)}</button><button type="button" class="x" data-rdup="${esc(n)}" title="Dupliquer cette recette" aria-label="Dupliquer ${esc(n)}">⧉</button><button type="button" class="x" data-re="${esc(n)}" title="Modifier cette recette" aria-label="Modifier ${esc(n)}">✎</button><button type="button" class="x" data-rx="${esc(n)}" title="Supprimer cette recette" aria-label="Supprimer ${esc(n)}">✕</button></div>`
+        )
+        .join("")
+    : `<p class="s">${Object.keys(S.rec).length ? "Aucune recette ne correspond au filtre." : "Aucune recette. Crée-en une avec « + Nouvelle recette », ou importe-en une."}</p>`;
+}
+
+/** Contenu de la fenêtre d'édition : types et mots-clés, description, tableau des ingrédients et liste pour en ajouter. */
+function drawRecEdit() {
   drawTags();
   const R = S.rec[S.cur];
   if (!R || !(recEdit in R.ing)) recEdit = null;
   $("rdesc").value = R ? R.desc : "";
-  // la description n'est modifiable que dans le mode édition (✎) ; sinon on la lit mise en forme (gras, souligné)
-  $("rdesc").readOnly = !EDIT;
-  $("rdesc").style.display = $("rtb").style.display = EDIT ? "" : "none";
-  $("rdv").style.display = EDIT ? "none" : "";
-  $("rdv").innerHTML =
-    R && R.desc
-      ? fmtDesc(R.desc)
-      : '<span class="s">Aucune description. Clique sur ✎ pour en ajouter une.</span>';
-  $("rdesc").placeholder =
-    EDIT || !R ? "" : "Aucune description. Clique sur ✎ pour en ajouter une.";
   $("rh").innerHTML =
     "<tr><th>Ingrédient</th>" +
     SEC.map(
@@ -81,11 +83,6 @@ function drawRec() {
       .map(([k, v]) => `<option value="${esc(k)}">${esc(v[0])}</option>`)
       .join("");
 }
-
-$("rsel").onchange = () => {
-  S.cur = $("rsel").value;
-  drawRec();
-};
 
 /** Enregistre la description au fil de la saisie (et pas seulement quand le champ perd le focus : sur téléphone, on quitte souvent la page sans cela). */
 function saveDesc() {
@@ -125,11 +122,11 @@ function mettreEnForme(type) {
 
 $("rtb").addEventListener("click", (e) => {
   const b = e.target.closest("[data-fmt]");
-  if (b && EDIT) mettreEnForme(b.dataset.fmt);
+  if (b) mettreEnForme(b.dataset.fmt);
 });
 
 $("rdesc").addEventListener("keydown", (e) => {
-  if (!EDIT || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
   const t = e.key.toLowerCase() === "b" ? "b" : e.key.toLowerCase() === "u" ? "u" : "";
   if (!t) return;
   e.preventDefault();
@@ -172,48 +169,6 @@ function renameRecipe(ancien, nom) {
     }
   return "";
 }
-
-$("redit").onclick = () => {
-  if (!S.rec[S.cur] || EDIT) return;
-  EDIT = { nom: S.cur, desc: S.rec[S.cur].desc };
-  $("reform").style.display = "grid";
-  $("remsg").textContent = "";
-  $("rename").value = S.cur;
-  drawRec();
-  $("rename").focus();
-  $("rename").select();
-};
-
-/** Referme le mode édition ; avec « restaurer », la description reprend sa valeur d'avant. */
-function finEdition(restaurer) {
-  if (EDIT && restaurer && S.rec[EDIT.nom]) {
-    S.rec[EDIT.nom].desc = EDIT.desc;
-    save();
-  }
-  EDIT = null;
-  $("reform").style.display = "none";
-  $("remsg").textContent = "";
-  drawRec();
-}
-
-$("reno").onclick = () => finEdition(true);
-
-$("reok").onclick = () => {
-  const err = renameRecipe(S.cur, $("rename").value);
-  if (err) {
-    $("remsg").textContent = "⚠ " + err;
-    return;
-  }
-  EDIT = null;
-  finEdition(false);
-  drawMenu();
-  calc();
-};
-
-$("rename").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") $("reok").click();
-  else if (e.key === "Escape") $("reno").click();
-});
 
 /** Place l'ingrédient `k` à la place de `cible` dans la recette `R` (l'ordre des clés de `R.ing` est celui de l'affichage et il est enregistré). */
 function deplacerIngredient(R, k, cible) {
@@ -396,6 +351,7 @@ $("rno").onclick = () => {
   $("rform").style.display = "none";
 };
 
+/** Nouvelle recette : on demande son nom, puis la fenêtre d'édition s'ouvre dessus. */
 $("rok").onclick = () => {
   const n = $("rname").value.trim();
   if (!n) return;
@@ -404,48 +360,136 @@ $("rok").onclick = () => {
     $("rname").placeholder = "Nom trop long (100 caractères au plus)";
     return;
   }
-  if (S.rec[n]) {
+  if (Object.hasOwn(S.rec, n)) {
     $("rname").value = "";
     $("rname").placeholder = "Ce nom existe déjà";
     return;
   }
   S.rec[n] = { desc: "", ing: {} };
-  S.cur = n;
   $("rform").style.display = "none";
-  drawRec();
-  drawMenu();
-  save();
+  ouvrirRecette(n, { neuf: true });
 };
 
 $("rname").addEventListener("keydown", (e) => {
   if (e.key === "Enter") $("rok").click();
 });
 
-let dc = 0;
+/** Ouvre la fenêtre d'édition d'une recette. Rien n'est enregistré avant « Enregistrer » ; « Annuler » remet la recette comme elle était. */
+function ouvrirRecette(nom, opts = {}) {
+  if (!S.rec[nom]) return;
+  S.cur = nom;
+  RDRAFT = { nom, copie: JSON.parse(JSON.stringify(S.rec[nom])), neuf: !!opts.neuf };
+  enregistrementSuspendu = true;
+  recEdit = null;
+  $("rename").value = nom;
+  $("rdmsg").textContent = "";
+  $("rdt").textContent = opts.neuf ? "Nouvelle recette" : "Modifier la recette";
+  drawRec();
+  if (!$("rdlg").open) $("rdlg").showModal();
+  $("rdlg").scrollTop = 0;
+  $("rdt").focus();
+}
 
-$("rdel").onclick = () => {
-  if (!S.rec[S.cur]) return;
-  const used = usedIn(S.cur);
+/** La fenêtre contient-elle des changements non enregistrés ? */
+const recetteModifiee = () =>
+  !!RDRAFT &&
+  ($("rename").value.trim() !== RDRAFT.nom ||
+    JSON.stringify(S.rec[RDRAFT.nom]) !== JSON.stringify(RDRAFT.copie));
+
+/** Referme la fenêtre : « enregistrer » garde les changements (et renomme la recette si besoin) ; sinon la recette redevient celle de l'ouverture (ou disparaît, si elle vient d'être créée). */
+function fermerRecette(enregistrer) {
+  if (!RDRAFT) return;
+  const d = RDRAFT;
+  if (enregistrer) {
+    const nom = $("rename").value.trim().replace(/\s+/g, " ");
+    if (nom !== d.nom) {
+      const err = renameRecipe(d.nom, nom);
+      if (err) {
+        $("rdmsg").textContent = "⚠ " + err;
+        $("rename").focus();
+        return;
+      }
+    }
+  } else if (d.neuf) delete S.rec[d.nom];
+  else S.rec[d.nom] = d.copie;
+  RDRAFT = null;
+  enregistrementSuspendu = false;
+  recEdit = null;
+  if ($("rdlg").open) $("rdlg").close();
+  if (!Object.hasOwn(S.rec, S.cur)) S.cur = recettesTriees()[0] || "";
+  $("remsg").textContent =
+    enregistrer && Object.hasOwn(S.rec, S.cur) && !recetteVisible(S.cur)
+      ? `« ${S.cur} » est enregistrée ; le filtre la masque (bouton « Tout afficher »).`
+      : "";
+  save();
+  drawRec();
+  drawMenu();
+  calc();
+}
+
+/** Echap ou clic à côté : on referme comme « Annuler », après confirmation s'il y a des changements. */
+function demanderFermeture() {
+  if (recetteModifiee() && !confirm("Abandonner les modifications de cette recette ?")) return;
+  fermerRecette(false);
+}
+
+$("rdok").onclick = () => fermerRecette(true);
+
+$("rdno").onclick = () => fermerRecette(false);
+
+$("rdlg").addEventListener("cancel", (e) => {
+  e.preventDefault();
+  demanderFermeture();
+});
+
+$("rdlg").addEventListener("click", (e) => {
+  if (e.target === $("rdlg")) demanderFermeture();
+});
+
+$("rename").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    $("rdok").click();
+  }
+});
+
+/** Nom d'une copie : « Plat (copie) », « Plat (copie 2) »… */
+function nomCopie(nom) {
+  const base = nom.slice(0, 80);
+  let n = base + " (copie)",
+    i = 2;
+  while (Object.hasOwn(S.rec, n)) n = base + " (copie " + i++ + ")";
+  return n;
+}
+
+/** Supprime une recette (refusée si un menu l'utilise). */
+function supprimerRecette(nom) {
+  if (!S.rec[nom]) return;
+  const used = usedIn(nom);
   if (used) {
     alert(`Recette utilisée ${used} fois dans les menus (tous camps) : retire-la d'abord du menu.`);
     return;
   }
-  if (!dc) {
-    dc = 1;
-    $("rdel").textContent = "Confirmer ?";
-    setTimeout(() => {
-      dc = 0;
-      $("rdel").textContent = "✕";
-    }, 3000);
-    return;
-  }
-  dc = 0;
-  $("rdel").textContent = "✕";
-  delete S.rec[S.cur];
+  if (!confirm(`Supprimer la recette « ${nom} » ?`)) return;
+  delete S.rec[nom];
   drawRec();
   drawMenu();
   calc();
-};
+}
+
+$("rlist").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-ro], [data-re], [data-rdup], [data-rx]");
+  if (!b) return;
+  const d = b.dataset;
+  if (d.ro !== undefined) ouvrirRecette(d.ro);
+  else if (d.re !== undefined) ouvrirRecette(d.re);
+  else if (d.rx !== undefined) supprimerRecette(d.rx);
+  else if (d.rdup !== undefined && S.rec[d.rdup]) {
+    const n = nomCopie(d.rdup);
+    S.rec[n] = JSON.parse(JSON.stringify(S.rec[d.rdup]));
+    ouvrirRecette(n, { neuf: true });
+  }
+});
 
 function rmIng(k) {
   for (const r of Object.values(S.rec)) {
