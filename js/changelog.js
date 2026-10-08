@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.32.0",
+    d: "2026-10-08",
+    t: "Recettes et catalogue : plus compacts",
+    l: [
+      "Description d'une recette : un bouton bascule entre la saisie (avec les marques de mise en forme) et l'aperçu ; les deux ne s'affichent plus ensemble.",
+      "Catalogue de prix : le filtre « sans prix » est sur la ligne du titre, à droite, et la colonne Ingrédient garde sa largeur, filtre ou non.",
+      "Page Recettes : lignes de la liste plus serrées, comme celles du tableau des ingrédients, pour en voir plus.",
+    ],
+  },
+  {
     v: "1.31.0",
     d: "2026-10-08",
     t: "Fenêtre de recette : types en accordéon",
