@@ -642,49 +642,46 @@ test("recettes : gérer les types d'origine (renommer, déplacer, supprimer, ajo
   expect(erreurs).toEqual([]);
 });
 
-test("sauvegarde : « Partager » essaie le .json, puis un .txt, puis le texte, et signale une vraie erreur", async ({
+test("sauvegarde : « Partager » essaie .txt, puis .json, puis le texte, un format par clic après un refus", async ({
   page,
 }) => {
   await page.addInitScript(() => {
     window.__partages = [];
-    window.__mode = "json";
-    navigator.canShare = (d) =>
-      !!d.files &&
-      d.files.every(
-        (f) =>
-          (window.__mode === "json" ? true : f.name.endsWith(".txt")) && window.__mode !== "texte"
-      );
+    window.__refus = 0; // nombre de prochains appels qui seront refusés
+    window.__annule = false;
+    navigator.canShare = (d) => !!d.files;
     navigator.share = async (d) => {
-      if (window.__mode === "erreur") throw new Error("refusé");
-      if (window.__mode === "annule") throw Object.assign(new Error("x"), { name: "AbortError" });
-      window.__partages.push({ fichier: d.files ? d.files[0].name : null, texte: !!d.text });
+      if (window.__annule) throw Object.assign(new Error("x"), { name: "AbortError" });
+      if (window.__refus > 0) {
+        window.__refus--;
+        throw Object.assign(new Error("Permission denied"), { name: "NotAllowedError" });
+      }
+      window.__partages.push(d.files ? d.files[0].name : "texte");
     };
   });
   await ouvrir(page);
   await aller(page, "pj");
   await expect(page.locator("#exps")).toBeVisible();
-  // 1. le navigateur accepte le .json
+  // 1. cas normal : le fichier .txt (le mieux accepté) est partagé
   await page.locator("#exps").click();
-  await expect(page.locator("#jmsg")).toContainText("Projet partagé");
-  expect((await page.evaluate(() => window.__partages))[0].fichier).toMatch(/\.json$/);
-  // 2. il refuse le .json : on partage le même contenu en .txt
-  await page.evaluate(() => (window.__mode = "txt"));
+  await expect(page.locator("#jmsg")).toContainText("fichier .txt");
+  expect((await page.evaluate(() => window.__partages))[0]).toMatch(/\.txt$/);
+  // 2. refus : le message montre l'erreur et le clic suivant essaie le .json, puis le texte
+  await page.evaluate(() => (window.__refus = 2));
   await page.locator("#exps").click();
-  await expect(page.locator("#jmsg")).toContainText(".txt");
-  expect((await page.evaluate(() => window.__partages))[1].fichier).toMatch(/\.txt$/);
-  // 3. aucun fichier accepté : texte seul
-  await page.evaluate(() => (window.__mode = "texte"));
+  await expect(page.locator("#jmsg")).toContainText("Permission denied");
+  await expect(page.locator("#jmsg")).toContainText("appuie à nouveau");
   await page.locator("#exps").click();
-  await expect(page.locator("#jmsg")).toContainText("en texte");
-  expect((await page.evaluate(() => window.__partages))[2].texte).toBe(true);
-  // fermer la fenêtre de partage n'affiche pas d'erreur
-  await page.evaluate(() => (window.__mode = "annule"));
+  await expect(page.locator("#jmsg")).toContainText("Permission denied");
+  await page.evaluate(() => (window.__refus = 0));
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText("texte");
+  expect(await page.evaluate(() => window.__partages)).toHaveLength(2);
+  expect((await page.evaluate(() => window.__partages))[1]).toBe("texte");
+  // 3. tout a échoué : on repart de zéro au clic suivant, sans erreur affichée si la fenêtre est fermée
+  await page.evaluate(() => (window.__annule = true));
   await page.locator("#exps").click();
   await expect(page.locator("#jmsg")).not.toContainText("impossible");
-  // une vraie erreur est signalée
-  await page.evaluate(() => (window.__mode = "erreur"));
-  await page.locator("#exps").click();
-  await expect(page.locator("#jmsg")).toContainText("Partage impossible");
 });
 
 test("sauvegarde : sans partage dans le navigateur, le bouton « Partager » est masqué", async ({
@@ -768,6 +765,40 @@ test("partager / imprimer : liens WhatsApp et mail raccourcis quand le texte est
   // le bouton Copier utilise le même repli
   await page.locator("#sc").click();
   await expect(page.locator("#shm")).toContainText("Copié");
+});
+
+test("partager / imprimer : WhatsApp avec un texte long passe par le menu de partage, entier", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.__partage = null;
+    window.__ouvert = null;
+    navigator.share = async (d) => {
+      window.__partage = d.text.length;
+    };
+    window.open = (u) => {
+      window.__ouvert = u;
+      return null;
+    };
+  });
+  await ouvrir(page);
+  await aller(page, "sh");
+  const total = await page.evaluate(() => {
+    S.rec["Grande recette"] = { desc: "x".repeat(4000), ing: {} };
+    $("shw").value = "recs";
+    $("sw").click();
+    return SH.recs[1]().length;
+  });
+  await expect(page.locator("#shm")).toContainText("choisis WhatsApp");
+  // le texte entier est partagé, et aucun lien tronqué n'est ouvert
+  expect(await page.evaluate(() => window.__partage)).toBe(total);
+  expect(await page.evaluate(() => window.__ouvert)).toBeNull();
+  // texte court : lien WhatsApp direct, comme avant
+  await page.evaluate(() => {
+    $("shw").value = "menu";
+    $("sw").click();
+  });
+  expect(await page.evaluate(() => window.__ouvert)).toContain("https://wa.me/?text=");
 });
 
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {

@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.41.0",
+    v: "1.43.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,22 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.42.0",
+    d: "2026-10-08",
+    t: "Sauvegarde : « Partager » contourne le refus « Permission denied »",
+    l: [
+      "Certains téléphones Android refusent le partage d'un fichier avec « Permission denied ». « Partager » essaie maintenant d'abord un fichier .txt (le mieux accepté), puis .json, puis le texte : après un refus, un nouvel appui sur « Partager » essaie le format suivant, et le message le dit.",
+    ],
+  },
+  {
+    v: "1.41.0",
+    d: "2026-10-08",
+    t: "WhatsApp : un texte long arrive en entier",
+    l: [
+      "Quand le texte est trop long pour un lien WhatsApp (par exemple toutes les recettes), le bouton WhatsApp ouvre le menu de partage du téléphone : il suffit d'y choisir WhatsApp, le texte arrive en entier. Sans menu de partage (certains ordinateurs), le début est envoyé et le texte complet est copié.",
     ],
   },
   {

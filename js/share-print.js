@@ -141,6 +141,14 @@ $("sw").onclick = () => {
   const t = shtxt();
   if (!t) return;
   const l = lienWhatsApp(t);
+  if (l.coupe && navigator.share) {
+    // texte trop long pour un lien : le menu de partage du téléphone passe le texte entier à WhatsApp, sans passer par une adresse
+    shmsg("Texte long : choisis WhatsApp dans la liste.");
+    navigator.share({ title: troop() + " – " + shk()[0], text: t }).catch((e) => {
+      if (e && e.name !== "AbortError") shmsg("Partage impossible : utilise « Copier ».");
+    });
+    return;
+  }
   if (l.coupe)
     copierTexte(t).then((ok) =>
       shmsg(
