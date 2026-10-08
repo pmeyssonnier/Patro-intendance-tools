@@ -54,26 +54,40 @@ function candidatsFusion(k) {
     );
 }
 
-/** Groupes d'ingrédients visibles de même nom (accents, majuscules, pluriel ignorés) et de même unité. */
-function groupesDoublons() {
-  const g = {};
-  for (const k of Object.keys(ING))
-    if (!S.hid.includes(k) && !ING[k][4]) {
-      const cle = cleNom(ING[k][0]) + "|" + ING[k][1];
-      (g[cle] = g[cle] || []).push(k);
-    }
-  return Object.values(g)
-    .filter((l) => l.length > 1)
-    .map((l) => l.sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr")));
+/** Deux noms de même sens : mêmes mots, ou tous les mots de l'un (au moins deux) figurent dans l'autre (« Huile d'olive » et « Huile d'olive extra vierge »). */
+function nomsProches(a, b) {
+  const A = motsNom(ING[a][0]),
+    B = motsNom(ING[b][0]),
+    [p, g] = A.size <= B.size ? [A, B] : [B, A];
+  return p.size >= 2 ? [...p].every((m) => g.has(m)) : cleNom(ING[a][0]) === cleNom(ING[b][0]);
 }
 
-/** Noms identiques mais unités différentes : pas fusionnables tels quels. */
-function doublonsUnitesDifferentes() {
+/** Regroupe les ingrédients visibles dont les noms sont proches (et, si `memeUnite`, l'unité identique) ; une liste par groupe de plus d'un. */
+function groupesProches(memeUnite) {
+  const cles = Object.keys(ING).filter((k) => !S.hid.includes(k) && !ING[k][4]),
+    comp = cles.map((_, i) => i),
+    racine = (i) => (comp[i] === i ? i : (comp[i] = racine(comp[i])));
+  cles.forEach((a, i) =>
+    cles.slice(i + 1).forEach((b, j) => {
+      if ((!memeUnite || ING[a][1] === ING[b][1]) && nomsProches(a, b))
+        comp[racine(i)] = racine(i + 1 + j);
+    })
+  );
   const g = {};
-  for (const k of Object.keys(ING))
-    if (!S.hid.includes(k) && !ING[k][4])
-      (g[cleNom(ING[k][0])] = g[cleNom(ING[k][0])] || []).push(k);
-  return Object.values(g).filter((l) => new Set(l.map((k) => ING[k][1])).size > 1);
+  cles.forEach((k, i) => (g[racine(i)] = g[racine(i)] || []).push(k));
+  return Object.values(g).filter((l) => l.length > 1);
+}
+
+/** Groupes d'ingrédients visibles de même nom ou de noms proches (accents, majuscules, pluriel ignorés) et de même unité. */
+function groupesDoublons() {
+  return groupesProches(true).map((l) =>
+    l.sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr"))
+  );
+}
+
+/** Noms identiques ou proches mais unités différentes : pas fusionnables tels quels. */
+function doublonsUnitesDifferentes() {
+  return groupesProches(false).filter((l) => new Set(l.map((k) => ING[k][1])).size > 1);
 }
 
 /** Ingrédient supprimé (`src`) et ingrédient gardé (`dst`) pour une fusion entre `a` et `b` ; `inverse` garde `a` au lieu de `b`. */

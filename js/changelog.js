@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.45.0",
+    d: "2026-10-08",
+    t: "Vérifier les doublons : noms proches",
+    l: [
+      "« Vérifier les doublons » repère aussi un nom inclus dans un autre (« Huile d'olive » et « Huile d'olive extra vierge ») et propose de les fusionner.",
+    ],
+  },
+  {
     v: "1.44.0",
     d: "2026-10-08",
     t: "Catalogue : huile d'olive ajoutée",
