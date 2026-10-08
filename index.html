@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.32.0">
+<link rel="stylesheet" href="styles.css?v=1.33.0">
 </head><body><main>
 <div id="vtest" class="np" role="note" hidden>VERSION TEST – les données de ce site sont à part de l'application habituelle.</div>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="sync" aria-label="Synchronisation" hidden>☁️</button><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
@@ -106,11 +106,10 @@
 <div id="pnew" hidden style="margin-top:6px"></div>
 <p class="impb"><button id="imp">Importer</button> <button id="impno" class="x">Annuler</button></p>
 </dialog>
-<h2 style="margin-top:14px">Prix des ingrédients</h2>
+<div class="chead"><h2>Prix des ingrédients</h2><label class="csans"><input type="checkbox" id="csans"> <span>Afficher seulement les ingrédients <b>sans prix</b> <span id="csansn"></span></span></label></div>
 <div class="row rayrow"><select id="crayon" aria-label="Filtrer les ingrédients par rayon"></select><button id="rygere" class="x">⚙️ Gérer les rayons</button></div>
 <input type="search" id="cfilt" aria-label="Filtrer les ingrédients par nom ou nom de produit" placeholder="🔍 Filtrer par ingrédient ou produit…" autocomplete="off" style="margin-bottom:8px">
-<p class="s" style="margin:0 0 8px"><label><input type="checkbox" id="csans"> Afficher seulement les ingrédients <b>sans prix</b> <span id="csansn"></span></label></p>
-<div class="w st"><table class="fit"><thead><tr><th>Ingrédient</th><th>Unité</th><th class="num">Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
+<div class="w st"><table class="fit tcat"><thead><tr><th>Ingrédient</th><th>Unité</th><th class="num">Prix</th><th></th></tr></thead><tbody id="ct"></tbody></table></div>
 <p><button id="cins" class="x">➕ Insérer un ingrédient</button> <span class="s" id="cinm" role="status"></span></p>
 <p><button id="hrs" class="x">Restaurer les ingrédients de base</button></p></section></div>
 
@@ -210,11 +209,11 @@
 <label for="rename">Nom de la recette</label>
 <input id="rename" maxlength="100" aria-label="Nom de la recette" placeholder="Nom de la recette" autocomplete="off">
 <p class="s" id="rdmsg" role="status" style="color:#d33"></p>
-<div id="rtags" class="rtags"></div>
+<details id="rtd" class="rtags" open><summary><b>Types, thèmes et mots-clés</b> <span id="rtsum" class="s"></span></summary><div id="rtags"></div></details>
 <details id="rdd" open><summary><b>Description / déroulé</b></summary>
-<div class="rtb" id="rtb"><button type="button" class="x" data-fmt="b" title="Gras (Ctrl+B) : sélectionne des mots puis clique" aria-label="Mettre en gras"><b>G</b></button><button type="button" class="x" data-fmt="u" title="Souligné (Ctrl+U) : sélectionne des mots puis clique" aria-label="Souligner"><u>S</u></button><button type="button" class="x" data-fmt="i" title="Italique (Ctrl+I) : sélectionne des mots puis clique" aria-label="Mettre en italique"><i>I</i></button><span class="s">Sélectionne des mots puis clique sur G (gras), S (souligné) ou I (italique).</span></div>
+<div class="rtb" id="rtb"><button type="button" class="x" id="rdmode" aria-pressed="false" title="Passer entre la saisie (avec les marques de mise en forme) et l'aperçu">👁 Aperçu</button><span id="rfmt"><button type="button" class="x" data-fmt="b" title="Gras (Ctrl+B) : sélectionne des mots puis clique" aria-label="Mettre en gras"><b>G</b></button><button type="button" class="x" data-fmt="u" title="Souligné (Ctrl+U) : sélectionne des mots puis clique" aria-label="Souligner"><u>S</u></button><button type="button" class="x" data-fmt="i" title="Italique (Ctrl+I) : sélectionne des mots puis clique" aria-label="Mettre en italique"><i>I</i></button><span class="s">Sélectionne des mots puis clique sur G (gras), S (souligné) ou I (italique).</span></span></div>
 <textarea id="rdesc" aria-label="Description de la recette" rows="4"></textarea>
-<div id="rdvw"><span class="s">Aperçu avec la mise en forme :</span><div id="rdv" class="rdv"></div></div>
+<div id="rdvw" hidden><div id="rdv" class="rdv"></div></div>
 </details>
 <p class="s">Quantité <b>par personne</b> et par section (g, ml ou pièces). Pour une quantité <b>unique</b> (ex. 5 pains, 5 L de lait), clique sur le nom de l'ingrédient pour ouvrir sa fiche, puis sur « → quantité unique ». Elle est répartie au prorata des régimes (désactivable).</p>
 <div class="rw"><div class="w sv"><table class="fit rec"><thead id="rh"></thead><tbody id="rb"></tbody></table></div></div>
@@ -230,35 +229,35 @@
 <p class="s" id="rym" role="status" style="color:#d33"></p>
 <p><button id="ryno" class="x">Fermer</button></p>
 </dialog>
-<script src="js/data-defaults.js?v=1.32.0"></script>
-<script src="js/utils.js?v=1.32.0"></script>
-<script src="js/storage.js?v=1.32.0"></script>
-<script src="js/state.js?v=1.32.0"></script>
-<script src="js/calculations.js?v=1.32.0"></script>
-<script src="js/shopping-list.js?v=1.32.0"></script>
-<script src="js/documents.js?v=1.32.0"></script>
-<script src="js/share-print.js?v=1.32.0"></script>
-<script src="js/navigation.js?v=1.32.0"></script>
-<script src="js/camps.js?v=1.32.0"></script>
-<script src="js/diets.js?v=1.32.0"></script>
-<script src="js/menu.js?v=1.32.0"></script>
-<script src="js/recipes.js?v=1.32.0"></script>
-<script src="js/recipe-types.js?v=1.32.0"></script>
-<script src="js/ingredient-matching.js?v=1.32.0"></script>
-<script src="js/ingredients.js?v=1.32.0"></script>
-<script src="js/ingredient-merge.js?v=1.32.0"></script>
-<script src="js/price-import.js?v=1.32.0"></script>
-<script src="js/rayons.js?v=1.32.0"></script>
-<script src="js/catalog-ui.js?v=1.32.0"></script>
-<script src="js/recipe-import.js?v=1.32.0"></script>
-<script src="js/changelog.js?v=1.32.0"></script>
-<script src="js/config.js?v=1.32.0"></script>
-<script src="js/groupes.js?v=1.32.0"></script>
-<script src="js/sync-data.js?v=1.32.0"></script>
-<script src="js/cloud-groups.js?v=1.32.0"></script>
-<script src="js/cloud-sync.js?v=1.32.0"></script>
-<script src="js/cloud-history.js?v=1.32.0"></script>
-<script src="js/cloud.js?v=1.32.0"></script>
-<script src="js/pwa.js?v=1.32.0"></script>
-<script src="js/main.js?v=1.32.0"></script>
+<script src="js/data-defaults.js?v=1.33.0"></script>
+<script src="js/utils.js?v=1.33.0"></script>
+<script src="js/storage.js?v=1.33.0"></script>
+<script src="js/state.js?v=1.33.0"></script>
+<script src="js/calculations.js?v=1.33.0"></script>
+<script src="js/shopping-list.js?v=1.33.0"></script>
+<script src="js/documents.js?v=1.33.0"></script>
+<script src="js/share-print.js?v=1.33.0"></script>
+<script src="js/navigation.js?v=1.33.0"></script>
+<script src="js/camps.js?v=1.33.0"></script>
+<script src="js/diets.js?v=1.33.0"></script>
+<script src="js/menu.js?v=1.33.0"></script>
+<script src="js/recipes.js?v=1.33.0"></script>
+<script src="js/recipe-types.js?v=1.33.0"></script>
+<script src="js/ingredient-matching.js?v=1.33.0"></script>
+<script src="js/ingredients.js?v=1.33.0"></script>
+<script src="js/ingredient-merge.js?v=1.33.0"></script>
+<script src="js/price-import.js?v=1.33.0"></script>
+<script src="js/rayons.js?v=1.33.0"></script>
+<script src="js/catalog-ui.js?v=1.33.0"></script>
+<script src="js/recipe-import.js?v=1.33.0"></script>
+<script src="js/changelog.js?v=1.33.0"></script>
+<script src="js/config.js?v=1.33.0"></script>
+<script src="js/groupes.js?v=1.33.0"></script>
+<script src="js/sync-data.js?v=1.33.0"></script>
+<script src="js/cloud-groups.js?v=1.33.0"></script>
+<script src="js/cloud-sync.js?v=1.33.0"></script>
+<script src="js/cloud-history.js?v=1.33.0"></script>
+<script src="js/cloud.js?v=1.33.0"></script>
+<script src="js/pwa.js?v=1.33.0"></script>
+<script src="js/main.js?v=1.33.0"></script>
 </body></html>

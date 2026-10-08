@@ -83,12 +83,23 @@ function drawRecEdit() {
       .join("");
 }
 
-/** Aperçu de la description avec sa mise en forme (gras, souligné, italique), sous le champ de saisie. */
+/** Description : mode saisie (champ avec les marques **, __, *) ou mode aperçu (texte mis en forme), jamais les deux à la fois. */
+let descApercu = false;
+
 function majApercu() {
   const t = $("rdesc").value;
-  $("rdv").innerHTML = t.trim() ? fmtDesc(t) : "";
-  $("rdvw").style.display = t.trim() ? "" : "none";
+  $("rdv").innerHTML = t.trim() ? fmtDesc(t) : '<span class="s">Aucune description.</span>';
+  $("rdesc").style.display = $("rfmt").style.display = descApercu ? "none" : "";
+  $("rdvw").hidden = !descApercu;
+  $("rdmode").textContent = descApercu ? "✎ Modifier" : "👁 Aperçu";
+  $("rdmode").setAttribute("aria-pressed", String(descApercu));
 }
+
+$("rdmode").onclick = () => {
+  descApercu = !descApercu;
+  majApercu();
+  if (!descApercu) $("rdesc").focus();
+};
 
 /** Enregistre la description au fil de la saisie (et pas seulement quand le champ perd le focus : sur téléphone, on quitte souvent la page sans cela). */
 function saveDesc() {
@@ -403,6 +414,7 @@ $("rname").addEventListener("keydown", (e) => {
 function ouvrirRecette(nom, opts = {}) {
   if (!S.rec[nom]) return;
   S.cur = nom;
+  descApercu = false;
   RDRAFT = { nom, copie: JSON.parse(JSON.stringify(S.rec[nom])), neuf: !!opts.neuf };
   enregistrementSuspendu = true;
   recEdit = null;

@@ -509,9 +509,9 @@ test("recettes : la fenêtre reste ouverte au clic à côté ; Enregistrer ne la
   expect(defile).toBe("visible");
   // masquer et montrer les types
   await expect(page.locator("#rtags .chips").first()).toBeVisible();
-  await page.locator("#rtags [data-rtmask]").click();
-  await expect(page.locator("#rtags .chips")).toHaveCount(0);
-  await page.locator("#rtags [data-rtmask]").click();
+  await page.locator("#rtd > summary").click();
+  await expect(page.locator("#rtags .chips").first()).toBeHidden();
+  await page.locator("#rtd > summary").click();
   await expect(page.locator("#rtags .chips").first()).toBeVisible();
   await fermerFiche(page, false);
 });
@@ -528,12 +528,21 @@ test("recettes : l'aperçu montre gras, souligné et italique sans les marques, 
   });
   await page.locator('#rtb [data-fmt="i"]').click();
   await expect(page.locator("#rdesc")).toHaveValue("*Cuire* les pâtes");
+  // saisie et aperçu ne s'affichent jamais ensemble
+  await expect(page.locator("#rdv")).toBeHidden();
+  await page.locator("#rdmode").click();
+  await expect(page.locator("#rdesc")).toBeHidden();
   await expect(page.locator("#rdv i")).toHaveText("Cuire");
   await expect(page.locator("#rdv")).not.toContainText("*");
+  await page.locator("#rdmode").click();
+  await expect(page.locator("#rdv")).toBeHidden();
+  await expect(page.locator("#rdesc")).toBeVisible();
   await page.locator("#rdesc").fill("**gras** __souligné__ *italique*");
+  await page.locator("#rdmode").click();
   await expect(page.locator("#rdv b")).toHaveText("gras");
   await expect(page.locator("#rdv u")).toHaveText("souligné");
   await expect(page.locator("#rdv i")).toHaveText("italique");
+  await page.locator("#rdmode").click();
   // la description se replie et se déplie
   await page.locator("#rdd > summary").click();
   await expect(page.locator("#rdesc")).toBeHidden();
