@@ -1745,3 +1745,89 @@ table.fit.tcat {
   padding: 8px 10px;
   font-size: 0.9rem;
 }
+
+/* Téléphone : rien ne doit dépasser de l'écran */
+@media (max-width: 700px) {
+  /* filtre « sans prix » du catalogue : le texte peut passer à la ligne */
+  .csans {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .csans span {
+    white-space: normal;
+  }
+
+  /* fiche de recette : le tableau défile de côté dans son cadre (pas la fenêtre), le nom de l'ingrédient reste visible */
+  #rdlg .w.sv {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  #rdlg .fit.rec th:first-child,
+  #rdlg .fit.rec td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    min-width: 128px;
+    max-width: 150px;
+    background: var(--card);
+  }
+
+  #rdlg .fit.rec th:not(:first-child) {
+    min-width: 58px;
+    max-width: 72px;
+  }
+
+  #rdlg .fit.rec td input[type="number"] {
+    width: 60px;
+  }
+
+  #rdlg .rdb button {
+    padding: 8px 7px;
+    font-size: 0.82rem;
+  }
+}
+
+/* Zones de toucher : au moins 24 px de haut (WCAG 2.2) sans agrandir les lignes */
+.rl .x {
+  min-width: 34px;
+  min-height: 28px;
+}
+
+.zn {
+  min-height: 26px;
+}
+
+/* Fenêtre « Gérer les types » */
+#tydlg {
+  width: min(560px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--tx);
+  box-sizing: border-box;
+}
+
+#tydlg::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.tyrow {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.tyrow input {
+  min-width: 0;
+}
+
+.tyrow .s {
+  white-space: nowrap;
+}

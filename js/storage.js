@@ -175,6 +175,15 @@ function cleanProject(x) {
       ["g", "ml", "pc"].includes(v.u)
     )
       o.ov[k] = { n: v.n.trim().slice(0, 100), u: v.u };
+  // liste des types et thèmes proposés (modifiable) ; sans liste, ce sont ceux d'origine
+  if (Array.isArray(x.types)) {
+    const l = [];
+    for (const t of x.types.slice(0, 60)) {
+      const nt = typeof t === "string" ? t.trim().replace(/\s+/g, " ").slice(0, 24) : "";
+      if (nt && !l.some((y) => y.toLowerCase() === nt.toLowerCase())) l.push(nt);
+    }
+    o.types = l;
+  }
   // rayons personnalisés (liste [identifiant, nom]) ; sans liste valide, ce sont ceux d'origine
   const rayons = cleanRayons(x.rayons);
   if (rayons) o.rayons = rayons;

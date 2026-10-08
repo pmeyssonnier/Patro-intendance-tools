@@ -505,8 +505,10 @@ test("recettes : la fenêtre reste ouverte au clic à côté ; Enregistrer ne la
   );
   // le tableau n'a pas de défilement propre
   await ouvrirFiche(page, "Spaghetti maison");
-  const defile = await page.locator("#rdlg .w.sv").evaluate((e) => getComputedStyle(e).overflowY);
-  expect(defile).toBe("visible");
+  const sansAscenseur = await page
+    .locator("#rdlg .w.sv")
+    .evaluate((e) => e.scrollHeight <= e.clientHeight + 1);
+  expect(sansAscenseur).toBe(true);
   // masquer et montrer les types
   await expect(page.locator("#rtags .chips").first()).toBeVisible();
   await page.locator("#rtd > summary").click();
@@ -578,6 +580,68 @@ test("catalogue : le filtre « sans prix » n'affiche que les ingrédients sans 
   await expect(page.locator("#ct tr")).toHaveCount(n0);
 });
 
+test("recettes : gérer les types d'origine (renommer, déplacer, supprimer, ajouter, rétablir)", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await page.evaluate(() => {
+    proposerTypes();
+    save();
+    drawRec();
+  });
+  await aller(page, "rec");
+  const nomPlat = await page.evaluate(
+    () => Object.entries(S.rec).find(([, R]) => (R.tags || []).includes("Plat"))[0]
+  );
+  const nPlat = await page.evaluate(() => nbRecettesType("Plat"));
+  expect(nPlat).toBeGreaterThan(0);
+  await page.locator("#rtypes").click();
+  await expect(page.locator("#tydlg")).toBeVisible();
+  // renommer un type d'origine : il change dans les recettes
+  await page.locator('#tyl [data-tyn="Plat"]').fill("Plat principal");
+  await page.locator('#tyl [data-tyn="Plat"]').blur();
+  await expect(page.locator('#tyl [data-tyn="Plat principal"]')).toBeVisible();
+  expect(await page.evaluate((n) => S.rec[n].tags, nomPlat)).toContain("Plat principal");
+  expect(await page.evaluate(() => nbRecettesType("Plat"))).toBe(0);
+  // un nom déjà pris est refusé
+  await page.locator('#tyl [data-tyn="Entrée"]').fill("dessert");
+  await page.locator('#tyl [data-tyn="Entrée"]').blur();
+  await expect(page.locator("#tym")).toContainText("existe déjà");
+  await expect(page.locator('#tyl [data-tyn="Entrée"]')).toHaveValue("Entrée");
+  // déplacer
+  await page.locator('#tyl [data-tyd="Petit-déjeuner"]').click();
+  expect(await page.evaluate(() => tagsConnus().slice(0, 2))).toEqual(["Entrée", "Petit-déjeuner"]);
+  // ajouter
+  await page.locator("#tyn").fill("Soupe du soir");
+  await page.locator("#tyok").click();
+  expect(await page.evaluate(() => tagsConnus().includes("Soupe du soir"))).toBe(true);
+  // supprimer un type d'origine, avec confirmation : il disparaît des recettes
+  await page.locator('#tyl [data-tyx="Chaud"]').click();
+  expect(await page.evaluate(() => tagsConnus().includes("Chaud"))).toBe(false);
+  expect(await page.evaluate(() => nbRecettesType("Chaud"))).toBe(0);
+  // la liste est enregistrée dans le projet et survit au rechargement
+  await page.locator("#tyno").click();
+  await page.reload();
+  expect(await page.evaluate(() => tagsConnus().slice(0, 2))).toEqual(["Entrée", "Petit-déjeuner"]);
+  expect(await page.evaluate(() => tagsConnus().includes("Chaud"))).toBe(false);
+  // la fiche de recette propose la liste modifiée
+  await aller(page, "rec");
+  await ouvrirFiche(page, nomPlat);
+  await expect(page.locator('#rtags [data-rt="Plat principal"]')).toBeVisible();
+  await expect(page.locator('#rtags [data-rt="Chaud"]')).toHaveCount(0);
+  await fermerFiche(page, false);
+  // rétablir la liste d'origine
+  await page.locator("#rtypes").click();
+  await page.locator("#tyre").click();
+  expect(await page.evaluate(() => S.types)).toBeUndefined();
+  expect(await page.evaluate(() => tagsConnus().slice(0, 3))).toEqual([
+    "Petit-déjeuner",
+    "Entrée",
+    "Plat",
+  ]);
+  expect(erreurs).toEqual([]);
+});
+
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "eff");
@@ -597,9 +661,9 @@ test("tableaux longs : la ligne de titre reste visible quand on défile", async 
   const rec = await page.evaluate(() => {
     const w = document.getElementById("rb").closest(".w");
     const d = document.getElementById("rdlg");
-    return [getComputedStyle(w).overflowY, d.scrollHeight > d.clientHeight];
+    return [w.scrollHeight <= w.clientHeight + 1, d.scrollHeight > d.clientHeight];
   });
-  expect(rec[0], "recettes : pas d'ascenseur sur le tableau").toBe("visible");
+  expect(rec[0], "recettes : pas d'ascenseur vertical sur le tableau").toBe(true);
   expect(rec[1], "recettes : la fenêtre défile").toBe(true);
   // catalogue et liste de courses : la page défile, le titre se colle sous la barre du haut
   for (const [g, id] of [

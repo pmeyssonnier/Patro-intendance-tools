@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.35.0",
+    v: "1.37.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,26 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.36.0",
+    d: "2026-10-08",
+    t: "Recettes : gérer les types et thèmes",
+    l: [
+      "Nouveau bouton « ⚙️ Gérer les types » sur la page Recettes : renommer, déplacer, supprimer ou ajouter des types, y compris ceux d'origine (Petit-déjeuner, Chaud, Froid…).",
+      "Renommer ou supprimer un type le change dans toutes les recettes qui le portent (avec confirmation pour la suppression). « Rétablir la liste d'origine » remet la liste de départ.",
+      "La liste modifiée est enregistrée dans le projet (sauvegarde et export compris) ; les propositions « d'après la description » ne suggèrent plus que les types qui existent.",
+    ],
+  },
+  {
+    v: "1.35.0",
+    d: "2026-10-08",
+    t: "Téléphone : plus de débordement",
+    l: [
+      "Fiche de recette : le tableau des ingrédients défile de côté dans son cadre, avec le nom de l'ingrédient qui reste visible, au lieu de faire déborder toute la fenêtre.",
+      "Catalogue de prix : le filtre « sans prix » passe à la ligne au lieu de dépasser de l'écran.",
+      "Boutons ⧉ ✎ ✕ de la liste des recettes et nom des repas du menu : zones de toucher plus hautes (24 px au moins).",
     ],
   },
   {

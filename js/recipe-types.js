@@ -36,9 +36,13 @@ const nomType = (t) =>
     .replace(/\s+/g, " ")
     .slice(0, TYPE_MAX);
 
-/** Étiquettes connues : celles d'origine, puis les autres utilisées par au moins une recette (par ordre alphabétique). */
+/** Étiquettes proposées : la liste modifiée par l'utilisateur (S.types) ou, à défaut, celle d'origine. */
+const typesProposes = () => (Array.isArray(S.types) ? S.types : TYPES0);
+
+/** Étiquettes connues : la liste proposée, puis les autres utilisées par au moins une recette (par ordre alphabétique). */
 function tagsConnus() {
-  const vus = new Set(TYPES0.map(plain)),
+  const base = typesProposes(),
+    vus = new Set(base.map(plain)),
     autres = [];
   for (const R of Object.values(S.rec))
     for (const t of R.tags || [])
@@ -46,7 +50,7 @@ function tagsConnus() {
         vus.add(plain(t));
         autres.push(t);
       }
-  return [...TYPES0, ...recettesTriees(autres)];
+  return [...base, ...recettesTriees(autres)];
 }
 
 /** Orthographe d'une étiquette : celle d'une étiquette déjà connue si elle ne diffère que par les accents ou les majuscules. */
@@ -99,8 +103,85 @@ function typesProbables(nom, desc, ingredients, deja = []) {
   )
     o.push("Asiatique");
   if (a(/barbecue|braise|feu de camp|brochette|papillote/)) o.push("Barbecue / feu de camp");
-  const prises = new Set(deja.map(plain));
-  return o.filter((x) => !prises.has(plain(x)));
+  const prises = new Set(deja.map(plain)),
+    connus = new Set(tagsConnus().map(plain));
+  return o.filter((x) => !prises.has(plain(x)) && connus.has(plain(x)));
+}
+
+/* ---- Gérer la liste des types et thèmes ---- */
+
+/** Enregistre la liste dans le projet (S.types), ou l'oublie quand elle est identique à celle d'origine. */
+function memoriserTypes(liste) {
+  if (JSON.stringify(liste) === JSON.stringify(TYPES0)) delete S.types;
+  else S.types = liste;
+}
+
+/** Nombre de recettes qui portent une étiquette. */
+const nbRecettesType = (t) =>
+  Object.values(S.rec).filter((R) => (R.tags || []).some((x) => plain(x) === plain(t))).length;
+
+/** Remplace une étiquette (ou la retire si `nouveau` est vide) dans toutes les recettes et dans le filtre. */
+function remplacerTypeDansRecettes(ancien, nouveau) {
+  for (const R of Object.values(S.rec)) {
+    if (!(R.tags || []).some((x) => plain(x) === plain(ancien))) continue;
+    const l = [];
+    for (const x of R.tags) {
+      const y = plain(x) === plain(ancien) ? nouveau : x;
+      if (y && !l.some((z) => plain(z) === plain(y))) l.push(y);
+    }
+    if (l.length) R.tags = l;
+    else delete R.tags;
+  }
+  filtreTypes = [
+    ...new Set(filtreTypes.map((f) => (plain(f) === plain(ancien) ? nouveau : f)).filter(Boolean)),
+  ];
+  memoriserFiltre();
+}
+
+/** Message d'erreur si `nom` ne convient pas comme étiquette (vide, déjà prise par une autre), sinon "". */
+function erreurNomType(nom, sauf) {
+  if (!nom) return "Le nom ne peut pas être vide.";
+  const pris = tagsConnus().find((t) => plain(t) === plain(nom) && plain(t) !== plain(sauf || ""));
+  return pris ? `« ${pris} » existe déjà.` : "";
+}
+
+/** Ajoute une étiquette à la liste proposée. Renvoie un message d'erreur, ou "". */
+function ajouterTypeListe(nom) {
+  nom = nomType(nom);
+  const err = erreurNomType(nom);
+  if (err) return err;
+  const l = tagsConnus();
+  if (l.length >= 60) return "60 types au plus.";
+  memoriserTypes([...l, nom]);
+  return "";
+}
+
+/** Renomme une étiquette partout (liste, recettes, filtre). Renvoie un message d'erreur, ou "". */
+function renommerType(ancien, nom) {
+  nom = nomType(nom);
+  if (nom === ancien) return "";
+  const err = erreurNomType(nom, ancien);
+  if (err) return err;
+  memoriserTypes(tagsConnus().map((t) => (t === ancien ? nom : t)));
+  remplacerTypeDansRecettes(ancien, nom);
+  return "";
+}
+
+/** Supprime une étiquette de la liste et de toutes les recettes qui la portent. */
+function supprimerTypeListe(t) {
+  memoriserTypes(tagsConnus().filter((x) => x !== t));
+  remplacerTypeDansRecettes(t, "");
+}
+
+/** Monte (-1) ou descend (+1) une étiquette dans la liste proposée. */
+function deplacerType(t, sens) {
+  const l = tagsConnus(),
+    i = l.indexOf(t),
+    j = i + sens;
+  if (i < 0 || j < 0 || j >= l.length) return false;
+  [l[i], l[j]] = [l[j], l[i]];
+  memoriserTypes(l);
+  return true;
 }
 
 /* ---- Filtre « visible ou pas » ---- */
@@ -311,4 +392,83 @@ $("rtd").addEventListener("toggle", () => {
   } catch {
     /* sans stockage : l'état n'est pas retenu */
   }
+});
+
+/* ---- Fenêtre « Gérer les types » ---- */
+
+function drawTypesListe() {
+  $("tyl").innerHTML = tagsConnus()
+    .map((t, i, l) => {
+      const n = nbRecettesType(t);
+      return `<div class="tyrow"><input data-tyn="${esc(t)}" value="${esc(t)}" maxlength="${TYPE_MAX}" aria-label="Nom du type ${esc(t)}"><span class="s">${n} recette${n > 1 ? "s" : ""}</span><button class="x" data-tyu="${esc(t)}" aria-label="Monter ${esc(t)}"${i ? "" : " disabled"}>▲</button><button class="x" data-tyd="${esc(t)}" aria-label="Descendre ${esc(t)}"${i < l.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-tyx="${esc(t)}" aria-label="Supprimer ${esc(t)}" title="Supprimer ce type">🗑</button></div>`;
+    })
+    .join("");
+}
+
+/** Redessine tout ce qui montre les types, après un changement de la liste. */
+function apresTypes() {
+  save();
+  drawTypesListe();
+  drawRec();
+  drawMenu();
+}
+
+$("rtypes").onclick = () => {
+  $("tym").textContent = "";
+  $("tyn").value = "";
+  drawTypesListe();
+  if (!$("tydlg").open) $("tydlg").showModal();
+};
+
+$("tyno").onclick = () => $("tydlg").close();
+
+$("tyok").onclick = () => {
+  const err = ajouterTypeListe($("tyn").value);
+  $("tym").textContent = err;
+  if (err) return;
+  $("tyn").value = "";
+  apresTypes();
+};
+
+$("tyn").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") $("tyok").click();
+});
+
+$("tyre").onclick = () => {
+  if (
+    !confirm(
+      "Rétablir la liste d'origine ? Les types que tu as ajoutés à des recettes restent proposés tant qu'une recette les porte."
+    )
+  )
+    return;
+  delete S.types;
+  $("tym").textContent = "";
+  apresTypes();
+};
+
+$("tyl").addEventListener("change", (e) => {
+  const t = e.target.dataset.tyn;
+  if (t === undefined) return;
+  const err = renommerType(t, e.target.value);
+  $("tym").textContent = err;
+  if (err) e.target.value = t;
+  else apresTypes();
+});
+
+$("tyl").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target.dataset.tyn !== undefined) e.target.blur();
+});
+
+$("tyl").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-tyu], [data-tyd], [data-tyx]");
+  if (!b) return;
+  $("tym").textContent = "";
+  if (b.dataset.tyx) {
+    const t = b.dataset.tyx,
+      n = nbRecettesType(t);
+    if (n && !confirm(`Supprimer « ${t} » ? Il sera retiré de ${n} recette${n > 1 ? "s" : ""}.`))
+      return;
+    supprimerTypeListe(t);
+  } else deplacerType(b.dataset.tyu || b.dataset.tyd, b.dataset.tyu ? -1 : 1);
+  apresTypes();
 });
