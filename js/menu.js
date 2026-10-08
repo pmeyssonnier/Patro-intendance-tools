@@ -529,3 +529,42 @@ $("madp").onchange = () => {
   S.ma = +$("madp").checked;
   calc();
 };
+
+/* Texte des adaptations (régimes) sur le menu imprimable : on clique sur le crayon d'un plat dans l'aperçu pour le remplacer par son propre texte
+   (ou le masquer) ; « Texte automatique » rend la main au calcul. Le texte est rangé dans C.adn, sous « jour|repas|plat ». */
+
+/** Plat dont on modifie les adaptations dans l'aperçu : { i, k, idx } ou null. */
+let adEdit = null;
+
+/** Ligne des adaptations d'un plat dans l'aperçu : le texte (automatique ou choisi) avec son crayon, ou l'éditeur si ce plat est en cours de modification. */
+function adLigne(i, k, idx, r, ad) {
+  const d = `data-i="${i}" data-k="${esc(k)}" data-r="${idx}"`;
+  if (adEdit && adEdit.i === i && adEdit.k === k && adEdit.idx === idx) {
+    const auto = meal(r, presents(i, k)).adapt.join(" · ");
+    return `<div class="ade"><textarea id="adtxt" maxlength="400" rows="4" aria-label="Adaptations (régimes) pour ${esc(r)}">${esc(ad.join(" · "))}</textarea><div class="s">Texte automatique : ${auto ? esc(auto) : "aucune adaptation"}</div><button class="x" data-ad="save" ${d}>Enregistrer</button> <button class="x" data-ad="auto" ${d}>Texte automatique</button> <button class="x" data-ad="cancel" ${d}>Annuler</button><div class="s">Vide : aucune ligne pour ce plat.</div></div>`;
+  }
+  const perso = Object.hasOwn(C.adn || {}, i + "|" + k + "|" + r);
+  return `<div class="ad">${ad.length ? esc(ad.join(" · ")) : ""}${perso ? ' <span class="s">(texte modifié)</span>' : ""} <button class="x adb" data-ad="edit" ${d} title="Modifier le texte des adaptations de ce plat" aria-label="Modifier les adaptations de ${esc(r)}">${ad.length ? "✎" : "＋ adaptation"}</button></div>`;
+}
+
+$("mprev").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-ad]");
+  if (!b) return;
+  const i = +b.dataset.i,
+    k = b.dataset.k,
+    idx = +b.dataset.r,
+    a = b.dataset.ad,
+    r = slotArr(i, k)[idx];
+  if (a === "edit") adEdit = { i, k, idx };
+  else {
+    if (r !== undefined && (a === "save" || a === "auto")) {
+      C.adn = C.adn || {};
+      const cle = i + "|" + k + "|" + r;
+      if (a === "auto") delete C.adn[cle];
+      else C.adn[cle] = $("adtxt").value.trim().replace(/\s+/g, " ").slice(0, 400);
+    }
+    adEdit = null;
+  }
+  calc();
+  if (adEdit && $("adtxt")) $("adtxt").focus();
+});

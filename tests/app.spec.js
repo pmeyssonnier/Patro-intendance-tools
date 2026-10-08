@@ -3238,3 +3238,91 @@ test("menu imprimable : « N pers. » prend la couleur du nom du repas, lisible 
   for (const [nom, eff] of r.lignes) expect(eff).toBe(nom);
   expect(r.css).toBe(true);
 });
+
+test("menu imprimable : le texte des adaptations (régimes) se modifie, se masque ou revient à l'automatique", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "reg");
+  await deplierRegime(page, "veg");
+  await page.locator('input[data-d="veg"][data-s="0"]').fill("2");
+  await aller(page, "menu");
+  await expect(page.locator("#mprev")).toContainText("Végétarien ×2");
+  const auto = (txt) => (txt.match(/Végétarien ×2/g) || []).length;
+  const avant = auto(await page.locator("#mprev").innerText());
+  // 1. remplacer le texte du premier plat adapté par le sien
+  const ligne = page.locator("#mprev .ad", { hasText: "Végétarien ×2" }).first();
+  await ligne.locator('[data-ad="edit"]').click();
+  await expect(page.locator("#adtxt")).toBeFocused();
+  await expect(page.locator("#adtxt")).toHaveValue(/Végétarien ×2 :/);
+  await page.locator("#adtxt").fill("2 végétariens : lasagnes aux légumes à la place");
+  await page.locator('[data-ad="save"]').click();
+  await expect(page.locator("#mprev")).toContainText("2 végétariens : lasagnes aux légumes");
+  expect(auto(await page.locator("#mprev").innerText())).toBe(avant - 1);
+  await expect(page.locator("#mprev")).toContainText("(texte modifié)");
+  // l'impression, le fichier HTML et le CSV utilisent le texte choisi
+  const html = await page.evaluate(() => menuHTML());
+  expect(html).toContain("2 végétariens : lasagnes aux légumes");
+  expect(html).not.toContain("adtxt");
+  expect(html).not.toContain("data-ad");
+  expect(auto(html)).toBe(avant - 1);
+  expect(await page.evaluate(() => csvMenu())).toContain("2 végétariens : lasagnes aux légumes");
+  // le texte survit à l'export puis à l'import du projet
+  const stocke = await page.evaluate(() =>
+    JSON.stringify(cleanProject(JSON.parse(JSON.stringify(S))))
+  );
+  expect(stocke).toContain("lasagnes aux légumes");
+  // 2. le texte suit le plat quand la recette est renommée
+  const plat = await page.evaluate(() => Object.keys(S.camps[S.ccur].adn)[0].split("|")[2]);
+  const err = await page.evaluate((p) => renameRecipe(p, "Plat renommé"), plat);
+  expect(err).toBe("");
+  expect(await page.evaluate(() => Object.keys(C.adn)[0].split("|")[2])).toBe("Plat renommé");
+  await page.evaluate(() => calc());
+  await expect(page.locator("#mprev")).toContainText("2 végétariens : lasagnes aux légumes");
+  // 3. masquer la ligne d'un plat : texte vide
+  await page
+    .locator("#mprev .ad", { hasText: "lasagnes aux légumes" })
+    .locator('[data-ad="edit"]')
+    .click();
+  await page.locator("#adtxt").fill("");
+  await page.locator('[data-ad="save"]').click();
+  await expect(page.locator("#mprev")).not.toContainText("lasagnes aux légumes");
+  expect(await page.evaluate(() => menuHTML())).not.toContain("lasagnes aux légumes");
+  // 4. « Texte automatique » rend la main au calcul
+  await page.locator('#mprev [data-ad="edit"]', { hasText: "adaptation" }).first().click();
+  await page.locator('[data-ad="auto"]').click();
+  expect(auto(await page.locator("#mprev").innerText())).toBe(avant);
+  expect(await page.evaluate(() => Object.keys(C.adn).length)).toBe(0);
+  // 5. annuler ne change rien
+  await page.locator('#mprev [data-ad="edit"]').first().click();
+  await page.locator("#adtxt").fill("texte abandonné");
+  await page.locator('[data-ad="cancel"]').click();
+  await expect(page.locator("#mprev")).not.toContainText("texte abandonné");
+  expect(await page.evaluate(() => Object.keys(C.adn).length)).toBe(0);
+  // les adaptations masquées de l'aperçu ne proposent aucun crayon
+  await page.locator("#madp").uncheck();
+  await expect(page.locator('#mprev [data-ad="edit"]')).toHaveCount(0);
+  expect(erreurs).toEqual([]);
+});
+
+test("menu imprimable : un texte d'adaptations dont le plat a quitté le repas est abandonné au chargement", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const p = JSON.parse(JSON.stringify(S));
+    const camp = p.camps[p.ccur];
+    const [jour] = Object.keys(camp.menu);
+    const [k] = Object.keys(camp.menu[jour]);
+    const plat = camp.menu[jour][k][0];
+    camp.adn = {
+      [`${jour}|${k}|${plat}`]: "gardé",
+      [`${jour}|${k}|Plat absent`]: "abandonné",
+      "x|y|z": "invalide",
+      [`${jour}|${k}|${plat}2`]: 42,
+    };
+    return Object.entries(cleanProject(p).camps[p.ccur].adn);
+  });
+  expect(r.map((x) => x[1])).toEqual(["gardé"]);
+  expect(erreurs).toEqual([]);
+});

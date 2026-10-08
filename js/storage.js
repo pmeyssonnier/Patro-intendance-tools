@@ -61,6 +61,7 @@ function cleanCamp(c, N) {
     types: [],
     off: {},
     pres: {},
+    adn: {},
     col: {},
   };
   // articles ajoutés à la liste de courses hors recettes (identifiant d'ingrédient -> quantité de base)
@@ -86,6 +87,14 @@ function cleanCamp(c, N) {
   for (const [pk, v] of ent(c.pres))
     if (/^\d{1,2}\|[A-Za-z0-9_-]{1,30}$/.test(pk) && Array.isArray(v))
       o.pres[pk] = qn(v, N).map((x) => Math.min(Math.round(x), 1e4));
+  // texte des adaptations (régimes) choisi pour un plat du menu imprimable : « jour|repas|plat » -> texte (vide = ligne masquée) ;
+  // un texte dont le plat n'est plus dans ce repas est abandonné
+  for (const [ak, v] of ent(c.adn)) {
+    const m = /^(\d{1,2})\|([A-Za-z0-9_-]{1,30})\|(.{1,100})$/.exec(ak);
+    if (!m || typeof v !== "string") continue;
+    const plats = o.menu[m[1]] && o.menu[m[1]][m[2]];
+    if (Array.isArray(plats) && plats.includes(m[3])) o.adn[ak] = v.slice(0, 400);
+  }
   return o;
 }
 

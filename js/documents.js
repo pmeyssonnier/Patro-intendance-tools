@@ -1,7 +1,16 @@
 /* Intendance PSS – Documents imprimables et partageables : menu, liste de courses, recettes, textes, exports CSV (Excel).
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
-function menuHTML() {
+/** Adaptations (régimes) d'un plat à un repas : le texte choisi par l'utilisateur s'il existe (vide = aucune ligne), sinon le texte automatique. */
+function adapteMenu(i, k, r) {
+  const o = C.adn || {},
+    cle = i + "|" + k + "|" + r;
+  if (Object.hasOwn(o, cle)) return o[cle] ? [o[cle]] : [];
+  return meal(r, presents(i, k)).adapt;
+}
+
+/** `edit` : version de l'aperçu à l'écran, avec le crayon pour modifier le texte des adaptations de chaque plat. */
+function menuHTML(edit = false) {
   const dsc = +S.md,
     adp = +S.ma;
   let rows = "";
@@ -11,9 +20,10 @@ function menuHTML() {
       const rs = slotArr(i, k);
       const dishes = rs.length
         ? rs
-            .map((r) => {
-              const ad = adp ? meal(r, presents(i, k)).adapt : [];
-              return `<div><b>${esc(r)}</b>${ad.length ? `<div class="ad">${esc(ad.join(" · "))}</div>` : ""}</div>`;
+            .map((r, idx) => {
+              const ad = adp ? adapteMenu(i, k, r) : [];
+              const ligne = ad.length ? `<div class="ad">${esc(ad.join(" · "))}</div>` : "";
+              return `<div><b>${esc(r)}</b>${edit && adp ? adLigne(i, k, idx, r, ad) : ligne}</div>`;
             })
             .join("")
         : '<span class="ad">–</span>';
@@ -260,7 +270,7 @@ function csvMenu() {
           t.n,
           x,
           R ? descTexte(R.desc) : "",
-          meal(x, presents(i, t.k)).adapt.join(" | "),
+          adapteMenu(i, t.k, x).join(" | "),
         ]);
       })
     )
