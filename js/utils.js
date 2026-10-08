@@ -92,11 +92,9 @@ const crat = (a, b) => {
       y = rlum(b);
     return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
   },
-  INK = "#1f2a22",
-  best = (c) => (crat(c, "#ffffff") >= crat(c, INK) ? "#ffffff" : INK),
-  lowc = (c) => HEX.test(c) && Math.max(crat(c, "#ffffff"), crat(c, INK)) < 4.5;
+  lowc = (c) => HEX.test(c) && crat(c, "#ffffff") < 4.5;
 
 const cvars = (c) => {
   c = HEX.test(c) ? c : COLS[0];
-  return `--mc:${c};--mcl:${c}22;--mct:${best(c)}`;
+  return `--mc:${c};--mcl:${c}22;--mct:#fff`;
 };
