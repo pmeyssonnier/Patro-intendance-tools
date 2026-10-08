@@ -239,12 +239,12 @@ function drawTags() {
     return `<button type="button" class="chip${on ? " on" : ""}" data-rt="${esc(t)}" aria-pressed="${on}">${esc(t)}</button>`;
   };
   $("rtags").innerHTML =
-    `<div><b>Types et thèmes</b> <span class="s">(touche pour cocher ou décocher ; sert à filtrer la liste des recettes)</span></div>` +
+    `<div><b>Types, thèmes et mots-clés</b> <span class="s">(touche pour cocher ou décocher ; sert à filtrer la liste des recettes)</span></div>` +
     `<div class="chips">${tagsConnus().map(pastille).join("")}</div>` +
     (sug.length
       ? `<div class="chips"><span class="s">💡 D'après la description :</span>${sug.map((t) => `<button type="button" class="chip sug" data-rts="${esc(t)}" aria-label="Ajouter le type ${esc(t)}">＋ ${esc(t)}</button>`).join("")}<button type="button" class="x" data-rtall="1">Tout ajouter</button></div>`
       : "") +
-    `<div class="row" style="grid-template-columns:1fr auto"><input id="tnew" maxlength="${TYPE_MAX}" placeholder="Nouveau type ou thème (ex. Barbecue)" aria-label="Nouveau type ou thème de recette"><button type="button" class="x" id="tadd">＋ Ajouter</button></div>`;
+    `<div class="row" style="grid-template-columns:1fr auto"><input id="tnew" maxlength="${TYPE_MAX}" placeholder="Nouveau mot-clé (ex. Barbecue, sans four…)" aria-label="Nouveau mot-clé, type ou thème de recette"><button type="button" class="x" id="tadd">＋ Ajouter</button></div>`;
 }
 
 /** Coche ou décoche une étiquette de la recette ouverte (ou l'ajoute si `forcer`). */
