@@ -23,7 +23,7 @@ async function ouvrirFiche(page, nom) {
 
 /** Referme la fiche d'une recette : « Enregistrer » (par défaut) ou « Annuler ». */
 async function fermerFiche(page, enregistrer = true) {
-  await page.locator(enregistrer ? "#rdok" : "#rdno").click();
+  await page.locator(enregistrer ? "#rdokc" : "#rdno").click();
   await page.locator("#rdlg").waitFor({ state: "hidden" });
 }
 

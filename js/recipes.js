@@ -382,6 +382,7 @@ function ouvrirRecette(nom, opts = {}) {
   enregistrementSuspendu = true;
   recEdit = null;
   $("rename").value = nom;
+  $("rdmsg").style.color = "#d33";
   $("rdmsg").textContent = "";
   $("rdt").textContent = opts.neuf ? "Nouvelle recette" : "Modifier la recette";
   drawRec();
@@ -396,22 +397,40 @@ const recetteModifiee = () =>
   ($("rename").value.trim() !== RDRAFT.nom ||
     JSON.stringify(S.rec[RDRAFT.nom]) !== JSON.stringify(RDRAFT.copie));
 
-/** Referme la fenêtre : « enregistrer » garde les changements (et renomme la recette si besoin) ; sinon la recette redevient celle de l'ouverture (ou disparaît, si elle vient d'être créée). */
+/** Enregistre la recette ouverte sans fermer la fenêtre : renomme si besoin, écrit sur disque, et « Annuler » reviendra désormais à cet état. Renvoie false si le nom est refusé. */
+function enregistrerRecette() {
+  const d = RDRAFT;
+  const nom = $("rename").value.trim().replace(/\s+/g, " ");
+  if (nom !== d.nom) {
+    const err = renameRecipe(d.nom, nom);
+    if (err) {
+      $("rdmsg").style.color = "#d33";
+      $("rdmsg").textContent = "⚠ " + err;
+      $("rename").focus();
+      return false;
+    }
+    S.cur = nom;
+    d.nom = nom;
+    $("rename").value = nom;
+  }
+  d.copie = JSON.parse(JSON.stringify(S.rec[d.nom]));
+  d.neuf = false;
+  $("rdt").textContent = "Modifier la recette";
+  enregistrementSuspendu = false;
+  save();
+  enregistrementSuspendu = true;
+  return true;
+}
+
+/** Referme la fenêtre : « enregistrer » garde les changements (et renomme la recette si besoin) ; sinon la recette redevient celle du dernier enregistrement (ou disparaît, si elle vient d'être créée). */
 function fermerRecette(enregistrer) {
   if (!RDRAFT) return;
+  if (enregistrer && !enregistrerRecette()) return;
   const d = RDRAFT;
-  if (enregistrer) {
-    const nom = $("rename").value.trim().replace(/\s+/g, " ");
-    if (nom !== d.nom) {
-      const err = renameRecipe(d.nom, nom);
-      if (err) {
-        $("rdmsg").textContent = "⚠ " + err;
-        $("rename").focus();
-        return;
-      }
-    }
-  } else if (d.neuf) delete S.rec[d.nom];
-  else S.rec[d.nom] = d.copie;
+  if (!enregistrer) {
+    if (d.neuf) delete S.rec[d.nom];
+    else S.rec[d.nom] = d.copie;
+  }
   RDRAFT = null;
   enregistrementSuspendu = false;
   recEdit = null;
@@ -433,17 +452,23 @@ function demanderFermeture() {
   fermerRecette(false);
 }
 
-$("rdok").onclick = () => fermerRecette(true);
+/** Enregistrer : on garde la fenêtre ouverte pour voir le résultat. */
+$("rdok").onclick = () => {
+  if (!enregistrerRecette()) return;
+  drawRec();
+  drawMenu();
+  calc();
+  $("rdmsg").style.color = "#1f7a3f";
+  $("rdmsg").textContent = "✓ Enregistré.";
+};
+
+$("rdokc").onclick = () => fermerRecette(true);
 
 $("rdno").onclick = () => fermerRecette(false);
 
 $("rdlg").addEventListener("cancel", (e) => {
   e.preventDefault();
   demanderFermeture();
-});
-
-$("rdlg").addEventListener("click", (e) => {
-  if (e.target === $("rdlg")) demanderFermeture();
 });
 
 $("rename").addEventListener("keydown", (e) => {

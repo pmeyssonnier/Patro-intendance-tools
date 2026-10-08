@@ -5,6 +5,17 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.29.0",
+    d: "2026-10-08",
+    t: "Fenêtre de recette : réglages",
+    l: [
+      "Un clic à côté de la fenêtre de recette ne la ferme plus (Échap demande confirmation s'il y a des changements).",
+      "« Enregistrer » garde la fenêtre ouverte pour voir le résultat ; « Enregistrer et fermer » la referme. « Annuler » revient au dernier enregistrement.",
+      "Le tableau des ingrédients n'a plus d'ascenseur : c'est la fenêtre qui défile. Lignes un peu plus serrées pour en voir plus.",
+      "Les types, thèmes et mots-clés se masquent et se montrent d'un bouton (réglage retenu).",
+    ],
+  },
+  {
     v: "1.28.0",
     d: "2026-10-08",
     t: "Recettes : liste compacte et fiche dans une fenêtre",
