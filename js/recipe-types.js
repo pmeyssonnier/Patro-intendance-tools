@@ -257,7 +257,7 @@ function basculerType(t, forcer) {
   if (i >= 0 && !forcer) a.splice(i, 1);
   else if (i < 0) {
     if (a.length >= TYPES_PAR_RECETTE) {
-      $("remsg").textContent = `${TYPES_PAR_RECETTE} types au plus par recette.`;
+      $("rdmsg").textContent = `${TYPES_PAR_RECETTE} types au plus par recette.`;
       return;
     }
     a.push(t);
