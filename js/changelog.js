@@ -7,15 +7,6 @@ const CHANGELOG = [
   {
     v: "1.32.0",
     d: "2026-10-08",
-    t: "Menu imprimable : adaptations des régimes modifiables",
-    l: [
-      "Menu du camp, aperçu du menu imprimable : un crayon ✎ à côté des adaptations (régimes) de chaque plat permet de les remplacer par son propre texte, ou de les masquer. « Texte automatique » rétablit le calcul.",
-      "Le texte choisi est utilisé dans l'impression, le fichier HTML et le CSV du menu. Il est rangé par camp, jour, repas et plat ; il suit si une recette est renommée, et il est synchronisé avec le groupe.",
-    ],
-  },
-  {
-    v: "1.31.0",
-    d: "2026-10-07",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
       "Configuration : connexion par un lien envoyé par e-mail (sans mot de passe). Sans connexion, rien ne change : tout reste sur l'appareil et l'application fonctionne comme avant.",
@@ -24,6 +15,15 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.26.0",
+    d: "2026-10-08",
+    t: "Menu imprimable : adaptations des régimes modifiables",
+    l: [
+      "Menu du camp, aperçu du menu imprimable : un crayon ✎ à côté des adaptations (régimes) de chaque plat permet de les remplacer par son propre texte, ou de les masquer. « Texte automatique » rétablit le calcul.",
+      "Le texte choisi est utilisé dans l'impression, le fichier HTML et le CSV du menu. Il est rangé par camp, jour, repas et plat ; il suit si une recette est renommée.",
     ],
   },
   {
