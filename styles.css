@@ -1759,3 +1759,36 @@ table.fit.tcat {
 .zn {
   min-height: 26px;
 }
+
+/* Fenêtre « Gérer les types » */
+#tydlg {
+  width: min(560px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--tx);
+  box-sizing: border-box;
+}
+
+#tydlg::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.tyrow {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.tyrow input {
+  min-width: 0;
+}
+
+.tyrow .s {
+  white-space: nowrap;
+}

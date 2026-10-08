@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.36.0",
+    d: "2026-10-08",
+    t: "Recettes : gérer les types et thèmes",
+    l: [
+      "Nouveau bouton « ⚙️ Gérer les types » sur la page Recettes : renommer, déplacer, supprimer ou ajouter des types, y compris ceux d'origine (Petit-déjeuner, Chaud, Froid…).",
+      "Renommer ou supprimer un type le change dans toutes les recettes qui le portent (avec confirmation pour la suppression). « Rétablir la liste d'origine » remet la liste de départ.",
+      "La liste modifiée est enregistrée dans le projet (sauvegarde et export compris) ; les propositions « d'après la description » ne suggèrent plus que les types qui existent.",
+    ],
+  },
+  {
     v: "1.35.0",
     d: "2026-10-08",
     t: "Téléphone : plus de débordement",
