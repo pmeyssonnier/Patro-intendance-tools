@@ -2754,7 +2754,9 @@ test("nouvel ingrédient depuis une recette : « Utiliser » est aussi proposé 
   expect(await page.evaluate(() => Object.keys(S.cust).length)).toBe(1);
   expect(
     await page.evaluate(() =>
-      Object.keys(S.rec[S.cur].ing).some((k) => ING[k][0] === "Huile de colza" && ING[k][1] === "ml")
+      Object.keys(S.rec[S.cur].ing).some(
+        (k) => ING[k][0] === "Huile de colza" && ING[k][1] === "ml"
+      )
     )
   ).toBe(true);
 });
