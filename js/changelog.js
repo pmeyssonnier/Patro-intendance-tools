@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.31.0",
+    d: "2026-10-08",
+    t: "Fenêtre de recette : types en accordéon",
+    l: [
+      "Types, thèmes et mots-clés : un volet repliable comme la description (clic sur le titre) ; replié, il liste les types cochés. Le réglage est retenu.",
+    ],
+  },
+  {
     v: "1.30.0",
     d: "2026-10-08",
     t: "Description de recette : italique, aperçu et volet repliable ; catalogue sans prix",

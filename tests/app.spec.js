@@ -498,9 +498,9 @@ test("recettes : la fenêtre reste ouverte au clic à côté ; Enregistrer ne la
   expect(defile).toBe("visible");
   // masquer et montrer les types
   await expect(page.locator("#rtags .chips").first()).toBeVisible();
-  await page.locator("#rtags [data-rtmask]").click();
-  await expect(page.locator("#rtags .chips")).toHaveCount(0);
-  await page.locator("#rtags [data-rtmask]").click();
+  await page.locator("#rtd > summary").click();
+  await expect(page.locator("#rtags .chips").first()).toBeHidden();
+  await page.locator("#rtd > summary").click();
   await expect(page.locator("#rtags .chips").first()).toBeVisible();
   await fermerFiche(page, false);
 });
