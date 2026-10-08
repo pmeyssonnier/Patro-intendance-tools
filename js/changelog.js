@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.39.0",
+    d: "2026-10-08",
+    t: "Sauvegarde : « Partager » marche sur plus d'appareils",
+    l: [
+      "« Partager » essaie d'abord le fichier .json ; si le navigateur le refuse (Chrome sur Android), il partage le même contenu en fichier .txt, puis en texte seul.",
+      "L'import accepte maintenant les fichiers .json et .txt.",
+      "Quand le navigateur n'a pas de partage (Firefox, certains navigateurs de bureau), le bouton est masqué ; « Exporter » et « Copier le projet » restent disponibles. Une vraie erreur de partage est maintenant affichée.",
+    ],
+  },
+  {
     v: "1.38.0",
     d: "2026-10-08",
     t: "Fenêtres « Gérer les rayons / les types » : un seul modèle, plus compact sur téléphone",

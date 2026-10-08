@@ -413,15 +413,50 @@ $("expc").onclick = () => {
   else ko();
 };
 
-$("exps").onclick = () => {
+/* Partager : le navigateur choisit ce qu'il accepte. Chrome sur Android refuse les fichiers .json (liste de types autorisés limitée) et beaucoup
+   de navigateurs de bureau n'ont pas de partage du tout. On essaie donc, dans l'ordre : le fichier .json, le même contenu en fichier .txt
+   (l'import accepte les deux), puis le texte seul. */
+if (!navigator.share) $("exps").style.display = "none";
+
+$("exps").onclick = async () => {
   const p = projetExporte();
   if (!p) return;
-  const f = new File([p.texte], p.nom, { type: "application/json" });
-  if (navigator.canShare && navigator.canShare({ files: [f] }))
-    navigator.share({ files: [f], title: "Projet Intendance PSS" }).catch(() => {});
-  else
-    $("jmsg").textContent =
-      "Le partage de fichier n'est pas disponible sur cet appareil : utilise « Exporter » ou « Copier le projet ».";
+  const msg = (t) => {
+    $("jmsg").textContent = t;
+  };
+  const titre = "Projet Intendance PSS";
+  const essais = [
+    { fichier: new File([p.texte], p.nom, { type: "application/json" }), note: "" },
+    {
+      fichier: new File([p.texte], p.nom.replace(/\.json$/, ".txt"), { type: "text/plain" }),
+      note: "Partagé en fichier .txt : l'import le lit aussi. ",
+    },
+  ];
+  try {
+    for (const { fichier, note } of essais) {
+      if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+        await navigator.share({ files: [fichier], title: titre });
+        msg(note + "Projet partagé.");
+        return;
+      }
+    }
+    // dernier recours : le texte du projet (tel quel, à coller dans un fichier .json ou .txt)
+    if (p.texte.length <= 150000) {
+      await navigator.share({ title: titre, text: p.texte });
+      msg("Projet partagé en texte : à coller dans un fichier .txt ou .json pour l'importer.");
+    } else
+      msg(
+        "Ce navigateur ne partage pas les fichiers et le projet est trop gros pour un partage en texte : utilise « Exporter » ou « Copier le projet »."
+      );
+  } catch (e) {
+    // fermer la fenêtre de partage n'est pas une erreur
+    if (e && e.name === "AbortError") return;
+    msg(
+      "Partage impossible (" +
+        (e && e.message ? e.message : e) +
+        ") : utilise « Exporter » ou « Copier le projet »."
+    );
+  }
 };
 
 $("jin").onchange = (e) => {
