@@ -348,7 +348,6 @@ test("configuration : nom de la troupe affiché dans le menu, le titre et les do
   await expect(page.locator("#ttroop")).toHaveText("Patro Saint-Jean");
   await aller(page, "sh");
   await page.locator("#shw").selectOption("list");
-  await page.locator("#sc").click();
   expect(await page.evaluate(() => troop())).toBe("Patro Saint-Jean");
   // nom vide : retour au nom par défaut
   await aller(page, "cfg");
@@ -758,6 +757,7 @@ test("partager / imprimer : liens WhatsApp et mail raccourcis quand le texte est
       ing: {},
     };
     $("shw").value = "recs";
+    $("shf").value = "txt";
     $("sw").click();
   });
   await expect(page.locator("#shm")).toContainText("texte complet copié");
@@ -767,9 +767,6 @@ test("partager / imprimer : liens WhatsApp et mail raccourcis quand le texte est
   }));
   expect(out.ouvert).toBeLessThanOrEqual(3100);
   expect(out.copie).toBeGreaterThan(4000);
-  // le bouton Copier utilise le même repli
-  await page.locator("#sc").click();
-  await expect(page.locator("#shm")).toContainText("Copié");
 });
 
 test("partager / imprimer : WhatsApp avec un texte long passe par le menu de partage, entier", async ({
@@ -791,6 +788,7 @@ test("partager / imprimer : WhatsApp avec un texte long passe par le menu de par
   const total = await page.evaluate(() => {
     S.rec["Grande recette"] = { desc: "x".repeat(4000), ing: {} };
     $("shw").value = "recs";
+    $("shf").value = "txt";
     $("sw").click();
     return SH.recs[1]().length;
   });
@@ -1024,13 +1022,6 @@ test("partager : le catalogue de prix se partage, s'imprime et s'exporte", async
   const html = await telecharger(page, "#sd");
   expect(html.texte).toContain("Catalogue de prix – prix des ingrédients");
   expect(html.texte).toContain("Spaghetti Boni 500g");
-  // texte copié
-  await page
-    .context()
-    .grantPermissions(["clipboard-read", "clipboard-write"])
-    .catch(() => {});
-  await page.locator("#sc").click();
-  await expect(page.locator("#shm")).not.toHaveText("Rien à partager.");
 });
 
 test("les pièces sont arrondies au supérieur sans erreur de calcul décimal", async ({ page }) => {
@@ -4393,4 +4384,65 @@ test("recettes en HTML : colonne de gauche par type, liste et recettes filtrées
   expect(pos.liste.top).toBeGreaterThanOrEqual(pos.barre.bottom - 1);
   expect(pos.centre.top).toBeGreaterThanOrEqual(pos.barre.bottom - 1);
   expect(pos.liste.right).toBeLessThanOrEqual(pos.centre.left);
+});
+
+test("partager / imprimer : WhatsApp, Mail et Partager envoient un fichier HTML par défaut ; plus de « Copier » ni de « Recette affichée »", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.__envois = [];
+    navigator.canShare = (d) => !!d.files;
+    navigator.share = async (d) => {
+      window.__envois.push({
+        nom: d.files[0].name,
+        type: d.files[0].type,
+        texte: await d.files[0].text(),
+        titre: d.title,
+      });
+    };
+  });
+  await ouvrir(page);
+  await aller(page, "sh");
+  await expect(page.locator("#sc")).toHaveCount(0);
+  expect(await page.locator("#shw option").allTextContents()).not.toContain("Recette affichée");
+  await expect(page.locator("#shf")).toHaveValue("html");
+  await page.locator("#shw").selectOption("list");
+  for (const id of ["#sw", "#sm", "#sn"]) await page.locator(id).click();
+  await expect.poll(() => page.evaluate(() => window.__envois.length)).toBe(3);
+  const envois = await page.evaluate(() => window.__envois);
+  for (const e of envois) {
+    expect(e.nom).toBe("patro-liste-de-courses.html");
+    expect(e.type).toBe("text/html");
+    expect(e.texte).toContain("<!DOCTYPE html>");
+    expect(e.texte).toContain("Liste de courses");
+  }
+  // le même document que « Fichier HTML »
+  const fichier = await telecharger(page, "#sd");
+  expect(fichier.texte).toBe(envois[0].texte);
+  // le format texte reste possible, et il est retenu
+  await page.locator("#shf").selectOption("txt");
+  await page.reload();
+  await aller(page, "sh");
+  await expect(page.locator("#shf")).toHaveValue("txt");
+});
+
+test("partager / imprimer : sans partage de fichier, WhatsApp télécharge le fichier HTML et ouvre un lien court", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.__ouvert = null;
+    window.open = (u) => {
+      window.__ouvert = u;
+      return null;
+    };
+  });
+  await ouvrir(page);
+  await aller(page, "sh");
+  await page.locator("#shw").selectOption("menu");
+  const [dl] = await Promise.all([page.waitForEvent("download"), page.locator("#sw").click()]);
+  expect(dl.suggestedFilename()).toBe("patro-menu.html");
+  await expect(page.locator("#shm")).toContainText("Fichier téléchargé");
+  const lien = await page.evaluate(() => window.__ouvert);
+  expect(lien).toContain("https://wa.me/?text=");
+  expect(decodeURIComponent(lien.split("text=")[1])).toContain("fichier HTML en pièce jointe");
 });
