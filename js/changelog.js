@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.49.0",
+    v: "1.50.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,17 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.49.0",
+    d: "2026-10-09",
+    t: "Partage : menu en texte complet, types des recettes",
+    l: [
+      "Partager le menu (WhatsApp, mail, copier) : la description des recettes et les adaptations (régimes) sont ajoutées sous chaque plat quand les cases correspondantes du menu sont cochées, comme à l'impression.",
+      "Toutes les recettes : les types et thèmes sont indiqués (« Types et thèmes : … ») à l'impression et dans le fichier HTML, et le CSV a une colonne « Types et thèmes ».",
+      "Catalogue de prix : l'impression, le fichier HTML et le texte (WhatsApp, mail, copier) indiquent le rayon, le libellé du produit Colruyt et son adresse, comme le CSV.",
+      "Toutes les recettes (fichier HTML) : un sommaire en haut propose des pastilles par type ou thème, qui mènent à la liste des recettes du type puis à chaque recette ; une flèche ↑ ramène au sommaire. Le sommaire n'est pas imprimé.",
     ],
   },
   {
