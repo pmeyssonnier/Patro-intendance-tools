@@ -641,7 +641,7 @@ test("recettes : gérer les types d'origine (renommer, déplacer, supprimer, ajo
   expect(erreurs).toEqual([]);
 });
 
-test("sauvegarde : « Partager » envoie le même fichier .json que l'export, puis le texte après un refus", async ({
+test("sauvegarde : « Partager » envoie le fichier .json de l'export, puis le même contenu en fichier .txt après un refus", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -656,33 +656,39 @@ test("sauvegarde : « Partager » envoie le même fichier .json que l'export, pu
         window.__refus--;
         throw Object.assign(new Error("Permission denied"), { name: "NotAllowedError" });
       }
-      window.__partages.push(d.files ? d.files[0].name : "texte");
-      window.__contenus.push(d.files ? await d.files[0].text() : d.text);
+      window.__partages.push(d.files[0].name);
+      window.__contenus.push(await d.files[0].text());
     };
   });
   await ouvrir(page);
   await aller(page, "pj");
   await expect(page.locator("#exps")).toBeVisible();
-  // 1. cas normal : le fichier .json est partagé, avec le contenu exporté (jamais un .txt)
+  await expect(page.locator("#expc")).toHaveCount(0);
+  // 1. cas normal : le fichier .json est partagé, avec le contenu exporté
   await page.locator("#exps").click();
   await expect(page.locator("#jmsg")).toContainText("même fichier .json");
   await expect.poll(() => page.evaluate(() => window.__partages.length)).toBe(1);
   const [nom, contenu] = await page.evaluate(() => [window.__partages[0], window.__contenus[0]]);
   expect(nom).toMatch(/\.json$/);
   expect(() => JSON.parse(contenu)).not.toThrow();
-  const copie = await page.evaluate(() => projetExporte().texte);
-  expect(contenu).toBe(copie);
-  // 2. refus : le message montre l'erreur ; le clic suivant envoie le même contenu en texte
+  const export_ = await page.evaluate(() => projetExporte().texte);
+  expect(contenu).toBe(export_);
+  // 2. refus : le message montre l'erreur ; le clic suivant envoie le même contenu dans un fichier .txt
   await page.evaluate(() => (window.__refus = 1));
   await page.locator("#exps").click();
   await expect(page.locator("#jmsg")).toContainText("Permission denied");
   await expect(page.locator("#jmsg")).toContainText("appuie à nouveau");
   await page.locator("#exps").click();
-  await expect(page.locator("#jmsg")).toContainText("texte");
+  await expect(page.locator("#jmsg")).toContainText(".txt");
   await expect.poll(() => page.evaluate(() => window.__partages.length)).toBe(2);
-  expect((await page.evaluate(() => window.__partages))[1]).toBe("texte");
-  expect((await page.evaluate(() => window.__contenus))[1]).toBe(copie);
-  // 3. on repart de zéro au clic suivant, sans erreur affichée si la fenêtre est fermée
+  expect((await page.evaluate(() => window.__partages))[1]).toMatch(/\.txt$/);
+  expect((await page.evaluate(() => window.__contenus))[1]).toBe(export_);
+  // 3. les deux refusés : pas d'autre format, on propose « Exporter »
+  await page.evaluate(() => (window.__refus = 2));
+  await page.locator("#exps").click();
+  await page.locator("#exps").click();
+  await expect(page.locator("#jmsg")).toContainText("utilise « Exporter »");
+  // 4. fenêtre fermée : aucune erreur affichée
   await page.evaluate(() => (window.__annule = true));
   await page.locator("#exps").click();
   await expect(page.locator("#jmsg")).not.toContainText("impossible");
@@ -697,7 +703,7 @@ test("sauvegarde : sans partage dans le navigateur, le bouton « Partager » est
   await ouvrir(page);
   await aller(page, "pj");
   await expect(page.locator("#exps")).toBeHidden();
-  await expect(page.locator("#expc")).toBeVisible();
+  await expect(page.locator("#exp")).toBeVisible();
 });
 
 test("effectifs : les champs d'une même ligne sont alignés", async ({ page }) => {
@@ -1980,11 +1986,9 @@ test("rayons : le champ « categorie » du fichier de prix est repris sans écra
   expect(r).toEqual(["boul", "epi", "boi", "aut"]);
 });
 
-test("sauvegarde : l'export du projet affiche un message, et propose de copier si le téléchargement échoue", async ({
+test("sauvegarde : l'export du projet affiche un message clair si le téléchargement échoue", async ({
   page,
-  context,
 }) => {
-  await context.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
   await ouvrir(page);
   await aller(page, "pj");
   const fichier = await telecharger(page, "#exp");
@@ -2007,9 +2011,7 @@ test("sauvegarde : l'export du projet affiche un message, et propose de copier s
   await page.evaluate(() => {
     delete S.boucle;
   });
-  // copie dans le presse-papiers
-  await page.locator("#expc").click();
-  await expect(page.locator("#jmsg")).toContainText(/Projet copié|Copie impossible/);
+  await expect(page.locator("#expc")).toHaveCount(0);
 });
 
 test("recettes : renommer une recette garde sa place, ses ingrédients et son menu ; rien n'est gardé avant « Enregistrer »", async ({

@@ -10,6 +10,7 @@ const CHANGELOG = [
     t: "Partager / imprimer : toujours un fichier HTML",
     l: [
       "Le choix « Envoyer en » est supprimé : WhatsApp, Mail et Partager… envoient toujours le fichier HTML. L'envoi en texte (liens WhatsApp et mail coupés) n'existe plus.",
+      "Sauvegarde : le bouton « Copier le projet » est supprimé. Si le téléphone refuse le fichier .json (« Permission denied »), un nouvel appui sur « Partager » envoie le même contenu dans un fichier .txt, jamais du texte collé.",
     ],
   },
   {
