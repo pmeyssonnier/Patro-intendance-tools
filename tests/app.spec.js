@@ -4118,6 +4118,8 @@ test("import de recette : fichier de recettes favorites (.json), plusieurs recet
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(favoris)),
   });
+  await expect(page.locator("#rimfm")).toContainText("recettes_favoris.json");
+  await expect(page.locator("#rimfm")).toContainText("2 recettes");
   await expect(page.locator("#rimm")).toContainText("Recette 1 sur 2");
   await expect(page.locator("#rimnom")).toHaveValue("Fusilli crème champignons");
   await expect(page.locator("#rimn")).toHaveValue("4");
@@ -4157,5 +4159,6 @@ test("import de recette : un fichier qui n'est pas un fichier de favoris est ref
     mimeType: "application/json",
     buffer: Buffer.from('{"a":1}'),
   });
-  await expect(page.locator("#rimm")).toContainText("n'est pas un fichier de recettes favorites");
+  await expect(page.locator("#rimfm")).toContainText("autre.json");
+  await expect(page.locator("#rimfm")).toContainText("n'est pas un fichier de recettes favorites");
 });
