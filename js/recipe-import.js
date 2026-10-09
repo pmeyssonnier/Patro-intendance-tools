@@ -454,19 +454,30 @@ $("rimlire").onclick = () => {
   lireRecette(chercherRecette(t) || recetteDepuisListe(t));
 };
 
+// on vide le choix avant d'en ouvrir un autre (sinon rechoisir le même fichier ne déclenche rien) ; après le choix, le nom reste affiché
+$("rimf").onclick = (e) => {
+  e.target.value = "";
+  $("rimfm").textContent = "";
+};
+
 $("rimf").onchange = async (e) => {
   const f = e.target.files[0];
-  e.target.value = "";
   if (!f) return;
+  $("rimfm").textContent = `Fichier « ${f.name} » : lecture…`;
   const t = await f.text().catch(() => "");
   if (!importerFavoris(t)) {
     ATTENTE = [];
     TOTAL_FICHIER = 0;
     RI = null;
     drawImport();
-    $("rimm").textContent =
-      "Ce fichier n'est pas un fichier de recettes favorites (.json) : aucune recette lue.";
+    $("rimfm").textContent =
+      `Fichier « ${f.name} » : ce n'est pas un fichier de recettes favorites (.json), aucune recette lue.`;
+    $("rimm").textContent = "";
+    return;
   }
+  $("rimfm").textContent =
+    `Fichier « ${f.name} » lu : ${TOTAL_FICHIER} recette${TOTAL_FICHIER > 1 ? "s" : ""}.`;
+  $("rimv").scrollIntoView({ block: "nearest" });
 };
 
 $("rimv").addEventListener("change", (e) => {

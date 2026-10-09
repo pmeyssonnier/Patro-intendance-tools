@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.56.0",
+    d: "2026-10-09",
+    t: "Import de recettes : le fichier choisi reste affiché",
+    l: [
+      "Importer un fichier de recettes favorites : le nom du fichier choisi et le nombre de recettes lues restent affichés sous le bouton de choix du fichier ; un fichier qui n'est pas le bon format est signalé au même endroit. L'écran défile jusqu'à l'aperçu.",
+    ],
+  },
+  {
     v: "1.55.0",
     d: "2026-10-09",
     t: "Import d'un fichier de recettes favorites (.json)",
