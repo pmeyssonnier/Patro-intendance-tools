@@ -102,6 +102,23 @@ function recHTML(names) {
   );
 }
 
+/** Ligne de la liste de courses en texte : quantité, prix, coût, puis le produit Colruyt et son adresse en dessous (si connus). */
+function ligneListeTexte(k) {
+  const lien = lienColruyt(S.url[k]),
+    nom = prodName(k),
+    cout = (LAST.tot[k] / per(k)) * price(k);
+  return (
+    "☐ " +
+    ING[k][0] +
+    " : " +
+    qty(k, LAST.tot[k]) +
+    " · " +
+    (price(k) ? eur(price(k)) + "/" + ul(k) + " · " + eur(cout) : "prix manquant") +
+    (nom ? "\n   Colruyt : " + nom : "") +
+    (lien ? "\n   " + lien : "")
+  );
+}
+
 const txtList = () =>
   "🛒 Liste de courses – " +
   troop() +
@@ -110,9 +127,7 @@ const txtList = () =>
   " pers.)\n\n" +
   (parRayon(LAST.keys)
     .map(
-      ([nom, l]) =>
-        (nom ? "\n" + nom.toUpperCase() + "\n" : "") +
-        l.map((k) => "☐ " + ING[k][0] + " : " + qty(k, LAST.tot[k])).join("\n")
+      ([nom, l]) => (nom ? "\n" + nom.toUpperCase() + "\n" : "") + l.map(ligneListeTexte).join("\n")
     )
     .join("\n")
     .trim() || "(vide)") +
