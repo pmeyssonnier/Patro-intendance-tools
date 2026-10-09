@@ -4050,23 +4050,56 @@ test("catalogue de prix en texte et en HTML : rayon, libellé Colruyt et adresse
   expect(r.html).toContain('<div class="ad">https://www.colruyt.be/fr/produits/14502</div>');
 });
 
-test("recettes en HTML : sommaire par type avec liens vers les recettes (pas pour une seule recette)", async ({
+test("recettes en HTML : colonne de gauche par type, liste et recettes filtrées, libellé et lien Colruyt des ingrédients", async ({
   page,
 }) => {
   await ouvrir(page);
   const r = await page.evaluate(() => {
-    const noms = Object.keys(S.rec).slice(0, 2);
+    const noms = recettesTriees().slice(0, 3);
     S.rec[noms[0]].tags = ["Plat", "Chaud"];
     S.rec[noms[1]].tags = ["Plat"];
-    return { noms, html: recHTML(noms), seul: recHTML([noms[0]]) };
+    S.rec[noms[2]].tags = ["Dessert"];
+    const k = Object.keys(S.rec[noms[0]].ing)[0];
+    S.pn[k] = "EVERYDAY test 1kg";
+    S.url[k] = "https://www.colruyt.be/fr/produits/14502";
+    const html = recHTML(noms);
+    const doc = "<style>" + DOC_CSS + "</style>" + html + "<script>" + NAV_JS + "</script>";
+    return { noms, html, seul: recHTML([noms[0]]), doc };
   });
-  expect(r.html).toContain('<nav class="np rnav" id="sommaire">');
-  expect(r.html).toMatch(/<a href="#t-0">Plat <span class="s">\(2\)<\/span><\/a>/);
-  expect(r.html).toMatch(/<a href="#t-1">Chaud <span class="s">\(1\)<\/span><\/a>/);
+  // sans script : tout est là (liens par type, recettes toutes présentes)
+  expect(r.html).toContain('<nav class="np rbar" id="sommaire">');
+  expect(r.html).toContain('<aside class="np rnav">');
+  expect(r.html).toContain('data-t="all"');
   expect(r.html).toContain('<h4 id="t-0">Plat</h4>');
-  expect(r.html).toContain('<a href="#r-0">');
-  expect(r.html).toContain('<a href="#r-1">');
-  expect(r.html).toContain('<h3 id="r-1"');
-  expect(r.html).toContain('href="#sommaire"');
+  expect(r.html).toContain('<a href="#r-1" data-r="r-1">');
+  expect(r.html).toContain(
+    '<div class="ad">Colruyt : <a href="https://www.colruyt.be/fr/produits/14502">EVERYDAY test 1kg</a></div>'
+  );
   expect(r.seul).not.toContain("rnav");
+  // avec le script : les pastilles filtrent la liste et les recettes
+  await page.setViewportSize({ width: 1100, height: 800 });
+  await page.setContent("<body>" + r.doc + "</body>");
+  const visibles = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll(".rec")].filter((e) => !e.hidden).map((e) => e.id)
+    );
+  expect(await visibles()).toEqual(["r-0", "r-1", "r-2"]);
+  await page.locator('.rchips [data-t="0"]').click(); // Plat
+  expect(await visibles()).toEqual(["r-0", "r-1"]);
+  await expect(page.locator('[data-l="0"]')).toBeVisible();
+  await expect(page.locator('[data-l="all"]')).toBeHidden();
+  await page.locator('[data-l="0"] [data-r="r-1"]').click();
+  expect(await visibles()).toEqual(["r-1"]);
+  await page.locator('.rchips [data-t="1"]').click(); // Dessert
+  expect(await visibles()).toEqual(["r-2"]);
+  await page.locator('.rchips [data-t="all"]').click();
+  expect(await visibles()).toEqual(["r-0", "r-1", "r-2"]);
+  // les pastilles sont en haut, au-dessus de la liste (à gauche) et des recettes (au centre)
+  const pos = await page.evaluate(() => {
+    const r = (s) => document.querySelector(s).getBoundingClientRect();
+    return { barre: r(".rbar"), liste: r(".rnav"), centre: r(".rmain") };
+  });
+  expect(pos.liste.top).toBeGreaterThanOrEqual(pos.barre.bottom - 1);
+  expect(pos.centre.top).toBeGreaterThanOrEqual(pos.barre.bottom - 1);
+  expect(pos.liste.right).toBeLessThanOrEqual(pos.centre.left);
 });

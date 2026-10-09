@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.50.0",
+    d: "2026-10-09",
+    t: "Recettes (fichier HTML) : navigation par type et thème",
+    l: [
+      "En haut : les types et thèmes en pastilles. Colonne de gauche : la liste des recettes du type choisi. Au centre : la ou les recettes correspondantes. « Toutes » affiche tout ; un clic sur une recette n'affiche qu'elle. Sur téléphone, les colonnes s'empilent. Sans JavaScript, tout reste affiché avec des liens.",
+      "Ingrédients : sous le nom, le libellé du produit Colruyt retenu, lié à sa fiche (impression comprise).",
+    ],
+  },
+  {
     v: "1.49.0",
     d: "2026-10-09",
     t: "Partage : menu en texte complet, types des recettes",
