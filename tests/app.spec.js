@@ -3694,7 +3694,7 @@ test("recettes : la liste (page Recettes, menu et export) est triée par ordre a
   expect(plats.slice(1)).toEqual(options);
   // « Toutes les recettes » (impression, texte, CSV) dans le même ordre
   const ordre = await page.evaluate(() =>
-    [...recHTML(recettesTriees()).matchAll(/<h3[^>]*>([^<]+)<\/h3>/g)].map((m) => m[1])
+    [...recHTML(recettesTriees()).matchAll(/<h3[^>]*>([^<]+?) ?(?:<a|<\/h3>)/g)].map((m) => m[1])
   );
   expect(ordre).toEqual(options);
   // l'ordre enregistré dans le projet n'a pas changé : les recettes ajoutées sont à la fin
@@ -3852,7 +3852,13 @@ test("recettes : « Proposer des types » complète les recettes sans type, puis
     "Italien",
   ]);
   const html = await page.evaluate(() => recHTML(["Pâtes à la sauce"]));
-  expect(html).toContain("Plat · Chaud · Italien");
+  expect(html).toContain("Types et thèmes : Plat · Chaud · Italien");
+  expect(await page.evaluate(() => csvRec(["Pâtes à la sauce"]))).toContain(
+    ";Plat | Chaud | Italien;"
+  );
+  expect(await page.evaluate(() => csvRec(["Pâtes à la sauce"]))).toContain(
+    "Recette;Types et thèmes;Ingrédient"
+  );
   expect(await page.evaluate(() => txtRec("Pâtes à la sauce"))).toContain(
     "Types : Plat, Chaud, Italien"
   );
@@ -3978,4 +3984,89 @@ test("liste de courses en texte : prix, coût, produit Colruyt et adresse en des
     "   https://www.colruyt.be/fr/produits/14502",
   ]);
   expect(r.l2).toContain("prix manquant");
+});
+
+test("menu en texte (WhatsApp, mail, copie) : description et adaptations suivent les cases du menu", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    let i = 0,
+      t = null;
+    for (; i < days().length && !t; i++) t = dtypes(i).find(({ k }) => slotArr(i, k).length);
+    i--;
+    const plat = slotArr(i, t.k)[0];
+    S.rec[plat].desc = "Mijoter *doucement*.\nServir chaud.";
+    C.adn = { [i + "|" + t.k + "|" + plat]: "2 végétariens : sans viande" };
+    const out = [];
+    for (const [md, ma] of [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+    ]) {
+      S.md = md;
+      S.ma = ma;
+      out.push(txtMenu());
+    }
+    return { out, plat };
+  });
+  const [aucun, desc, adapt, tout] = r.out;
+  expect(aucun).toContain("• ");
+  expect(aucun).not.toContain("Mijoter");
+  expect(aucun).not.toContain("adaptations");
+  expect(desc).toContain(`     ${r.plat} : Mijoter doucement. Servir chaud.`);
+  expect(desc).not.toContain("adaptations");
+  expect(adapt).toContain(`     ${r.plat} – adaptations : 2 végétariens : sans viande`);
+  expect(adapt).not.toContain("Mijoter");
+  expect(tout).toContain("Mijoter doucement");
+  expect(tout).toContain("sans viande");
+});
+
+test("catalogue de prix en texte et en HTML : rayon, libellé Colruyt et adresse", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    S.pn.pates = "EVERYDAY spaghetti 500g";
+    S.url.pates = "https://www.colruyt.be/fr/produits/14502";
+    delete S.pn.riz;
+    delete S.url.riz;
+    return {
+      l1: ligneCatalogueTexte("pates"),
+      l2: ligneCatalogueTexte("riz"),
+      html: pricesHTML(),
+      rayon: rayonNom("pates"),
+    };
+  });
+  expect(r.l1.split("\n")).toEqual([
+    expect.stringMatching(/^- .+ : .+ · Rayon : .+$/),
+    "   Colruyt : EVERYDAY spaghetti 500g",
+    "   https://www.colruyt.be/fr/produits/14502",
+  ]);
+  expect(r.l1).toContain("Rayon : " + r.rayon);
+  expect(r.l2.split("\n")).toHaveLength(1);
+  expect(r.html).toContain("<th>Rayon</th><th>Produit Colruyt</th>");
+  expect(r.html).toContain('<div class="ad">https://www.colruyt.be/fr/produits/14502</div>');
+});
+
+test("recettes en HTML : sommaire par type avec liens vers les recettes (pas pour une seule recette)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const noms = Object.keys(S.rec).slice(0, 2);
+    S.rec[noms[0]].tags = ["Plat", "Chaud"];
+    S.rec[noms[1]].tags = ["Plat"];
+    return { noms, html: recHTML(noms), seul: recHTML([noms[0]]) };
+  });
+  expect(r.html).toContain('<nav class="np rnav" id="sommaire">');
+  expect(r.html).toMatch(/<a href="#t-0">Plat <span class="s">\(2\)<\/span><\/a>/);
+  expect(r.html).toMatch(/<a href="#t-1">Chaud <span class="s">\(1\)<\/span><\/a>/);
+  expect(r.html).toContain('<h4 id="t-0">Plat</h4>');
+  expect(r.html).toContain('<a href="#r-0">');
+  expect(r.html).toContain('<a href="#r-1">');
+  expect(r.html).toContain('<h3 id="r-1"');
+  expect(r.html).toContain('href="#sommaire"');
+  expect(r.seul).not.toContain("rnav");
 });

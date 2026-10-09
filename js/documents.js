@@ -72,23 +72,52 @@ const prodName = (k) =>
 
 const priceUnit = (k) => (ING[k][1] === "pc" ? "pièce" : ul(k));
 
+const rayonNom = (k) => CATS.find((c) => c[0] === catOf(k))[1];
+
 function pricesHTML() {
   const rows = catKeys()
     .map(
       (k) =>
-        `<tr><td>${esc(ING[k][0])}</td><td>${lienColruyt(S.url[k]) ? `<a href="${esc(S.url[k])}">${esc(prodName(k) || "Fiche produit")}</a>` : esc(prodName(k))}</td><td>${price(k) ? eur(price(k)) + "/" + priceUnit(k) : "–"}</td></tr>`
+        `<tr><td>${esc(ING[k][0])}</td><td>${esc(rayonNom(k))}</td><td>${produitColruytHTML(k)}</td><td>${price(k) ? eur(price(k)) + "/" + priceUnit(k) : "–"}</td></tr>`
     )
     .join("");
-  return `<div class="mp pvx" style="${cvars()}"><h2>Catalogue de prix – prix des ingrédients</h2><div class="s">${esc(troop())} · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th>Ingrédient</th><th>Produit retenu</th><th>Prix</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Aucun ingrédient</td></tr>'}</tbody></table></div>`;
+  return `<div class="mp pvx" style="${cvars()}"><h2>Catalogue de prix – prix des ingrédients</h2><div class="s">${esc(troop())} · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th>Ingrédient</th><th>Rayon</th><th>Produit Colruyt</th><th>Prix</th></tr></thead><tbody>${rows || '<tr><td colspan="4">Aucun ingrédient</td></tr>'}</tbody></table></div>`;
+}
+
+/** Sommaire des recettes par type ou thème : pastilles qui sautent à un type, puis la liste des recettes de chaque type (liens). Rien pour une seule recette. */
+function sommaireRecettes(names) {
+  if (names.length < 2) return "";
+  const groupes = tagsConnus()
+    .map((t) => [t, names.filter((n) => (S.rec[n].tags || []).some((x) => plain(x) === plain(t)))])
+    .filter(([, l]) => l.length);
+  const sans = names.filter((n) => !(S.rec[n].tags || []).length);
+  if (sans.length) groupes.push(["Sans type", sans]);
+  if (!groupes.length) return "";
+  const idT = (i) => "t-" + i,
+    idR = (n) => "r-" + names.indexOf(n);
+  return (
+    `<nav class="np rnav" id="sommaire"><div class="s">Choisis un type ou un thème :</div><div class="rchips">${groupes
+      .map(([t, l], i) => `<a href="#${idT(i)}">${esc(t)} <span class="s">(${l.length})</span></a>`)
+      .join("")}</div>` +
+    groupes
+      .map(
+        ([t, l], i) =>
+          `<h4 id="${idT(i)}">${esc(t)}</h4><ul>${l.map((n) => `<li><a href="#${idR(n)}">${esc(n)}</a></li>`).join("")}</ul>`
+      )
+      .join("") +
+    "</nav>"
+  );
 }
 
 function recHTML(names) {
+  const nav = sommaireRecettes(names);
   return (
     `<div class="mp pvx" style="${cvars()}"><h2>Recettes</h2>` +
+    nav +
     (names
       .map((n) => {
         const R = S.rec[n];
-        return `<h3 style="margin:16px 0 2px;break-after:avoid">${esc(n)}</h3>${R.tags && R.tags.length ? `<div class="s">${esc(R.tags.join(" · "))}</div>` : ""}<div class="s">${fmtDesc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map((s) => `<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(
+        return `<h3 id="r-${names.indexOf(n)}" style="margin:16px 0 2px;break-after:avoid">${esc(n)}${nav ? ' <a class="np rup" href="#sommaire" title="Retour au sommaire">↑</a>' : ""}</h3>${R.tags && R.tags.length ? `<div class="s">Types et thèmes : ${esc(R.tags.join(" · "))}</div>` : ""}<div class="s">${fmtDesc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map((s) => `<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(
           R.ing
         )
           .map(
@@ -134,20 +163,42 @@ const txtList = () =>
   "\n\nTotal estimé : " +
   eur(LAST.sum);
 
+/** Ligne du catalogue de prix en texte : prix, rayon, puis le produit Colruyt et son adresse en dessous (si connus). */
+function ligneCatalogueTexte(k) {
+  const lien = lienColruyt(S.url[k]),
+    nom = prodName(k);
+  return (
+    "- " +
+    ING[k][0] +
+    " : " +
+    (price(k) ? eur(price(k)) + "/" + priceUnit(k) : "prix manquant") +
+    " · Rayon : " +
+    rayonNom(k) +
+    (nom ? "\n   Colruyt : " + nom : "") +
+    (lien ? "\n   " + lien : "")
+  );
+}
+
 const txtPrices = () =>
   "🏷️ Catalogue de prix – " +
   troop() +
   "\n\n" +
-  (catKeys()
-    .map(
-      (k) =>
-        "- " +
-        ING[k][0] +
-        " : " +
-        (price(k) ? eur(price(k)) + "/" + priceUnit(k) : "prix manquant") +
-        (prodName(k) ? " (" + prodName(k) + ")" : "")
-    )
-    .join("\n") || "(vide)");
+  (catKeys().map(ligneCatalogueTexte).join("\n") || "(vide)");
+
+/** Lignes d'un repas en texte : « • Midi : plat + plat », puis, sous chaque plat, sa description et ses adaptations si les cases du menu sont cochées. */
+function lignesRepasTexte(i, k, lab) {
+  const rs = slotArr(i, k);
+  if (!rs.length) return "";
+  const plus = rs.flatMap((r) => {
+    const d = +S.md && S.rec[r] ? descTexte(S.rec[r].desc) : "",
+      ad = +S.ma ? adapteMenu(i, k, r).join(" · ") : "";
+    return [
+      d && "     " + r + " : " + d.replace(/\n+/g, " "),
+      ad && "     " + r + " – adaptations : " + ad,
+    ].filter(Boolean);
+  });
+  return ["  • " + lab + " : " + rs.join(" + "), ...plus].join("\n");
+}
 
 const txtMenu = () =>
   "🍽️ " +
@@ -165,10 +216,7 @@ const txtMenu = () =>
         dlab(d) +
         "\n" +
         dtypes(i)
-          .map(({ k, n: lab }) => {
-            const rs = slotArr(i, k);
-            return rs.length ? "  • " + lab + " : " + rs.join(" + ") : "";
-          })
+          .map(({ k, n: lab }) => lignesRepasTexte(i, k, lab))
           .filter(Boolean)
           .join("\n")
     )
@@ -272,7 +320,7 @@ function csvPrices() {
       priceUnit(k),
       cn(price(k)),
       price(k) ? "" : "prix manquant",
-      CATS.find((c) => c[0] === catOf(k))[1],
+      rayonNom(k),
       lienColruyt(S.url[k]),
     ])
   );
@@ -306,6 +354,7 @@ function csvRec(names) {
   const r = [
     [
       "Recette",
+      "Types et thèmes",
       "Ingrédient",
       "Unité",
       ...SEC.map((s) => s[0] + " (par personne)"),
@@ -319,6 +368,7 @@ function csvRec(names) {
       const fx = R.fx && k in R.fx;
       r.push([
         n,
+        (R.tags || []).join(" | "),
         ING[k][0],
         ING[k][1],
         ...(fx ? ["", "", "", ""] : q.map(cq)),
