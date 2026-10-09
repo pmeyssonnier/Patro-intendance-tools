@@ -3852,7 +3852,13 @@ test("recettes : « Proposer des types » complète les recettes sans type, puis
     "Italien",
   ]);
   const html = await page.evaluate(() => recHTML(["Pâtes à la sauce"]));
-  expect(html).toContain("Plat · Chaud · Italien");
+  expect(html).toContain("Types et thèmes : Plat · Chaud · Italien");
+  expect(await page.evaluate(() => csvRec(["Pâtes à la sauce"]))).toContain(
+    ";Plat | Chaud | Italien;"
+  );
+  expect(await page.evaluate(() => csvRec(["Pâtes à la sauce"]))).toContain(
+    "Recette;Types et thèmes;Ingrédient"
+  );
   expect(await page.evaluate(() => txtRec("Pâtes à la sauce"))).toContain(
     "Types : Plat, Chaud, Italien"
   );

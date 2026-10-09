@@ -88,7 +88,7 @@ function recHTML(names) {
     (names
       .map((n) => {
         const R = S.rec[n];
-        return `<h3 style="margin:16px 0 2px;break-after:avoid">${esc(n)}</h3>${R.tags && R.tags.length ? `<div class="s">${esc(R.tags.join(" · "))}</div>` : ""}<div class="s">${fmtDesc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map((s) => `<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(
+        return `<h3 style="margin:16px 0 2px;break-after:avoid">${esc(n)}</h3>${R.tags && R.tags.length ? `<div class="s">Types et thèmes : ${esc(R.tags.join(" · "))}</div>` : ""}<div class="s">${fmtDesc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map((s) => `<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(
           R.ing
         )
           .map(
@@ -318,6 +318,7 @@ function csvRec(names) {
   const r = [
     [
       "Recette",
+      "Types et thèmes",
       "Ingrédient",
       "Unité",
       ...SEC.map((s) => s[0] + " (par personne)"),
@@ -331,6 +332,7 @@ function csvRec(names) {
       const fx = R.fx && k in R.fx;
       r.push([
         n,
+        (R.tags || []).join(" | "),
         ING[k][0],
         ING[k][1],
         ...(fx ? ["", "", "", ""] : q.map(cq)),
