@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.51.0",
+    d: "2026-10-09",
+    t: "Sauvegarde : « Partager » envoie le fichier .json exporté",
+    l: [
+      "« Partager » envoie le même fichier .json que « Exporter le projet » (plus de renommage en .txt). Si le téléphone le refuse, un nouvel appui envoie le même contenu en texte, comme « Copier le projet ».",
+    ],
+  },
+  {
     v: "1.50.0",
     d: "2026-10-09",
     t: "Recettes (fichier HTML) : navigation par type et thème",

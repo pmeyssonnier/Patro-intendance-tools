@@ -642,11 +642,12 @@ test("recettes : gérer les types d'origine (renommer, déplacer, supprimer, ajo
   expect(erreurs).toEqual([]);
 });
 
-test("sauvegarde : « Partager » essaie .txt, puis .json, puis le texte, un format par clic après un refus", async ({
+test("sauvegarde : « Partager » envoie le même fichier .json que l'export, puis le texte après un refus", async ({
   page,
 }) => {
   await page.addInitScript(() => {
     window.__partages = [];
+    window.__contenus = [];
     window.__refus = 0; // nombre de prochains appels qui seront refusés
     window.__annule = false;
     navigator.canShare = (d) => !!d.files;
@@ -657,28 +658,32 @@ test("sauvegarde : « Partager » essaie .txt, puis .json, puis le texte, un for
         throw Object.assign(new Error("Permission denied"), { name: "NotAllowedError" });
       }
       window.__partages.push(d.files ? d.files[0].name : "texte");
+      window.__contenus.push(d.files ? await d.files[0].text() : d.text);
     };
   });
   await ouvrir(page);
   await aller(page, "pj");
   await expect(page.locator("#exps")).toBeVisible();
-  // 1. cas normal : le fichier .txt (le mieux accepté) est partagé
+  // 1. cas normal : le fichier .json est partagé, avec le contenu exporté (jamais un .txt)
   await page.locator("#exps").click();
-  await expect(page.locator("#jmsg")).toContainText("fichier .txt");
-  expect((await page.evaluate(() => window.__partages))[0]).toMatch(/\.txt$/);
-  // 2. refus : le message montre l'erreur et le clic suivant essaie le .json, puis le texte
-  await page.evaluate(() => (window.__refus = 2));
+  await expect(page.locator("#jmsg")).toContainText("même fichier .json");
+  await expect.poll(() => page.evaluate(() => window.__partages.length)).toBe(1);
+  const [nom, contenu] = await page.evaluate(() => [window.__partages[0], window.__contenus[0]]);
+  expect(nom).toMatch(/\.json$/);
+  expect(() => JSON.parse(contenu)).not.toThrow();
+  const copie = await page.evaluate(() => projetExporte().texte);
+  expect(contenu).toBe(copie);
+  // 2. refus : le message montre l'erreur ; le clic suivant envoie le même contenu en texte
+  await page.evaluate(() => (window.__refus = 1));
   await page.locator("#exps").click();
   await expect(page.locator("#jmsg")).toContainText("Permission denied");
   await expect(page.locator("#jmsg")).toContainText("appuie à nouveau");
   await page.locator("#exps").click();
-  await expect(page.locator("#jmsg")).toContainText("Permission denied");
-  await page.evaluate(() => (window.__refus = 0));
-  await page.locator("#exps").click();
   await expect(page.locator("#jmsg")).toContainText("texte");
-  expect(await page.evaluate(() => window.__partages)).toHaveLength(2);
+  await expect.poll(() => page.evaluate(() => window.__partages.length)).toBe(2);
   expect((await page.evaluate(() => window.__partages))[1]).toBe("texte");
-  // 3. tout a échoué : on repart de zéro au clic suivant, sans erreur affichée si la fenêtre est fermée
+  expect((await page.evaluate(() => window.__contenus))[1]).toBe(copie);
+  // 3. on repart de zéro au clic suivant, sans erreur affichée si la fenêtre est fermée
   await page.evaluate(() => (window.__annule = true));
   await page.locator("#exps").click();
   await expect(page.locator("#jmsg")).not.toContainText("impossible");
