@@ -149,6 +149,21 @@ const txtPrices = () =>
     )
     .join("\n") || "(vide)");
 
+/** Lignes d'un repas en texte : « • Midi : plat + plat », puis, sous chaque plat, sa description et ses adaptations si les cases du menu sont cochées. */
+function lignesRepasTexte(i, k, lab) {
+  const rs = slotArr(i, k);
+  if (!rs.length) return "";
+  const plus = rs.flatMap((r) => {
+    const d = +S.md && S.rec[r] ? descTexte(S.rec[r].desc) : "",
+      ad = +S.ma ? adapteMenu(i, k, r).join(" · ") : "";
+    return [
+      d && "     " + r + " : " + d.replace(/\n+/g, " "),
+      ad && "     " + r + " – adaptations : " + ad,
+    ].filter(Boolean);
+  });
+  return ["  • " + lab + " : " + rs.join(" + "), ...plus].join("\n");
+}
+
 const txtMenu = () =>
   "🍽️ " +
   (C.mt || "Menu") +
@@ -165,10 +180,7 @@ const txtMenu = () =>
         dlab(d) +
         "\n" +
         dtypes(i)
-          .map(({ k, n: lab }) => {
-            const rs = slotArr(i, k);
-            return rs.length ? "  • " + lab + " : " + rs.join(" + ") : "";
-          })
+          .map(({ k, n: lab }) => lignesRepasTexte(i, k, lab))
           .filter(Boolean)
           .join("\n")
     )

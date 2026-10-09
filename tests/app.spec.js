@@ -3979,3 +3979,40 @@ test("liste de courses en texte : prix, coût, produit Colruyt et adresse en des
   ]);
   expect(r.l2).toContain("prix manquant");
 });
+
+test("menu en texte (WhatsApp, mail, copie) : description et adaptations suivent les cases du menu", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    let i = 0,
+      t = null;
+    for (; i < days().length && !t; i++) t = dtypes(i).find(({ k }) => slotArr(i, k).length);
+    i--;
+    const plat = slotArr(i, t.k)[0];
+    S.rec[plat].desc = "Mijoter *doucement*.\nServir chaud.";
+    C.adn = { [i + "|" + t.k + "|" + plat]: "2 végétariens : sans viande" };
+    const out = [];
+    for (const [md, ma] of [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+    ]) {
+      S.md = md;
+      S.ma = ma;
+      out.push(txtMenu());
+    }
+    return { out, plat };
+  });
+  const [aucun, desc, adapt, tout] = r.out;
+  expect(aucun).toContain("• ");
+  expect(aucun).not.toContain("Mijoter");
+  expect(aucun).not.toContain("adaptations");
+  expect(desc).toContain(`     ${r.plat} : Mijoter doucement. Servir chaud.`);
+  expect(desc).not.toContain("adaptations");
+  expect(adapt).toContain(`     ${r.plat} – adaptations : 2 végétariens : sans viande`);
+  expect(adapt).not.toContain("Mijoter");
+  expect(tout).toContain("Mijoter doucement");
+  expect(tout).toContain("sans viande");
+});

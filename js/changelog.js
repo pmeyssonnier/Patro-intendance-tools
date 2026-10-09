@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.49.0",
+    d: "2026-10-09",
+    t: "Menu : description et adaptations dans le partage en texte",
+    l: [
+      "Partager le menu (WhatsApp, mail, copier) : la description des recettes et les adaptations (régimes) sont ajoutées sous chaque plat quand les cases correspondantes du menu sont cochées, comme à l'impression.",
+    ],
+  },
+  {
     v: "1.48.0",
     d: "2026-10-09",
     t: "Liste de courses : produit, lien, prix et coût dans l'export HTML et le partage",
