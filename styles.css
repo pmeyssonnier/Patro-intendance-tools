@@ -61,6 +61,30 @@ h2 {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
 }
+/* iPhone (Safari, Chrome) : un champ date a une largeur et une hauteur propres qui débordent de sa case ; une liste dans le menu latéral est écrasée quand l'écran est bas */
+.g > * {
+  min-width: 0;
+}
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  height: 2.4rem;
+  text-align: left;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.2em;
+}
+#drawer > * {
+  flex-shrink: 0;
+}
+#csel {
+  min-height: 2.4rem;
+  line-height: normal;
+}
 label {
   display: block;
   font-size: 0.78rem;

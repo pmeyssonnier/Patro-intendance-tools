@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.54.0",
+    d: "2026-10-09",
+    t: "iPhone : affichage corrigé (dates, liste des camps)",
+    l: [
+      "Sur iPhone, les champs « Début » et « Fin » du camp ne débordent plus sur les cases voisines, et la liste « Camp en cours » du menu n'est plus coupée.",
+    ],
+  },
+  {
     v: "1.53.0",
     d: "2026-10-09",
     t: "Partager / imprimer : toujours un fichier HTML",
