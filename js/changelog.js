@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.52.0",
+    d: "2026-10-09",
+    t: "Partager / imprimer : envoi en fichier HTML",
+    l: [
+      "WhatsApp, Mail et Partager… envoient par défaut un fichier HTML (le même que « Fichier HTML ») par le menu de partage du téléphone ; un choix « Envoyer en : Texte » garde l'ancien envoi. Sans partage de fichier (ordinateur), le fichier est téléchargé à joindre au message.",
+      "Le bouton « Copier » et le choix « Recette affichée » sont supprimés (« Toutes les recettes » reste).",
+    ],
+  },
+  {
     v: "1.51.0",
     d: "2026-10-09",
     t: "Sauvegarde : « Partager » envoie le fichier .json exporté",

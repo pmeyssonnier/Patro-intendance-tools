@@ -5,12 +5,6 @@ const SH = {
   list: ["Liste de courses", txtList, listHTML, csvList],
   menu: ["Menu", txtMenu, menuHTML, csvMenu],
   prices: ["Catalogue de prix", txtPrices, pricesHTML, csvPrices],
-  rec: [
-    "Recette",
-    () => txtRec(S.cur),
-    () => recHTML(S.rec[S.cur] ? [S.cur] : []),
-    () => csvRec(S.rec[S.cur] ? [S.cur] : []),
-  ],
   recs: [
     "Recettes",
     () => recettesTriees().map(txtRec).join("\n\n"),
@@ -59,19 +53,24 @@ const NAV_JS =
   'links.forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();var id=a.getAttribute("data-r");links.forEach(function(x){x.classList.toggle("on",x.getAttribute("data-r")===id)});showRecs([id]);if(window.innerWidth<800){var m=d.querySelector(".rmain");if(m)m.scrollIntoView()}})});' +
   'pickType("all")})();';
 
-function dlHTML(html, name) {
-  dl(
+/** Document HTML complet et autonome (celui du « Fichier HTML » et de l'envoi par WhatsApp, Partager et Mail). */
+function docHTML(html, name) {
+  return (
     '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
-      esc(name) +
-      "</title><style>" +
-      DOC_CSS +
-      "</style></head><body>" +
-      html +
-      (html.includes("data-recnav") ? "<script>" + NAV_JS + "</script>" : "") +
-      "</body></html>",
-    name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html",
-    "text/html"
+    esc(name) +
+    "</title><style>" +
+    DOC_CSS +
+    "</style></head><body>" +
+    html +
+    (html.includes("data-recnav") ? "<script>" + NAV_JS + "</script>" : "") +
+    "</body></html>"
   );
+}
+
+const nomHTML = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html";
+
+function dlHTML(html, name) {
+  dl(docHTML(html, name), nomHTML(name), "text/html");
 }
 
 const shmsg = (t) => {
@@ -152,7 +151,56 @@ function copierTexte(t) {
   return Promise.resolve(repli());
 }
 
+/* Envoi par WhatsApp, Mail ou Partager : un fichier HTML par défaut (le même que « Fichier HTML »), ou le texte si on le choisit.
+   Le fichier passe par le menu de partage du téléphone (WhatsApp et les mails ne savent pas recevoir un fichier par un simple lien).
+   Sans partage de fichier (ordinateur, navigateur ancien), le fichier est téléchargé à joindre au message. */
+const FORMAT_CLE = "pss-envoi-format";
+try {
+  if (localStorage.getItem(FORMAT_CLE) === "txt") $("shf").value = "txt";
+} catch (_) {}
+$("shf").onchange = () => {
+  try {
+    localStorage.setItem(FORMAT_CLE, $("shf").value);
+  } catch (_) {}
+};
+
+const envoiHTML = () => $("shf").value !== "txt";
+
+function envoyerHTML(canal) {
+  if (!shk()[1]().trim()) return shmsg("Rien à partager.");
+  const nom = "Patro " + shk()[0],
+    titre = troop() + " – " + shk()[0],
+    html = shk()[2](),
+    fichier = new File([docHTML(html, nom)], nomHTML(nom), { type: "text/html" }),
+    telecharge = () => {
+      dlHTML(html, nom);
+      shmsg("Fichier téléchargé : joins-le à ton message.");
+    };
+  if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
+    shmsg(
+      canal === "wa"
+        ? "Choisis WhatsApp dans la liste."
+        : canal === "mail"
+          ? "Choisis ta messagerie dans la liste."
+          : ""
+    );
+    navigator.share({ files: [fichier], title: titre }).catch((e) => {
+      if (e && e.name === "AbortError") return;
+      telecharge();
+    });
+    return;
+  }
+  telecharge();
+  const court = titre + " (fichier HTML en pièce jointe)";
+  if (canal === "wa")
+    window.open("https://wa.me/?text=" + encodeURIComponent(court), "_blank", "noopener");
+  else if (canal === "mail")
+    location.href =
+      "mailto:?subject=" + encodeURIComponent(titre) + "&body=" + encodeURIComponent(court);
+}
+
 $("sw").onclick = () => {
+  if (envoiHTML()) return envoyerHTML("wa");
   const t = shtxt();
   if (!t) return;
   const l = lienWhatsApp(t);
@@ -160,7 +208,7 @@ $("sw").onclick = () => {
     // texte trop long pour un lien : le menu de partage du téléphone passe le texte entier à WhatsApp, sans passer par une adresse
     shmsg("Texte long : choisis WhatsApp dans la liste.");
     navigator.share({ title: troop() + " – " + shk()[0], text: t }).catch((e) => {
-      if (e && e.name !== "AbortError") shmsg("Partage impossible : utilise « Copier ».");
+      if (e && e.name !== "AbortError") shmsg("Partage impossible : utilise « Fichier HTML ».");
     });
     return;
   }
@@ -176,6 +224,7 @@ $("sw").onclick = () => {
 };
 
 $("sm").onclick = () => {
+  if (envoiHTML()) return envoyerHTML("mail");
   const t = shtxt();
   if (!t) return;
   const l = lienMail(t, troop() + " – " + shk()[0]);
@@ -187,22 +236,17 @@ $("sm").onclick = () => {
           : "Texte long : seul le début est dans le mail."
       )
     );
-  else shmsg("Pas de messagerie qui s'ouvre ? Utilise « Copier ».");
+  else shmsg("Pas de messagerie qui s'ouvre ? Utilise « Fichier HTML ».");
   location.href = l.url;
 };
 
 if (!navigator.share) $("sn").style.display = "none";
 
 $("sn").onclick = () => {
+  if (envoiHTML()) return envoyerHTML("autre");
   const t = shtxt();
   if (!t) return;
   navigator.share({ title: troop() + " – " + shk()[0], text: t }).catch((e) => {
-    if (e && e.name !== "AbortError") shmsg("Partage impossible : utilise « Copier ».");
+    if (e && e.name !== "AbortError") shmsg("Partage impossible : utilise « Fichier HTML ».");
   });
-};
-
-$("sc").onclick = () => {
-  const t = shtxt();
-  if (!t) return;
-  copierTexte(t).then((ok) => shmsg(ok ? "Copié ✅" : "Copie impossible"));
 };
