@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.52.0">
+<link rel="stylesheet" href="styles.css?v=1.53.0">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -131,9 +131,9 @@
 
 <div class="pg" id="g-sh">
 <section class="card np"><h2>Partager / imprimer</h2>
-<div class="g"><div><label>Quoi ?</label><select id="shw" aria-label="Document à partager ou imprimer"><option value="list">Liste de courses</option><option value="menu">Menu</option><option value="recs">Toutes les recettes</option><option value="prices">Catalogue de prix – prix des ingrédients</option></select></div><div><label>Envoyer en</label><select id="shf" aria-label="Format d'envoi par WhatsApp, Partager et Mail"><option value="html">Fichier HTML</option><option value="txt">Texte</option></select></div></div>
+<div class="g"><div><label>Quoi ?</label><select id="shw" aria-label="Document à partager ou imprimer"><option value="list">Liste de courses</option><option value="menu">Menu</option><option value="recs">Toutes les recettes</option><option value="prices">Catalogue de prix – prix des ingrédients</option></select></div></div>
 <p><button id="sw">💬 WhatsApp</button> <button id="sm">✉️ Mail</button> <button id="sn" class="x">📤 Partager…</button> <button id="sp" class="x">🖨️ Imprimer</button> <button id="sd" class="x">⬇️ Fichier HTML</button> <button id="sx" class="x">📊 Fichier CSV (Excel)</button> <span class="s" id="shm"></span></p>
-<p class="s">WhatsApp, Mail et Partager… envoient un fichier HTML (ou le texte, si tu choisis « Envoyer en : Texte »). Sur ordinateur, le fichier est téléchargé : joins-le à ton message.</p>
+<p class="s">WhatsApp, Mail et Partager… envoient un fichier HTML. Sur ordinateur, si le navigateur ne partage pas les fichiers, il est téléchargé : joins-le à ton message.</p>
 <p class="s">« Fichier HTML » : si l'impression directe ne fonctionne pas sur ton appareil, télécharge le fichier, ouvre-le et imprime-le. « Fichier CSV » s'ouvre directement dans Excel (accents et virgules décimales corrects), pratique pour le budget.</p></section>
 
 </div><div class="pg" id="g-cfg">
@@ -153,7 +153,7 @@
 </div><div class="pg" id="g-pj">
 <section class="card np"><h2>Sauvegarde du projet</h2>
 <p class="s">Sauvegarde tout (recettes, menu, effectifs, régimes, prix) dans un fichier <b>.json</b> pour le retrouver ou le passer à un autre animateur.</p>
-<p><button id="exp">💾 Exporter le projet (.json)</button> <button id="expc" class="x">📋 Copier le projet</button> <button id="exps" class="x">📤 Partager</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json,.txt,application/json,text/plain" hidden></label> <span class="s" id="jmsg" role="status"></span> </p>
+<p><button id="exp">💾 Exporter le projet (.json)</button> <button id="exps" class="x">📤 Partager</button> <label class="x" style="display:inline-block;width:auto;cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:7px 9px;font-size:1rem;color:var(--mu)">📂 Importer un projet<input type="file" id="jin" accept=".json,.txt,application/json,text/plain" hidden></label> <span class="s" id="jmsg" role="status"></span> </p>
 <h2 style="margin-top:18px">Zone sensible</h2>
 <p><button id="rclr" class="x" style="color:#d33;border-color:#d33">🗑️ Vider recettes, ingrédients et menus</button></p>
 <p class="s">Supprime toutes les recettes, tous les ingrédients et les menus de tous les camps. Les camps (dates, effectifs, régimes) sont conservés.</p>
@@ -227,29 +227,29 @@
 <p class="s" id="rym" role="status" style="color:#d33"></p>
 <p class="lbtn"><button id="ryno" class="x">Fermer</button></p></div>
 </dialog>
-<script src="js/data-defaults.js?v=1.52.0"></script>
-<script src="js/utils.js?v=1.52.0"></script>
-<script src="js/storage.js?v=1.52.0"></script>
-<script src="js/state.js?v=1.52.0"></script>
-<script src="js/calculations.js?v=1.52.0"></script>
-<script src="js/shopping-list.js?v=1.52.0"></script>
-<script src="js/documents.js?v=1.52.0"></script>
-<script src="js/share-print.js?v=1.52.0"></script>
-<script src="js/navigation.js?v=1.52.0"></script>
-<script src="js/camps.js?v=1.52.0"></script>
-<script src="js/diets.js?v=1.52.0"></script>
-<script src="js/menu.js?v=1.52.0"></script>
-<script src="js/recipes.js?v=1.52.0"></script>
-<script src="js/recipe-types.js?v=1.52.0"></script>
-<script src="js/ingredient-matching.js?v=1.52.0"></script>
-<script src="js/ingredients.js?v=1.52.0"></script>
-<script src="js/ingredient-merge.js?v=1.52.0"></script>
-<script src="js/price-import.js?v=1.52.0"></script>
-<script src="js/rayons.js?v=1.52.0"></script>
-<script src="js/catalog-ui.js?v=1.52.0"></script>
-<script src="js/recipe-import.js?v=1.52.0"></script>
-<script src="js/changelog.js?v=1.52.0"></script>
-<script src="js/config.js?v=1.52.0"></script>
-<script src="js/pwa.js?v=1.52.0"></script>
-<script src="js/main.js?v=1.52.0"></script>
+<script src="js/data-defaults.js?v=1.53.0"></script>
+<script src="js/utils.js?v=1.53.0"></script>
+<script src="js/storage.js?v=1.53.0"></script>
+<script src="js/state.js?v=1.53.0"></script>
+<script src="js/calculations.js?v=1.53.0"></script>
+<script src="js/shopping-list.js?v=1.53.0"></script>
+<script src="js/documents.js?v=1.53.0"></script>
+<script src="js/share-print.js?v=1.53.0"></script>
+<script src="js/navigation.js?v=1.53.0"></script>
+<script src="js/camps.js?v=1.53.0"></script>
+<script src="js/diets.js?v=1.53.0"></script>
+<script src="js/menu.js?v=1.53.0"></script>
+<script src="js/recipes.js?v=1.53.0"></script>
+<script src="js/recipe-types.js?v=1.53.0"></script>
+<script src="js/ingredient-matching.js?v=1.53.0"></script>
+<script src="js/ingredients.js?v=1.53.0"></script>
+<script src="js/ingredient-merge.js?v=1.53.0"></script>
+<script src="js/price-import.js?v=1.53.0"></script>
+<script src="js/rayons.js?v=1.53.0"></script>
+<script src="js/catalog-ui.js?v=1.53.0"></script>
+<script src="js/recipe-import.js?v=1.53.0"></script>
+<script src="js/changelog.js?v=1.53.0"></script>
+<script src="js/config.js?v=1.53.0"></script>
+<script src="js/pwa.js?v=1.53.0"></script>
+<script src="js/main.js?v=1.53.0"></script>
 </body></html>

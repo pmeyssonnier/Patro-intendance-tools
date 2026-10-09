@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.53.0",
+    d: "2026-10-09",
+    t: "Partager / imprimer : toujours un fichier HTML",
+    l: [
+      "Le choix « Envoyer en » est supprimé : WhatsApp, Mail et Partager… envoient toujours le fichier HTML. L'envoi en texte (liens WhatsApp et mail coupés) n'existe plus.",
+      "Sauvegarde : le bouton « Copier le projet » est supprimé. Si le téléphone refuse le fichier .json (« Permission denied »), un nouvel appui sur « Partager » envoie le même contenu dans un fichier .txt, jamais du texte collé.",
+    ],
+  },
+  {
     v: "1.52.0",
     d: "2026-10-09",
     t: "Partager / imprimer : envoi en fichier HTML",

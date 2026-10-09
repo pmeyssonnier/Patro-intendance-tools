@@ -78,15 +78,6 @@ const shmsg = (t) => {
   setTimeout(() => ($("shm").textContent = ""), 2500);
 };
 
-function shtxt() {
-  const t = shk()[1]();
-  if (!t.trim()) {
-    shmsg("Rien à partager.");
-    return "";
-  }
-  return t;
-}
-
 $("plist").onclick = () => printHTML(listHTML());
 
 $("pmenu").onclick = () => printHTML(menuHTML());
@@ -99,73 +90,9 @@ $("sx").onclick = () => dlCsv(shk()[0], shk()[3]());
 
 $("lcsv").onclick = () => dlCsv("Liste de courses", csvList());
 
-/* Longueur d'un lien : les messageries coupent les textes trop longs (WhatsApp, et surtout les logiciels de mail : environ 2 000 caractères une fois encodé).
-   Au-delà, on envoie le début (coupé à une fin de ligne), et le texte complet est copié pour être collé à la suite. */
-const LIEN_MAX = { wa: 3000, mail: 1800 };
-
-/** Texte à mettre dans un lien : entier s'il est assez court, sinon coupé à une fin de ligne avec une mention. Renvoie { texte, coupe }. */
-function texteDeLien(t, max, reste) {
-  if (encodeURIComponent(t).length <= max) return { texte: t, coupe: false };
-  const fin = "\n… (suite : colle le texte complet, copié)",
-    place = max - encodeURIComponent(fin).length - reste;
-  let n = t.length;
-  while (n > 0 && encodeURIComponent(t.slice(0, n)).length > place) n = Math.floor(n * 0.9);
-  const cut = t.lastIndexOf("\n", n);
-  return { texte: t.slice(0, cut > 0 ? cut : n) + fin, coupe: true };
-}
-
-/** Lien WhatsApp (wa.me) et lien mail pour un texte, avec le texte réellement envoyé. */
-function lienWhatsApp(t) {
-  const r = texteDeLien(t, LIEN_MAX.wa, "https://wa.me/?text=".length);
-  return { url: "https://wa.me/?text=" + encodeURIComponent(r.texte), coupe: r.coupe };
-}
-
-function lienMail(t, sujet) {
-  const debut = "mailto:?subject=" + encodeURIComponent(sujet) + "&body=",
-    r = texteDeLien(t, LIEN_MAX.mail, debut.length);
-  return { url: debut + encodeURIComponent(r.texte), coupe: r.coupe };
-}
-
-/** Copie un texte : API moderne, sinon repli par un champ temporaire (navigateurs intégrés à une appli, pages sans HTTPS). Résout true si c'est copié. */
-function copierTexte(t) {
-  const repli = () => {
-    const a = document.createElement("textarea");
-    a.value = t;
-    a.setAttribute("readonly", "");
-    a.style.cssText = "position:fixed;top:0;left:0;opacity:0";
-    document.body.appendChild(a);
-    a.select();
-    try {
-      return document.execCommand("copy");
-    } catch (_) {
-      return false;
-    } finally {
-      a.remove();
-    }
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText)
-    return navigator.clipboard.writeText(t).then(
-      () => true,
-      () => repli()
-    );
-  return Promise.resolve(repli());
-}
-
-/* Envoi par WhatsApp, Mail ou Partager : un fichier HTML par défaut (le même que « Fichier HTML »), ou le texte si on le choisit.
-   Le fichier passe par le menu de partage du téléphone (WhatsApp et les mails ne savent pas recevoir un fichier par un simple lien).
-   Sans partage de fichier (ordinateur, navigateur ancien), le fichier est téléchargé à joindre au message. */
-const FORMAT_CLE = "pss-envoi-format";
-try {
-  if (localStorage.getItem(FORMAT_CLE) === "txt") $("shf").value = "txt";
-} catch (_) {}
-$("shf").onchange = () => {
-  try {
-    localStorage.setItem(FORMAT_CLE, $("shf").value);
-  } catch (_) {}
-};
-
-const envoiHTML = () => $("shf").value !== "txt";
-
+/* Envoi par WhatsApp, Mail ou Partager : un fichier HTML (le même que « Fichier HTML »).
+   Le fichier passe par le menu de partage de l'appareil (un simple lien WhatsApp ou mail ne peut pas transporter de fichier).
+   Sans partage de fichier (navigateur de bureau qui ne sait pas), le fichier est téléchargé à joindre au message. */
 function envoyerHTML(canal) {
   if (!shk()[1]().trim()) return shmsg("Rien à partager.");
   const nom = "Patro " + shk()[0],
@@ -199,54 +126,10 @@ function envoyerHTML(canal) {
       "mailto:?subject=" + encodeURIComponent(titre) + "&body=" + encodeURIComponent(court);
 }
 
-$("sw").onclick = () => {
-  if (envoiHTML()) return envoyerHTML("wa");
-  const t = shtxt();
-  if (!t) return;
-  const l = lienWhatsApp(t);
-  if (l.coupe && navigator.share) {
-    // texte trop long pour un lien : le menu de partage du téléphone passe le texte entier à WhatsApp, sans passer par une adresse
-    shmsg("Texte long : choisis WhatsApp dans la liste.");
-    navigator.share({ title: troop() + " – " + shk()[0], text: t }).catch((e) => {
-      if (e && e.name !== "AbortError") shmsg("Partage impossible : utilise « Fichier HTML ».");
-    });
-    return;
-  }
-  if (l.coupe)
-    copierTexte(t).then((ok) =>
-      shmsg(
-        ok
-          ? "Texte long : début envoyé, texte complet copié."
-          : "Texte long : seul le début est envoyé."
-      )
-    );
-  window.open(l.url, "_blank", "noopener");
-};
+$("sw").onclick = () => envoyerHTML("wa");
 
-$("sm").onclick = () => {
-  if (envoiHTML()) return envoyerHTML("mail");
-  const t = shtxt();
-  if (!t) return;
-  const l = lienMail(t, troop() + " – " + shk()[0]);
-  if (l.coupe)
-    copierTexte(t).then((ok) =>
-      shmsg(
-        ok
-          ? "Texte long : début dans le mail, texte complet copié."
-          : "Texte long : seul le début est dans le mail."
-      )
-    );
-  else shmsg("Pas de messagerie qui s'ouvre ? Utilise « Fichier HTML ».");
-  location.href = l.url;
-};
+$("sm").onclick = () => envoyerHTML("mail");
 
 if (!navigator.share) $("sn").style.display = "none";
 
-$("sn").onclick = () => {
-  if (envoiHTML()) return envoyerHTML("autre");
-  const t = shtxt();
-  if (!t) return;
-  navigator.share({ title: troop() + " – " + shk()[0], text: t }).catch((e) => {
-    if (e && e.name !== "AbortError") shmsg("Partage impossible : utilise « Fichier HTML ».");
-  });
-};
+$("sn").onclick = () => envoyerHTML("autre");
