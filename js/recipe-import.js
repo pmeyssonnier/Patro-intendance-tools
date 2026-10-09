@@ -26,10 +26,11 @@ const UNITES_RECETTE = [
   [/^ml(?![\p{L}])\.?/iu, 1, "ml"],
   [/^(?:c\.?\s*à\.?\s*s(?:oupe)?(?![\p{L}])\.?|cuill?[èe]res?\s+à\s+soupe|càs)/iu, 15, "ml"],
   [
-    /^(?:c\.?\s*à\.?\s*c(?:af[ée])?(?![\p{L}])\.?|cuill?[èe]res?\s+à\s+(?:caf[ée]|th[ée])|càc)/iu,
+    /^(?:c\.?\s*à\.?\s*(?:c(?:af[ée])?|t(?:h[ée])?)(?![\p{L}])\.?|cuill?[èe]res?\s+à\s+(?:caf[ée]|th[ée])|càc)/iu,
     5,
     "ml",
   ],
+  [/^tasses?(?![\p{L}])\.?/iu, 250, "ml"],
   [
     /^(?:gousses?|tranches?|branches?|bottes?|bo[iî]tes?|sachets?|feuilles?|brins?|pi[èe]ces?|pots?|tiges?|barquettes?)(?![\p{L}])\.?/iu,
     1,
@@ -67,6 +68,7 @@ function ligneRecette(txt) {
     q = Math.round(q * 1000) / 1000;
   }
   const nom = reste
+    .replace(/^\([^)]*\)\s*/, "")
     .replace(/^(?:de la |de l[’']|de |du |des |d[’'])\s*/i, "")
     .split(/[,(;]/)[0]
     .trim();
@@ -140,6 +142,35 @@ function recetteDepuisListe(texte) {
     .filter((l) => l && !/:$/.test(l));
   if (lignes.length < 2 || !lignes.some((l) => ligneRecette(l).q)) return null;
   return { name: "Recette importée", recipeYield: "4", recipeIngredient: lignes };
+}
+
+/** Fichier « recettes favoris » (tableau JSON de { nom, ingredients, etapes, portions, total_min, url… }) en recettes au format ld+json ; null si ce n'est pas ce format. */
+function recettesDepuisFavoris(texte) {
+  let d;
+  try {
+    d = JSON.parse(String(texte).trim());
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(d)) return null;
+  const liste = d.filter(
+    (x) => x && typeof x === "object" && typeof x.nom === "string" && Array.isArray(x.ingredients)
+  );
+  if (!liste.length) return null;
+  return liste.map((x) => ({
+    name: x.nom,
+    recipeYield: x.portions || 4,
+    recipeIngredient: x.ingredients.map(String),
+    recipeInstructions: Array.isArray(x.etapes) ? x.etapes.map(String) : [],
+    totalTime:
+      x.total_min > 0
+        ? "PT" +
+          (x.total_min >= 60 ? Math.floor(x.total_min / 60) + "H" : "") +
+          (x.total_min % 60 ? (x.total_min % 60) + "M" : "")
+        : "",
+    urlSource: typeof x.url === "string" && /^https?:\/\//.test(x.url) ? x.url : "",
+    type: "Recipe",
+  }));
 }
 
 /** Rayon probable d'un nouvel ingrédient d'après son nom (clé de CATS) ; « aut » si rien ne correspond. */
@@ -320,6 +351,8 @@ $("rimp").onclick = () => {
 /** Referme la zone d'import sans rien créer, et la vide. */
 function fermerImport() {
   RI = null;
+  ATTENTE = [];
+  TOTAL_FICHIER = 0;
   drawImport();
   $("rimt").value = "";
   $("rimu").value = "";
@@ -329,13 +362,16 @@ function fermerImport() {
 
 $("rimfer").onclick = fermerImport;
 
-$("rimlire").onclick = () => {
-  const r = chercherRecette($("rimt").value) || recetteDepuisListe($("rimt").value);
+let ATTENTE = []; // recettes d'un fichier de favoris qui restent à importer, après celle affichée
+let TOTAL_FICHIER = 0;
+
+/** Affiche l'aperçu d'une recette lue (ld+json, liste ou fichier de favoris). */
+function lireRecette(r) {
   if (!r || !Array.isArray(r.recipeIngredient) || !r.recipeIngredient.length) {
     RI = null;
     drawImport();
     $("rimm").textContent =
-      'Aucune recette trouvée. Colle le bloc <script type="application/ld+json"> de la page s\'il contient « Recipe » ; sinon (article, page sans données de recette) colle la liste des ingrédients, une ligne par ingrédient.';
+      'Aucune recette trouvée. Colle le bloc <script type="application/ld+json"> de la page s\'il contient « Recipe » ; sinon (article, page sans données de recette) colle la liste des ingrédients, une ligne par ingrédient. Un fichier de recettes favorites (.json) est aussi accepté.';
     return;
   }
   const n =
@@ -351,7 +387,7 @@ $("rimlire").onclick = () => {
       .trim()
       .slice(0, 100),
     n,
-    url: $("rimu").value.trim().slice(0, 300),
+    url: ($("rimu").value.trim() || r.urlSource || "").slice(0, 300),
     desc: String(r.description || "")
       .replace(/<[^>]*>/g, " ")
       .replace(/\s+/g, " ")
@@ -383,9 +419,54 @@ $("rimlire").onclick = () => {
         };
       }),
   };
+  const rang =
+    TOTAL_FICHIER > 1 ? `Recette ${TOTAL_FICHIER - ATTENTE.length} sur ${TOTAL_FICHIER} : ` : "";
   $("rimm").textContent =
-    `${RI.lignes.length} lignes lues${r["@type"] ? "" : " (liste d'ingrédients : donne le nom de la recette et le nombre de personnes)"}. Vérifie chaque ingrédient puis crée la recette.`;
+    `${rang}${RI.lignes.length} lignes lues${r["@type"] || r.type ? "" : " (liste d'ingrédients : donne le nom de la recette et le nombre de personnes)"}. Vérifie chaque ingrédient puis crée la recette.`;
   drawImport();
+}
+
+/** Prend la recette suivante du fichier de favoris, s'il en reste ; renvoie false sinon. */
+function recetteSuivante() {
+  if (!ATTENTE.length) {
+    TOTAL_FICHIER = 0;
+    return false;
+  }
+  lireRecette(ATTENTE.shift());
+  return true;
+}
+
+/** Commence l'import d'un fichier de favoris (liste de recettes) ; renvoie false si le texte n'a pas ce format. */
+function importerFavoris(texte) {
+  const liste = recettesDepuisFavoris(texte);
+  if (!liste) return false;
+  ATTENTE = liste;
+  TOTAL_FICHIER = liste.length;
+  recetteSuivante();
+  return true;
+}
+
+$("rimlire").onclick = () => {
+  const t = $("rimt").value;
+  if (importerFavoris(t)) return;
+  ATTENTE = [];
+  TOTAL_FICHIER = 0;
+  lireRecette(chercherRecette(t) || recetteDepuisListe(t));
+};
+
+$("rimf").onchange = async (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  const t = await f.text().catch(() => "");
+  if (!importerFavoris(t)) {
+    ATTENTE = [];
+    TOTAL_FICHIER = 0;
+    RI = null;
+    drawImport();
+    $("rimm").textContent =
+      "Ce fichier n'est pas un fichier de recettes favorites (.json) : aucune recette lue.";
+  }
 };
 
 $("rimv").addEventListener("change", (e) => {
@@ -413,10 +494,17 @@ $("rimv").addEventListener("click", (e) => {
     const nom = S.cur;
     RI = null;
     drawImport();
+    refreshIng();
+    if (ATTENTE.length) {
+      const reste = ATTENTE.length;
+      recetteSuivante();
+      $("rimm").textContent =
+        `Recette « ${nom} » créée. ${reste} à importer encore : ` + $("rimm").textContent;
+      return;
+    }
     $("rimt").value = "";
     $("rimu").value = "";
     $("rimpf").style.display = "none";
-    refreshIng();
     $("rimm").textContent =
       `Recette « ${nom} » créée : ajuste les quantités par section d'âge si besoin, puis enregistre.`;
     ouvrirRecette(nom, { neuf: true });
