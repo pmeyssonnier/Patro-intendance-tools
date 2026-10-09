@@ -3694,7 +3694,7 @@ test("recettes : la liste (page Recettes, menu et export) est triée par ordre a
   expect(plats.slice(1)).toEqual(options);
   // « Toutes les recettes » (impression, texte, CSV) dans le même ordre
   const ordre = await page.evaluate(() =>
-    [...recHTML(recettesTriees()).matchAll(/<h3[^>]*>([^<]+)<\/h3>/g)].map((m) => m[1])
+    [...recHTML(recettesTriees()).matchAll(/<h3[^>]*>([^<]+?) ?(?:<a|<\/h3>)/g)].map((m) => m[1])
   );
   expect(ordre).toEqual(options);
   // l'ordre enregistré dans le projet n'a pas changé : les recettes ajoutées sont à la fin
@@ -4048,4 +4048,25 @@ test("catalogue de prix en texte et en HTML : rayon, libellé Colruyt et adresse
   expect(r.l2.split("\n")).toHaveLength(1);
   expect(r.html).toContain("<th>Rayon</th><th>Produit Colruyt</th>");
   expect(r.html).toContain('<div class="ad">https://www.colruyt.be/fr/produits/14502</div>');
+});
+
+test("recettes en HTML : sommaire par type avec liens vers les recettes (pas pour une seule recette)", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const noms = Object.keys(S.rec).slice(0, 2);
+    S.rec[noms[0]].tags = ["Plat", "Chaud"];
+    S.rec[noms[1]].tags = ["Plat"];
+    return { noms, html: recHTML(noms), seul: recHTML([noms[0]]) };
+  });
+  expect(r.html).toContain('<nav class="np rnav" id="sommaire">');
+  expect(r.html).toMatch(/<a href="#t-0">Plat <span class="s">\(2\)<\/span><\/a>/);
+  expect(r.html).toMatch(/<a href="#t-1">Chaud <span class="s">\(1\)<\/span><\/a>/);
+  expect(r.html).toContain('<h4 id="t-0">Plat</h4>');
+  expect(r.html).toContain('<a href="#r-0">');
+  expect(r.html).toContain('<a href="#r-1">');
+  expect(r.html).toContain('<h3 id="r-1"');
+  expect(r.html).toContain('href="#sommaire"');
+  expect(r.seul).not.toContain("rnav");
 });
