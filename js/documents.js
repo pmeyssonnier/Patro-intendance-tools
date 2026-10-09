@@ -72,14 +72,16 @@ const prodName = (k) =>
 
 const priceUnit = (k) => (ING[k][1] === "pc" ? "pièce" : ul(k));
 
+const rayonNom = (k) => CATS.find((c) => c[0] === catOf(k))[1];
+
 function pricesHTML() {
   const rows = catKeys()
     .map(
       (k) =>
-        `<tr><td>${esc(ING[k][0])}</td><td>${lienColruyt(S.url[k]) ? `<a href="${esc(S.url[k])}">${esc(prodName(k) || "Fiche produit")}</a>` : esc(prodName(k))}</td><td>${price(k) ? eur(price(k)) + "/" + priceUnit(k) : "–"}</td></tr>`
+        `<tr><td>${esc(ING[k][0])}</td><td>${esc(rayonNom(k))}</td><td>${produitColruytHTML(k)}</td><td>${price(k) ? eur(price(k)) + "/" + priceUnit(k) : "–"}</td></tr>`
     )
     .join("");
-  return `<div class="mp pvx" style="${cvars()}"><h2>Catalogue de prix – prix des ingrédients</h2><div class="s">${esc(troop())} · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th>Ingrédient</th><th>Produit retenu</th><th>Prix</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Aucun ingrédient</td></tr>'}</tbody></table></div>`;
+  return `<div class="mp pvx" style="${cvars()}"><h2>Catalogue de prix – prix des ingrédients</h2><div class="s">${esc(troop())} · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th>Ingrédient</th><th>Rayon</th><th>Produit Colruyt</th><th>Prix</th></tr></thead><tbody>${rows || '<tr><td colspan="4">Aucun ingrédient</td></tr>'}</tbody></table></div>`;
 }
 
 function recHTML(names) {
@@ -134,20 +136,27 @@ const txtList = () =>
   "\n\nTotal estimé : " +
   eur(LAST.sum);
 
+/** Ligne du catalogue de prix en texte : prix, rayon, puis le produit Colruyt et son adresse en dessous (si connus). */
+function ligneCatalogueTexte(k) {
+  const lien = lienColruyt(S.url[k]),
+    nom = prodName(k);
+  return (
+    "- " +
+    ING[k][0] +
+    " : " +
+    (price(k) ? eur(price(k)) + "/" + priceUnit(k) : "prix manquant") +
+    " · Rayon : " +
+    rayonNom(k) +
+    (nom ? "\n   Colruyt : " + nom : "") +
+    (lien ? "\n   " + lien : "")
+  );
+}
+
 const txtPrices = () =>
   "🏷️ Catalogue de prix – " +
   troop() +
   "\n\n" +
-  (catKeys()
-    .map(
-      (k) =>
-        "- " +
-        ING[k][0] +
-        " : " +
-        (price(k) ? eur(price(k)) + "/" + priceUnit(k) : "prix manquant") +
-        (prodName(k) ? " (" + prodName(k) + ")" : "")
-    )
-    .join("\n") || "(vide)");
+  (catKeys().map(ligneCatalogueTexte).join("\n") || "(vide)");
 
 /** Lignes d'un repas en texte : « • Midi : plat + plat », puis, sous chaque plat, sa description et ses adaptations si les cases du menu sont cochées. */
 function lignesRepasTexte(i, k, lab) {
@@ -284,7 +293,7 @@ function csvPrices() {
       priceUnit(k),
       cn(price(k)),
       price(k) ? "" : "prix manquant",
-      CATS.find((c) => c[0] === catOf(k))[1],
+      rayonNom(k),
       lienColruyt(S.url[k]),
     ])
   );

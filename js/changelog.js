@@ -11,6 +11,7 @@ const CHANGELOG = [
     l: [
       "Partager le menu (WhatsApp, mail, copier) : la description des recettes et les adaptations (régimes) sont ajoutées sous chaque plat quand les cases correspondantes du menu sont cochées, comme à l'impression.",
       "Toutes les recettes : les types et thèmes sont indiqués (« Types et thèmes : … ») à l'impression et dans le fichier HTML, et le CSV a une colonne « Types et thèmes ».",
+      "Catalogue de prix : l'impression, le fichier HTML et le texte (WhatsApp, mail, copier) indiquent le rayon, le libellé du produit Colruyt et son adresse, comme le CSV.",
     ],
   },
   {

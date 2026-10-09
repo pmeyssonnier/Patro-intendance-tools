@@ -4022,3 +4022,30 @@ test("menu en texte (WhatsApp, mail, copie) : description et adaptations suivent
   expect(tout).toContain("Mijoter doucement");
   expect(tout).toContain("sans viande");
 });
+
+test("catalogue de prix en texte et en HTML : rayon, libellé Colruyt et adresse", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const r = await page.evaluate(() => {
+    S.pn.pates = "EVERYDAY spaghetti 500g";
+    S.url.pates = "https://www.colruyt.be/fr/produits/14502";
+    delete S.pn.riz;
+    delete S.url.riz;
+    return {
+      l1: ligneCatalogueTexte("pates"),
+      l2: ligneCatalogueTexte("riz"),
+      html: pricesHTML(),
+      rayon: rayonNom("pates"),
+    };
+  });
+  expect(r.l1.split("\n")).toEqual([
+    expect.stringMatching(/^- .+ : .+ · Rayon : .+$/),
+    "   Colruyt : EVERYDAY spaghetti 500g",
+    "   https://www.colruyt.be/fr/produits/14502",
+  ]);
+  expect(r.l1).toContain("Rayon : " + r.rayon);
+  expect(r.l2.split("\n")).toHaveLength(1);
+  expect(r.html).toContain("<th>Rayon</th><th>Produit Colruyt</th>");
+  expect(r.html).toContain('<div class="ad">https://www.colruyt.be/fr/produits/14502</div>');
+});
