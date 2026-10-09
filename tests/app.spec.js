@@ -2523,10 +2523,10 @@ test("liens produit : la fiche Colruyt est cliquable dans le catalogue et la lis
   expect(await page.evaluate(() => pricesHTML())).toContain(
     '<a href="https://www.colruyt.be/fr/produits/14502">'
   );
-  // un prix saisi à la main : le lien disparaît
+  // un prix saisi à la main : le lien reste
   await page.locator('#list input[data-p="pain"]').fill("1.5");
   await page.locator('#list input[data-p="pain"]').press("Tab");
-  expect(await page.evaluate(() => "pain" in S.url)).toBe(false);
+  expect(await page.evaluate(() => "pain" in S.url)).toBe(true);
 });
 
 test("liens produit : enregistrés dans le projet, adresses étrangères refusées à l'import", async ({
@@ -4212,6 +4212,10 @@ test("catalogue : la fiche d'un ingrédient permet de saisir, corriger et efface
   await page.locator('[data-ep="pates"]').fill("1.5");
   await page.locator('[data-eok="pates"]').click();
   expect(await page.evaluate(() => [S.url.pates, S.prices.pates])).toEqual([lien, 1.5]);
+  // prix tapé dans le tableau : le lien reste aussi
+  await page.locator('[data-cp="pates"]').fill("2");
+  await page.locator('[data-cp="pates"]').blur();
+  expect(await page.evaluate(() => [S.url.pates, S.prices.pates])).toEqual([lien, 2]);
   // champ vidé : le lien est supprimé
   champ = await ouvrirFiche();
   await champ.fill("");
