@@ -4366,3 +4366,85 @@ test("iPhone : champs date contenus dans leur case, liste « Camp en cours » ja
   );
   expect(h).toBeGreaterThanOrEqual(34);
 });
+
+test("import de recette : fichier de recettes favorites (.json), plusieurs recettes l'une après l'autre", async ({
+  page,
+}) => {
+  const favoris = [
+    {
+      url: "https://www.marmiton.org/recettes/fusilli.aspx",
+      nom: "Fusilli crème champignons",
+      portions: "4 personnes",
+      total_min: 25,
+      ingredients: [
+        "320 g de fusilli",
+        "10 cl de crème liquide",
+        "1 cuillère à soupe de persil haché",
+      ],
+      etapes: ["Cuire les pâtes.", "Ajouter la crème."],
+    },
+    {
+      url: "https://www.ricardocuisine.com/recettes/6435",
+      nom: "Tarte aux pommes",
+      portions: "8 portion(s)",
+      total_min: 90,
+      ingredients: [
+        "60 ml (1/4 tasse) de beurre",
+        "1 ml (1/4 c. à thé) de cannelle moulue",
+        "2 tasses de farine",
+      ],
+      etapes: ["Fondre le beurre."],
+    },
+  ];
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#rimp").click();
+  await page.locator("#rimf").setInputFiles({
+    name: "recettes_favoris.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(favoris)),
+  });
+  await expect(page.locator("#rimfm")).toContainText("recettes_favoris.json");
+  await expect(page.locator("#rimfm")).toContainText("2 recettes");
+  await expect(page.locator("#rimm")).toContainText("Recette 1 sur 2");
+  await expect(page.locator("#rimnom")).toHaveValue("Fusilli crème champignons");
+  await expect(page.locator("#rimn")).toHaveValue("4");
+  await page.locator("#rimet").check();
+  await page.locator("#rimok").click();
+  await expect(page.locator("#rimm")).toContainText("Recette 2 sur 2");
+  await expect(page.locator("#rimnom")).toHaveValue("Tarte aux pommes");
+  await expect(page.locator("#rimn")).toHaveValue("8");
+  // l'équivalence entre parenthèses est ignorée : « beurre », pas une ligne vide
+  const lignes = await page.locator("#rimlig .rimpl b").allTextContents();
+  expect(lignes).toHaveLength(3);
+  const noms = await page.evaluate(() => RI.lignes.map((L) => [L.nom, L.q, L.u]));
+  expect(noms).toEqual([
+    ["Beurre", 60, "ml"],
+    ["Cannelle moulue", 1, "ml"],
+    ["Farine", 500, "ml"],
+  ]);
+  await page.locator("#rimok").click();
+  const r = await page.evaluate(() => ({
+    f: S.rec["Fusilli crème champignons"].desc,
+    t: !!S.rec["Tarte aux pommes"],
+  }));
+  expect(r.t).toBe(true);
+  expect(r.f).toContain("Source : https://www.marmiton.org/recettes/fusilli.aspx");
+  expect(r.f).toContain("Pour 4 personnes · 25 min");
+  expect(r.f).toContain("1. Cuire les pâtes.");
+});
+
+test("import de recette : un fichier qui n'est pas un fichier de favoris est refusé clairement", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#rimp").click();
+  await page.locator("#rimf").setInputFiles({
+    name: "autre.json",
+    mimeType: "application/json",
+    buffer: Buffer.from('{"a":1}'),
+  });
+  await expect(page.locator("#rimfm")).toContainText("autre.json");
+  await expect(page.locator("#rimfm")).toContainText("n'est pas un fichier de recettes favorites");
+});
