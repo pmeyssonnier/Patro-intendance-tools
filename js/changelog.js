@@ -5,12 +5,19 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.56.0",
+    d: "2026-10-09",
+    t: "Import de recettes : le fichier choisi reste affiché",
+    l: [
+      "Importer un fichier de recettes favorites : le nom du fichier choisi et le nombre de recettes lues restent affichés sous le bouton de choix du fichier ; un fichier qui n'est pas le bon format est signalé au même endroit. L'écran défile jusqu'à l'aperçu.",
+    ],
+  },
+  {
     v: "1.55.0",
     d: "2026-10-09",
     t: "Import d'un fichier de recettes favorites (.json)",
     l: [
       "Recettes › Importer une recette : on peut choisir un fichier de recettes favorites (.json, une ou plusieurs recettes) ou le coller. Chaque recette passe par le même aperçu que d'habitude (ingrédients, personnes, étapes facultatives, source).",
-      "Le nom du fichier choisi et le nombre de recettes lues restent affichés sous le bouton de choix du fichier.",
       "L'import reconnaît aussi les « c. à thé », les « tasses » (250 ml) et ignore l'équivalence entre parenthèses (« 60 ml (1/4 tasse) de beurre »).",
     ],
   },
