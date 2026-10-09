@@ -4067,7 +4067,8 @@ test("recettes en HTML : colonne de gauche par type, liste et recettes filtrées
     return { noms, html, seul: recHTML([noms[0]]), doc };
   });
   // sans script : tout est là (liens par type, recettes toutes présentes)
-  expect(r.html).toContain('<aside class="np rnav" id="sommaire">');
+  expect(r.html).toContain('<nav class="np rbar" id="sommaire">');
+  expect(r.html).toContain('<aside class="np rnav">');
   expect(r.html).toContain('data-t="all"');
   expect(r.html).toContain('<h4 id="t-0">Plat</h4>');
   expect(r.html).toContain('<a href="#r-1" data-r="r-1">');
@@ -4093,9 +4094,12 @@ test("recettes en HTML : colonne de gauche par type, liste et recettes filtrées
   expect(await visibles()).toEqual(["r-2"]);
   await page.locator('.rchips [data-t="all"]').click();
   expect(await visibles()).toEqual(["r-0", "r-1", "r-2"]);
-  // trois pastilles par ligne
-  const lignes = await page.evaluate(
-    () => new Set([...document.querySelectorAll(".rchips a")].map((a) => a.offsetTop)).size
-  );
-  expect(lignes).toBe(2); // 4 pastilles : Toutes, Plat, Dessert, Chaud -> 2 lignes de 3
+  // les pastilles sont en haut, au-dessus de la liste (à gauche) et des recettes (au centre)
+  const pos = await page.evaluate(() => {
+    const r = (s) => document.querySelector(s).getBoundingClientRect();
+    return { barre: r(".rbar"), liste: r(".rnav"), centre: r(".rmain") };
+  });
+  expect(pos.liste.top).toBeGreaterThanOrEqual(pos.barre.bottom - 1);
+  expect(pos.centre.top).toBeGreaterThanOrEqual(pos.barre.bottom - 1);
+  expect(pos.liste.right).toBeLessThanOrEqual(pos.centre.left);
 });

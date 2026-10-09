@@ -92,7 +92,7 @@ function colruytIngHTML(k) {
   return `<div class="ad">Colruyt : ${lien ? `<a href="${esc(lien)}">${esc(nom || "Fiche produit")}</a>` : esc(nom)}</div>`;
 }
 
-/** Colonne de gauche des recettes : pastilles des types et thèmes (3 par ligne), puis la liste des recettes du type choisi. Vide pour une seule recette.
+/** Navigation des recettes : pastilles des types et thèmes en haut de la page, liste des recettes du type choisi dans la colonne de gauche. Vide pour une seule recette.
     Sans JavaScript, tout reste affiché (listes par type, liens) ; avec le script du fichier HTML, les listes et les recettes sont filtrées. */
 function sommaireRecettes(names) {
   if (names.length < 2) return "";
@@ -106,12 +106,12 @@ function sommaireRecettes(names) {
   const tous = [["Toutes", names, "all"], ...groupes.map(([t, l], i) => [t, l, String(i)])],
     idR = (n) => "r-" + names.indexOf(n);
   return (
-    `<aside class="np rnav" id="sommaire"><div class="s">Types et thèmes</div><div class="rchips">${tous
+    `<nav class="np rbar" id="sommaire"><div class="rchips">${tous
       .map(
         ([t, l, id]) =>
           `<a href="#t-${id}" data-t="${id}">${esc(t)} <span class="s">(${l.length})</span></a>`
       )
-      .join("")}</div>` +
+      .join("")}</div></nav><aside class="np rnav">` +
     tous
       .map(
         ([t, l, id]) =>
