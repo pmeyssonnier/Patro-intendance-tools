@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.51.0",
+    v: "1.52.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,14 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.51.0",
+    d: "2026-10-09",
+    t: "Sauvegarde : « Partager » envoie le fichier .json exporté",
+    l: [
+      "« Partager » envoie le même fichier .json que « Exporter le projet » (plus de renommage en .txt). Si le téléphone le refuse, un nouvel appui envoie le même contenu en texte, comme « Copier le projet ».",
     ],
   },
   {

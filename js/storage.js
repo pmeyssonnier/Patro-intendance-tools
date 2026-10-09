@@ -416,8 +416,8 @@ $("expc").onclick = () => {
 
 /* Partager : le navigateur choisit ce qu'il accepte, et refuse parfois après coup (« Permission denied » sur certains Android) même quand il a dit oui.
    Un clic ne permet qu'UN appel à share() (le navigateur consomme le geste), donc on ne peut pas enchaîner les essais : on garde en mémoire
-   l'étape qui a échoué et chaque nouveau clic essaie la suivante. Ordre : fichier .txt (le mieux accepté), fichier .json, puis texte seul.
-   L'import lit les .txt comme les .json. */
+   l'étape qui a échoué et chaque nouveau clic essaie la suivante. Ordre : le fichier .json, identique à « Exporter », puis, si le téléphone le refuse, le même contenu en texte (comme « Copier le projet »).
+   Le fichier n'est jamais renommé en .txt : l'import lit les .json et les .txt, mais le partage envoie ce qui est exporté. */
 if (!navigator.share) $("exps").style.display = "none";
 
 let etapePartage = 0;
@@ -433,19 +433,14 @@ $("exps").onclick = () => {
   const peutFichier = (f) => !!(navigator.canShare && navigator.canShare({ files: [f] }));
   const etapes = [
     {
-      donnees: { files: [fichier(p.nom.replace(/\.json$/, ".txt"), "text/plain")], title: titre },
-      ok: (d) => peutFichier(d.files[0]),
-      note: "Projet partagé en fichier .txt (l'import le lit aussi).",
-    },
-    {
       donnees: { files: [fichier(p.nom, "application/json")], title: titre },
       ok: (d) => peutFichier(d.files[0]),
-      note: "Projet partagé en fichier .json.",
+      note: "Projet partagé : le même fichier .json que « Exporter ».",
     },
     {
       donnees: { title: titre, text: p.texte },
       ok: () => p.texte.length <= 150000,
-      note: "Projet partagé en texte : à coller dans un fichier .txt ou .json pour l'importer.",
+      note: "Projet partagé en texte (le même contenu que « Copier le projet ») : le coller dans un fichier .json pour l'importer.",
     },
   ];
   const n = etapes.findIndex((e, i) => i >= etapePartage && e.ok(e.donnees));
