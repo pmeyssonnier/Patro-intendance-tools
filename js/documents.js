@@ -84,50 +84,68 @@ function pricesHTML() {
   return `<div class="mp pvx" style="${cvars()}"><h2>Catalogue de prix – prix des ingrédients</h2><div class="s">${esc(troop())} · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th>Ingrédient</th><th>Rayon</th><th>Produit Colruyt</th><th>Prix</th></tr></thead><tbody>${rows || '<tr><td colspan="4">Aucun ingrédient</td></tr>'}</tbody></table></div>`;
 }
 
-/** Sommaire des recettes par type ou thème : pastilles qui sautent à un type, puis la liste des recettes de chaque type (liens). Rien pour une seule recette. */
+/** Libellé du produit Colruyt d'un ingrédient (lié à sa fiche si l'adresse est connue), sous son nom dans les recettes ; "" si rien n'est connu. */
+function colruytIngHTML(k) {
+  const lien = lienColruyt(S.url[k]),
+    nom = prodName(k);
+  if (!lien && !nom) return "";
+  return `<div class="ad">Colruyt : ${lien ? `<a href="${esc(lien)}">${esc(nom || "Fiche produit")}</a>` : esc(nom)}</div>`;
+}
+
+/** Colonne de gauche des recettes : pastilles des types et thèmes (3 par ligne), puis la liste des recettes du type choisi. Vide pour une seule recette.
+    Sans JavaScript, tout reste affiché (listes par type, liens) ; avec le script du fichier HTML, les listes et les recettes sont filtrées. */
 function sommaireRecettes(names) {
   if (names.length < 2) return "";
-  const groupes = tagsConnus()
-    .map((t) => [t, names.filter((n) => (S.rec[n].tags || []).some((x) => plain(x) === plain(t)))])
-    .filter(([, l]) => l.length);
-  const sans = names.filter((n) => !(S.rec[n].tags || []).length);
+  const tags = (n) => S.rec[n].tags || [],
+    groupes = tagsConnus()
+      .map((t) => [t, names.filter((n) => tags(n).some((x) => plain(x) === plain(t)))])
+      .filter(([, l]) => l.length),
+    sans = names.filter((n) => !tags(n).length);
   if (sans.length) groupes.push(["Sans type", sans]);
   if (!groupes.length) return "";
-  const idT = (i) => "t-" + i,
+  const tous = [["Toutes", names, "all"], ...groupes.map(([t, l], i) => [t, l, String(i)])],
     idR = (n) => "r-" + names.indexOf(n);
   return (
-    `<nav class="np rnav" id="sommaire"><div class="s">Choisis un type ou un thème :</div><div class="rchips">${groupes
-      .map(([t, l], i) => `<a href="#${idT(i)}">${esc(t)} <span class="s">(${l.length})</span></a>`)
-      .join("")}</div>` +
-    groupes
+    `<aside class="np rnav" id="sommaire"><div class="s">Types et thèmes</div><div class="rchips">${tous
       .map(
-        ([t, l], i) =>
-          `<h4 id="${idT(i)}">${esc(t)}</h4><ul>${l.map((n) => `<li><a href="#${idR(n)}">${esc(n)}</a></li>`).join("")}</ul>`
+        ([t, l, id]) =>
+          `<a href="#t-${id}" data-t="${id}">${esc(t)} <span class="s">(${l.length})</span></a>`
+      )
+      .join("")}</div>` +
+    tous
+      .map(
+        ([t, l, id]) =>
+          `<div class="rlst" data-l="${id}"><h4 id="t-${id}">${id === "all" ? "Toutes les recettes" : esc(t)}</h4><ul>${l
+            .map((n) => `<li><a href="#${idR(n)}" data-r="${idR(n)}">${esc(n)}</a></li>`)
+            .join("")}</ul></div>`
       )
       .join("") +
-    "</nav>"
+    "</aside>"
   );
 }
 
 function recHTML(names) {
-  const nav = sommaireRecettes(names);
+  const nav = sommaireRecettes(names),
+    corps =
+      names
+        .map((n) => {
+          const R = S.rec[n];
+          return `<section class="rec" id="r-${names.indexOf(n)}"><h3 style="margin:16px 0 2px;break-after:avoid">${esc(n)}${nav ? ' <a class="np rup" href="#sommaire" title="Retour au sommaire">↑</a>' : ""}</h3>${R.tags && R.tags.length ? `<div class="s">Types et thèmes : ${esc(R.tags.join(" · "))}</div>` : ""}<div class="s">${fmtDesc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map((s) => `<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(
+            R.ing
+          )
+            .map(
+              ([k, q]) =>
+                `<tr><td>${esc(ING[k][0])} (${ING[k][1]})${colruytIngHTML(k)}</td>${R.fx && k in R.fx ? `<td colspan="${SEC.length}"><b>${qty(k, R.fx[k])}</b> au total</td>` : q.map((v) => `<td>${v}</td>`).join("")}</tr>`
+            )
+            .join("")}</tbody></table></section>`;
+        })
+        .join("") || "<p>Aucune recette.</p>";
   return (
     `<div class="mp pvx" style="${cvars()}"><h2>Recettes</h2>` +
-    nav +
-    (names
-      .map((n) => {
-        const R = S.rec[n];
-        return `<h3 id="r-${names.indexOf(n)}" style="margin:16px 0 2px;break-after:avoid">${esc(n)}${nav ? ' <a class="np rup" href="#sommaire" title="Retour au sommaire">↑</a>' : ""}</h3>${R.tags && R.tags.length ? `<div class="s">Types et thèmes : ${esc(R.tags.join(" · "))}</div>` : ""}<div class="s">${fmtDesc(R.desc)}</div><table class="mt"><thead><tr><th>Ingrédient</th>${SEC.map((s) => `<th>${esc(s[0])}</th>`).join("")}</tr></thead><tbody>${Object.entries(
-          R.ing
-        )
-          .map(
-            ([k, q]) =>
-              `<tr><td>${esc(ING[k][0])} (${ING[k][1]})</td>${R.fx && k in R.fx ? `<td colspan="${SEC.length}"><b>${qty(k, R.fx[k])}</b> au total</td>` : q.map((v) => `<td>${v}</td>`).join("")}</tr>`
-          )
-          .join("")}</tbody></table>`;
-      })
-      .join("") || "<p>Aucune recette.</p>") +
-    `<p class="s">Quantités par personne, sauf mention « au total ».</p></div>`
+    (nav ? `<div class="rlay" data-recnav="1">${nav}<div class="rmain">${corps}` : corps) +
+    `<p class="s">Quantités par personne, sauf mention « au total ».</p>` +
+    (nav ? "</div></div>" : "") +
+    "</div>"
   );
 }
 
