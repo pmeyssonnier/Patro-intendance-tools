@@ -15,7 +15,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Intendance PSS">
 <title>Patro Sainte-Suzanne – Intendance de camp</title>
-<link rel="stylesheet" href="styles.css?v=1.54.0">
+<link rel="stylesheet" href="styles.css?v=1.55.0">
 </head><body><main>
 <div class="top np"><button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button><span id="ptitle"></span><button class="burger" id="theme" aria-label="Passer en mode sombre" title="Mode sombre / clair">🌙</button><button class="burger" id="gear" aria-label="Configuration" title="Configuration">⚙️</button></div>
 <div id="scrim" class="np"></div>
@@ -84,6 +84,8 @@
 <div id="rimpf" style="display:none"><p class="s">Sur la page d'une recette, ouvre le code source (clic droit → « Afficher le code source »), cherche <b>ld+json</b> et colle ici le bloc <b>&lt;script type="application/ld+json"&gt;…&lt;/script&gt;</b> qui contient « Recipe ». Si la page n'a pas de bloc « Recipe » (article, site sans données structurées), copie plutôt la <b>liste des ingrédients</b>, une ligne par ingrédient. L'appli ne lit que ce que tu colles, elle n'appelle aucun site.</p>
 <textarea id="rimt" rows="5" aria-label="Données de la recette (ld+json)" placeholder='{"@type":"Recipe","name":"…","recipeIngredient":["400 g …"]}'></textarea>
 <input id="rimu" type="text" aria-label="Adresse de la recette (facultatif)" placeholder="Adresse de la recette, pour garder la source (facultatif)" style="margin-top:6px">
+<p class="s" style="margin-bottom:2px">Ou choisis un fichier de recettes favorites (<b>.json</b>, une ou plusieurs recettes) :</p>
+<input type="file" id="rimf" accept=".json,application/json" aria-label="Fichier de recettes favorites (.json)">
 <p><button id="rimlire">Lire la recette</button> <button id="rimfer" class="x">Annuler</button></p>
 <div id="rimv"></div></div>
 <p class="s" id="remsg" role="status"></p>
@@ -227,29 +229,29 @@
 <p class="s" id="rym" role="status" style="color:#d33"></p>
 <p class="lbtn"><button id="ryno" class="x">Fermer</button></p></div>
 </dialog>
-<script src="js/data-defaults.js?v=1.54.0"></script>
-<script src="js/utils.js?v=1.54.0"></script>
-<script src="js/storage.js?v=1.54.0"></script>
-<script src="js/state.js?v=1.54.0"></script>
-<script src="js/calculations.js?v=1.54.0"></script>
-<script src="js/shopping-list.js?v=1.54.0"></script>
-<script src="js/documents.js?v=1.54.0"></script>
-<script src="js/share-print.js?v=1.54.0"></script>
-<script src="js/navigation.js?v=1.54.0"></script>
-<script src="js/camps.js?v=1.54.0"></script>
-<script src="js/diets.js?v=1.54.0"></script>
-<script src="js/menu.js?v=1.54.0"></script>
-<script src="js/recipes.js?v=1.54.0"></script>
-<script src="js/recipe-types.js?v=1.54.0"></script>
-<script src="js/ingredient-matching.js?v=1.54.0"></script>
-<script src="js/ingredients.js?v=1.54.0"></script>
-<script src="js/ingredient-merge.js?v=1.54.0"></script>
-<script src="js/price-import.js?v=1.54.0"></script>
-<script src="js/rayons.js?v=1.54.0"></script>
-<script src="js/catalog-ui.js?v=1.54.0"></script>
-<script src="js/recipe-import.js?v=1.54.0"></script>
-<script src="js/changelog.js?v=1.54.0"></script>
-<script src="js/config.js?v=1.54.0"></script>
-<script src="js/pwa.js?v=1.54.0"></script>
-<script src="js/main.js?v=1.54.0"></script>
+<script src="js/data-defaults.js?v=1.55.0"></script>
+<script src="js/utils.js?v=1.55.0"></script>
+<script src="js/storage.js?v=1.55.0"></script>
+<script src="js/state.js?v=1.55.0"></script>
+<script src="js/calculations.js?v=1.55.0"></script>
+<script src="js/shopping-list.js?v=1.55.0"></script>
+<script src="js/documents.js?v=1.55.0"></script>
+<script src="js/share-print.js?v=1.55.0"></script>
+<script src="js/navigation.js?v=1.55.0"></script>
+<script src="js/camps.js?v=1.55.0"></script>
+<script src="js/diets.js?v=1.55.0"></script>
+<script src="js/menu.js?v=1.55.0"></script>
+<script src="js/recipes.js?v=1.55.0"></script>
+<script src="js/recipe-types.js?v=1.55.0"></script>
+<script src="js/ingredient-matching.js?v=1.55.0"></script>
+<script src="js/ingredients.js?v=1.55.0"></script>
+<script src="js/ingredient-merge.js?v=1.55.0"></script>
+<script src="js/price-import.js?v=1.55.0"></script>
+<script src="js/rayons.js?v=1.55.0"></script>
+<script src="js/catalog-ui.js?v=1.55.0"></script>
+<script src="js/recipe-import.js?v=1.55.0"></script>
+<script src="js/changelog.js?v=1.55.0"></script>
+<script src="js/config.js?v=1.55.0"></script>
+<script src="js/pwa.js?v=1.55.0"></script>
+<script src="js/main.js?v=1.55.0"></script>
 </body></html>
