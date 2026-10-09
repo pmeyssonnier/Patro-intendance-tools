@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.50.0",
+    v: "1.51.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,15 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.50.0",
+    d: "2026-10-09",
+    t: "Recettes (fichier HTML) : navigation par type et thème",
+    l: [
+      "En haut : les types et thèmes en pastilles. Colonne de gauche : la liste des recettes du type choisi. Au centre : la ou les recettes correspondantes. « Toutes » affiche tout ; un clic sur une recette n'affiche qu'elle. Sur téléphone, les colonnes s'empilent. Sans JavaScript, tout reste affiché avec des liens.",
+      "Ingrédients : sous le nom, le libellé du produit Colruyt retenu, lié à sa fiche (impression comprise).",
     ],
   },
   {
