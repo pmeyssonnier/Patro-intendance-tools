@@ -4339,3 +4339,30 @@ test("partager / imprimer : sans partage de fichier, WhatsApp télécharge le fi
   expect(lien).toContain("https://wa.me/?text=");
   expect(decodeURIComponent(lien.split("text=")[1])).toContain("fichier HTML en pièce jointe");
 });
+
+test("iPhone : champs date contenus dans leur case, liste « Camp en cours » jamais écrasée", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "eff");
+  for (const largeur of [320, 375]) {
+    await page.setViewportSize({ width: largeur, height: 700 });
+    const r = await page.evaluate(() => {
+      const carte = document.querySelector("#cstart").closest(".card").getBoundingClientRect();
+      return ["cname", "cstart", "cend", "cmarg"]
+        .filter((id) => document.getElementById(id))
+        .map((id) => {
+          const b = document.getElementById(id).getBoundingClientRect();
+          return [id, b.left >= carte.left - 1 && b.right <= carte.right + 1];
+        });
+    });
+    for (const [id, dedans] of r) expect(dedans, id + " à " + largeur + " px").toBe(true);
+  }
+  // menu latéral sur un écran bas : la liste garde sa hauteur
+  await page.setViewportSize({ width: 375, height: 260 });
+  await page.locator("#burger").click();
+  const h = await page.evaluate(
+    () => document.getElementById("csel").getBoundingClientRect().height
+  );
+  expect(h).toBeGreaterThanOrEqual(34);
+});
