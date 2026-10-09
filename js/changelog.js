@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.48.0",
+    d: "2026-10-09",
+    t: "Liste de courses : produit, lien, prix et coût dans l'export HTML et le partage",
+    l: [
+      "Partager / imprimer : la liste de courses en HTML a une colonne « Produit Colruyt » avec le libellé du produit retenu, lié à sa fiche, et l'adresse affichée en dessous.",
+      "Partager (WhatsApp, mail, copier) : chaque ligne de la liste de courses indique aussi le prix et le coût, puis le produit Colruyt et son adresse en dessous.",
+    ],
+  },
+  {
     v: "1.47.0",
     d: "2026-10-09",
     t: "Prix saisi à la main : le lien du produit est conservé",
