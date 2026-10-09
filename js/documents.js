@@ -39,20 +39,28 @@ function menuHTML(edit = false) {
   return `<div class="mp pvx"><h2>${esc(C.mt || "Menu")}</h2><div class="s">${esc(C.name)} · ${fdate(C.start)} → ${fdate(C.end)} · ${nn()} personnes · ${esc(troop())}</div><table class="mt"><thead><tr><th>Repas</th><th>Au menu</th>${dsc ? "<th>Description</th>" : ""}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
+/** Cellule « Produit Colruyt » : libellé du produit retenu, lié à sa fiche, et l'adresse en clair (utile sur papier) ; vide si ni l'un ni l'autre. */
+function produitColruytHTML(k) {
+  const lien = lienColruyt(S.url[k]),
+    nom = prodName(k);
+  if (!lien) return esc(nom);
+  return `<a href="${esc(lien)}">${esc(nom || "Fiche produit")}</a><div class="ad">${esc(lien)}</div>`;
+}
+
 function listHTML() {
   const rows = parRayon(LAST.keys)
     .map(
       ([nom, l]) =>
-        (nom ? `<tr><td colspan="5"><b>${esc(nom)}</b></td></tr>` : "") +
+        (nom ? `<tr><td colspan="6"><b>${esc(nom)}</b></td></tr>` : "") +
         l
           .map((k) => {
             const c = (LAST.tot[k] / per(k)) * price(k);
-            return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${qty(k, LAST.tot[k])}</td><td>${price(k) ? eur(price(k)) + "/" + ul(k) : "–"}</td><td>${eur(c)}</td></tr>`;
+            return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${produitColruytHTML(k)}</td><td>${qty(k, LAST.tot[k])}</td><td>${price(k) ? eur(price(k)) + "/" + ul(k) : "–"}</td><td>${eur(c)}</td></tr>`;
           })
           .join("")
     )
     .join("");
-  return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">${esc(troop())} · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows || '<tr><td colspan="5">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn() ? " · par personne : " + eur(LAST.sum / nn()) : ""}</p></div>`;
+  return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">${esc(troop())} · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Produit Colruyt</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows || '<tr><td colspan="6">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn() ? " · par personne : " + eur(LAST.sum / nn()) : ""}</p></div>`;
 }
 
 /** Ingrédients du catalogue de prix, dans l'ordre de la page, sans ceux que l'utilisateur a masqués. */
