@@ -387,37 +387,19 @@ $("exp").onclick = () => {
     $("jmsg").textContent =
       "« " +
       p.nom +
-      " » préparé : cherche-le dans tes téléchargements. Rien ne s'est téléchargé ? Utilise « Copier le projet » ou « Partager ».";
+      " » préparé : cherche-le dans tes téléchargements. Rien ne s'est téléchargé ? Utilise « Partager ».";
   } catch (e) {
     $("jmsg").textContent =
       "Téléchargement impossible (" +
       (e && e.message ? e.message : e) +
-      ") : utilise « Copier le projet » ou « Partager ».";
+      ") : utilise « Partager ».";
   }
-};
-
-// repli quand le navigateur bloque le téléchargement (navigateur intégré à une appli, appli installée, Safari…)
-$("expc").onclick = () => {
-  const p = projetExporte();
-  if (!p) return;
-  const ok = () => {
-    $("jmsg").textContent =
-      "Projet copié (" +
-      Math.round(p.texte.length / 1000) +
-      " ko) : colle-le dans un fichier texte enregistré en .json, ou dans un message à toi-même.";
-  };
-  const ko = () => {
-    $("jmsg").textContent = "Copie impossible : ton navigateur la refuse. Essaie « Partager ».";
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText)
-    navigator.clipboard.writeText(p.texte).then(ok, ko);
-  else ko();
 };
 
 /* Partager : le navigateur choisit ce qu'il accepte, et refuse parfois après coup (« Permission denied » sur certains Android) même quand il a dit oui.
    Un clic ne permet qu'UN appel à share() (le navigateur consomme le geste), donc on ne peut pas enchaîner les essais : on garde en mémoire
-   l'étape qui a échoué et chaque nouveau clic essaie la suivante. Ordre : le fichier .json, identique à « Exporter », puis, si le téléphone le refuse, le même contenu en texte (comme « Copier le projet »).
-   Le fichier n'est jamais renommé en .txt : l'import lit les .json et les .txt, mais le partage envoie ce qui est exporté. */
+   l'étape qui a échoué et chaque nouveau clic essaie la suivante. Ordre : le fichier .json, identique à « Exporter », puis, si le téléphone le refuse, le même contenu dans un fichier .txt (jamais du texte collé).
+   L'import lit les .txt comme les .json. */
 if (!navigator.share) $("exps").style.display = "none";
 
 let etapePartage = 0;
@@ -438,15 +420,15 @@ $("exps").onclick = () => {
       note: "Projet partagé : le même fichier .json que « Exporter ».",
     },
     {
-      donnees: { title: titre, text: p.texte },
-      ok: () => p.texte.length <= 150000,
-      note: "Projet partagé en texte (le même contenu que « Copier le projet ») : le coller dans un fichier .json pour l'importer.",
+      donnees: { files: [fichier(p.nom.replace(/\.json$/, ".txt"), "text/plain")], title: titre },
+      ok: (d) => peutFichier(d.files[0]),
+      note: "Projet partagé en fichier .txt (même contenu que le .json ; l'import le lit aussi).",
     },
   ];
   const n = etapes.findIndex((e, i) => i >= etapePartage && e.ok(e.donnees));
   if (n < 0) {
     etapePartage = 0;
-    msg("Ce navigateur ne partage pas ce projet : utilise « Exporter » ou « Copier le projet ».");
+    msg("Ce navigateur ne partage pas ce projet : utilise « Exporter ».");
     return;
   }
   navigator.share(etapes[n].donnees).then(
@@ -461,7 +443,7 @@ $("exps").onclick = () => {
           ? "Partage impossible" +
               detail +
               " : appuie à nouveau sur « Partager », un autre format sera essayé."
-          : "Partage impossible" + detail + " : utilise « Exporter » ou « Copier le projet »."
+          : "Partage impossible" + detail + " : utilise « Exporter »."
       );
     }
   );

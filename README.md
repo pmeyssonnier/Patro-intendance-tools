@@ -17,7 +17,7 @@ sur ordinateur, tablette et téléphone. Les données restent sur ton appareil
 4. **Régimes & allergies** : indique combien de personnes sont concernées, par section.
 5. **Menu** : compose les repas (Matin, Midi, Soir) de chaque jour ; glisse ⠿ pour déplacer un plat.
 6. **Liste de courses** : consulte les quantités et le budget, puis imprime ou partage la liste.
-7. **Sauvegarde** : exporte le projet (`.json`) pour ne rien perdre. Si le téléchargement est bloqué par ton navigateur (navigateur intégré à une appli, appli installée, Safari…), « 📋 Copier le projet » et « 📤 Partager » servent de repli, et un message explique toute erreur d'export.
+7. **Sauvegarde** : exporte le projet (`.json`) pour ne rien perdre. Si le téléchargement est bloqué par ton navigateur (navigateur intégré à une appli, appli installée, Safari…), « 📤 Partager » sert de repli (le fichier `.json`, puis, si l'appareil le refuse, le même contenu dans un fichier `.txt`), et un message explique toute erreur d'export.
 
 ## Installer l'application sur le téléphone
 
