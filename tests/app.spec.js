@@ -4222,3 +4222,46 @@ test("catalogue : la fiche d'un ingrédient permet de saisir, corriger et efface
   await page.locator('[data-eok="pates"]').click();
   expect(await page.evaluate(() => S.url.pates)).toBeUndefined();
 });
+
+test("liste de courses HTML : libellé Colruyt lié à la fiche, adresse en clair, cellule vide sans produit", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "list");
+  const html = await page.evaluate(() => {
+    const k = LAST.keys[0],
+      autre = LAST.keys[1];
+    S.pn[k] = "EVERYDAY spaghetti 500g";
+    S.url[k] = "https://www.colruyt.be/fr/produits/14502";
+    delete S.pn[autre];
+    delete S.url[autre];
+    return [listHTML(), k, autre, ING[autre][0]];
+  });
+  const [h, , , nomAutre] = html;
+  expect(h).toContain("<th>Produit Colruyt</th>");
+  expect(h).toContain(
+    '<a href="https://www.colruyt.be/fr/produits/14502">EVERYDAY spaghetti 500g</a><div class="ad">https://www.colruyt.be/fr/produits/14502</div>'
+  );
+  // sans produit ni lien : cellule vide
+  expect(h).toMatch(new RegExp("<td>" + nomAutre.replace(/[()]/g, "\\$&") + "</td><td></td>"));
+});
+
+test("liste de courses en texte : prix, coût, produit Colruyt et adresse en dessous", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "list");
+  const r = await page.evaluate(() => {
+    const [k, autre] = LAST.keys;
+    S.pn[k] = "EVERYDAY spaghetti 500g";
+    S.url[k] = "https://www.colruyt.be/fr/produits/14502";
+    S.prices[autre] = 0;
+    return { l1: ligneListeTexte(k), l2: ligneListeTexte(autre), nom: ING[k][0] };
+  });
+  expect(r.l1.split("\n")).toEqual([
+    expect.stringMatching(/^☐ .+ : .+ · .+\/.+ · .+€$/),
+    "   Colruyt : EVERYDAY spaghetti 500g",
+    "   https://www.colruyt.be/fr/produits/14502",
+  ]);
+  expect(r.l2).toContain("prix manquant");
+});
