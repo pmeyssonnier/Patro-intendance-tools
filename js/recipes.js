@@ -1,15 +1,15 @@
-/* Intendance PSS – Recettes et ingrédients : édition, quantités (par personne ou uniques), ingrédients personnalisés, suppression.
+/* Intendance PSS – Recettes et ingrédients : édition, quantités par personne, ingrédients personnalisés, suppression.
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
 /** Dernières valeurs « X pour N personnes » saisies, par recette et ingrédient (elles restent affichées après « Appliquer »). */
 const RATIO = {};
 const ratioKey = (k) => S.cur + "|" + k;
 
-/** « X pour N personnes » (proposé en mode quantité unique) : « Appliquer » garde le ratio X ÷ N par personne ; le total est calculé pour l'effectif de chaque camp. */
+/** « X pour N personnes » (dans la fiche de l'ingrédient) : « Appliquer » garde le ratio X ÷ N par personne dans toutes les sections ; le total n'existe que dans la liste de courses, calculé pour l'effectif de chaque camp. */
 function ratioForm(k) {
   const u = ING[k][1],
     r = RATIO[ratioKey(k)] || { q: "", n: "1" };
-  return `<div class="rtf"><span class="s">ou</span> <input type="text" inputmode="decimal" value="${esc(r.q)}" placeholder="500" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="${esc(r.n)}" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personne(s)</span> <button class="x" data-ra="${esc(k)}" title="Enregistre la quantité par personne : le total suit l'effectif de chaque camp">Appliquer (par personne)</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, nbr(r.q), nbr(r.n))}</div></div>`;
+  return `<div class="rtf"><span class="s">Saisir en :</span> <input type="text" inputmode="decimal" value="${esc(r.q)}" placeholder="500" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="${esc(r.n)}" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personne(s)</span> <button class="x" data-ra="${esc(k)}" title="Enregistre la quantité par personne : le total suit l'effectif de chaque camp">Appliquer (par personne)</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, nbr(r.q), nbr(r.n))}</div></div>`;
 }
 
 /** Nombre saisi dans un champ texte, virgule ou point (« 0,5 »). */
@@ -53,48 +53,12 @@ function drawRecList() {
     : `<p class="s">${Object.keys(S.rec).length ? "Aucune recette ne correspond au filtre." : "Aucune recette. Crée-en une avec « + Nouvelle recette », ou importe-en une."}</p>`;
 }
 
-let FXN = ""; // effectif saisi pour convertir les quantités uniques (reste affiché après un redessin)
-
-/** Bandeau au-dessus du tableau quand la recette a des quantités uniques : les convertir en quantités par personne.
-    Le total d'une quantité unique a été calculé pour un effectif donné (celui de l'auteur de la recette, ou du camp au moment de la saisie) : le ratio n'est pas gardé, il faut donc dire pour combien de personnes il a été calculé. */
-function drawFxBar() {
-  const R = S.rec[S.cur],
-    n = R && R.fx ? Object.keys(R.fx).length : 0;
-  $("rfxbar").innerHTML = n
-    ? `<div class="rtf"><span class="s">${n} ingrédient${n > 1 ? "s" : ""} en <b>quantité unique</b> : le total a été calculé pour un effectif donné, sans garder le ratio par personne. Pour qu'il suive l'effectif de chaque camp, indique pour combien de personnes ces totaux ont été calculés :</span> <input type="text" inputmode="numeric" id="rfxn" value="${esc(FXN || String(nn() || ""))}" aria-label="Nombre de personnes pour lesquelles les quantités uniques ont été calculées" style="width:70px"> <span>personne(s)</span> <button class="x" id="rfxok">Convertir en quantités par personne</button><div class="s" id="rfxm" role="status"></div></div>`
-    : "";
-}
-
-$("rfxbar").addEventListener("input", (e) => {
-  if (e.target.id === "rfxn") FXN = e.target.value;
-});
-
-$("rfxbar").addEventListener("click", (e) => {
-  if (e.target.id !== "rfxok") return;
-  const R = S.rec[S.cur],
-    n = nbr($("rfxn").value);
-  if (!R || !R.fx) return;
-  if (!(n >= 1)) {
-    $("rfxm").textContent = "Indique un nombre de personnes (1 ou plus).";
-    return;
-  }
-  for (const k of Object.keys(R.fx)) {
-    const pp = Math.round((R.fx[k] / n) * 1e6) / 1e6;
-    R.ing[k] = SEC.map(() => pp);
-    delete R.fx[k];
-    if (R.fa) delete R.fa[k];
-  }
-  drawRec();
-  calc();
-});
-
 /** Contenu de la fenêtre d'édition : types et mots-clés, description, tableau des ingrédients et liste pour en ajouter. */
 function drawRecEdit() {
   drawTags();
   const R = S.rec[S.cur];
   if (!R || !(recEdit in R.ing)) recEdit = null;
   $("rdesc").value = R ? R.desc : "";
-  drawFxBar();
   majApercu();
   $("rh").innerHTML =
     "<tr><th>Ingrédients</th>" +
@@ -103,10 +67,9 @@ function drawRecEdit() {
   $("rb").innerHTML = R
     ? Object.entries(R.ing)
         .map(([k, q]) => {
-          const fx = R.fx && k in R.fx;
           const ouvert = recEdit === k,
             nom = `${esc(ING[k][0])} (${ING[k][1]})`;
-          return `<tr data-rk="${esc(k)}"><td><div class="ibox"><span class="ih" role="button" tabindex="0" data-ih="${esc(k)}" aria-label="Déplacer ${esc(ING[k][0])} avec les flèches du clavier" title="Glisser pour changer l’ordre des ingrédients (flèches haut/bas au clavier)">⠿</span><button class="ib" data-ced="${esc(k)}" aria-expanded="${ouvert}" title="Modifier cet ingrédient : nom, unité, prix, régime, rayon, quantité unique" aria-label="Modifier ${esc(ING[k][0])}"><span class="ibt">${nom}</span> <span aria-hidden="true">${ouvert ? "▴" : "✎"}</span></button></div></td>${fx ? `<td colspan="${SEC.length}"><input type="number" min="0" step="any" value="${+(R.fx[k] / fxu(k)).toFixed(3)}" data-fx="${esc(k)}" style="width:90px" aria-label="${esc(ING[k][0])} : quantité totale en ${fxl(k)}"> <span class="s">${fxl(k)} au total</span>${ratioForm(k)}<label style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-fa="${esc(k)}"${R.fa && R.fa[k] === 0 ? "" : " checked"} style="width:auto"> adapter aux régimes</label></td>` : q.map((v, i) => `<td><input type="number" min="0" step="any" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${esc(SEC[i][0])}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>${ouvert ? `<tr class="ced"><td colspan="${SEC.length + 2}">${ficheIngredient(k, `<button class="x tg" data-tg="${esc(k)}">${fx ? "→ par personne" : "→ quantité unique"}</button>`)}</td></tr>` : ""}`;
+          return `<tr data-rk="${esc(k)}"><td><div class="ibox"><span class="ih" role="button" tabindex="0" data-ih="${esc(k)}" aria-label="Déplacer ${esc(ING[k][0])} avec les flèches du clavier" title="Glisser pour changer l’ordre des ingrédients (flèches haut/bas au clavier)">⠿</span><button class="ib" data-ced="${esc(k)}" aria-expanded="${ouvert}" title="Modifier cet ingrédient : nom, unité, prix, régime, rayon, quantité pour N personnes" aria-label="Modifier ${esc(ING[k][0])}"><span class="ibt">${nom}</span> <span aria-hidden="true">${ouvert ? "▴" : "✎"}</span></button></div></td>${q.map((v, i) => `<td><input type="number" min="0" step="any" value="${v}" data-k="${esc(k)}" data-s="${i}" aria-label="${esc(ING[k][0])}, ${esc(SEC[i][0])}, par personne"></td>`).join("")}<td><button class="x" data-rm="${esc(k)}" aria-label="Retirer ${esc(ING[k][0])} de la recette" title="Retirer de la recette">✕</button></td></tr>${ouvert ? `<tr class="ced"><td colspan="${SEC.length + 2}">${ficheIngredient(k)}${ratioForm(k)}</td></tr>` : ""}`;
         })
         .join("")
     : "";
@@ -343,14 +306,6 @@ $("rb").addEventListener("change", (e) => {
   if (d.k) {
     R.ing[d.k][+d.s] = saisie(e.target.value);
     calc();
-  } else if (d.fx && R.fx) {
-    R.fx[d.fx] = Math.round(saisie(e.target.value) * fxu(d.fx) * 1000) / 1000;
-    calc();
-  } else if (d.fa !== undefined && R.fx) {
-    R.fa = R.fa || {};
-    if (e.target.checked) delete R.fa[d.fa];
-    else R.fa[d.fa] = 0;
-    calc();
   }
 });
 
@@ -369,24 +324,12 @@ $("rb").addEventListener("click", (e) => {
   const t = e.target.dataset,
     R = S.rec[S.cur];
   if (!R) return;
-  if (t.tg) {
-    const k = t.tg;
-    R.fx = R.fx || {};
-    if (k in R.fx) {
-      const n = nn(),
-        pp = n ? Math.round((R.fx[k] / n) * 1e6) / 1e6 : 0;
-      R.ing[k] = SEC.map(() => pp);
-      delete R.fx[k];
-      if (R.fa) delete R.fa[k];
-    } else R.fx[k] = Math.round(R.ing[k].reduce((a, q, i) => a + q * C.n[i], 0) * 100) / 100;
-    drawRec();
-    calc();
-  } else if (t.ra) {
+  if (t.ra) {
     const box = e.target.closest(".rtf"),
       q = nbr(box.querySelector("[data-rq]").value),
       n = nbr(box.querySelector("[data-rn]").value);
     if (!(q >= 0) || !(n > 0)) return;
-    if (!R.fx || !(t.ra in R.fx)) return;
+    if (!(t.ra in R.ing)) return;
     RATIO[ratioKey(t.ra)] = {
       q: box.querySelector("[data-rq]").value,
       n: box.querySelector("[data-rn]").value,
@@ -394,15 +337,11 @@ $("rb").addEventListener("click", (e) => {
     // le ratio est gardé par personne dans toutes les sections : le total se recalcule pour chaque camp (aucun total n'est stocké)
     const pp = Math.round((q / n) * 1e6) / 1e6;
     R.ing[t.ra] = SEC.map(() => pp);
-    delete R.fx[t.ra];
-    if (R.fa) delete R.fa[t.ra];
     drawRec();
     calc();
   } else if (t.rm) {
     if (!confirm("Retirer « " + ING[t.rm][0] + " » de la recette « " + S.cur + " » ?")) return;
     delete R.ing[t.rm];
-    if (R.fx) delete R.fx[t.rm];
-    if (R.fa) delete R.fa[t.rm];
     drawRec();
     calc();
   }
@@ -596,8 +535,6 @@ $("rlist").addEventListener("click", (e) => {
 function rmIng(k) {
   for (const r of Object.values(S.rec)) {
     delete r.ing[k];
-    if (r.fx) delete r.fx[k];
-    if (r.fa) delete r.fa[k];
   }
   delete S.prices[k];
   delete S.pn[k];
