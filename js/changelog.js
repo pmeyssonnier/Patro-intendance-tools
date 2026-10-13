@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.58.0",
+    d: "2026-10-13",
+    t: "Recettes : tout par personne, plus aucun total dans la recette",
+    l: [
+      "Le mode « quantité unique » (un total figé dans la recette) est supprimé : une recette ne contient plus que des quantités par personne. Le total de la liste de courses se calcule toujours d'après l'effectif du camp : il augmente avec l'effectif.",
+      "La saisie « X pour N personnes » est dans la fiche de l'ingrédient (clic sur son nom) : elle recopie X ÷ N par personne dans toutes les sections.",
+      "Les anciens totaux figés (recettes reçues d'une autre personne, ou saisies avant) sont convertis en quantités par personne au chargement, avec l'effectif du camp en cours. L'export CSV des recettes n'a plus de colonne « Quantité totale (si unique) ».",
+    ],
+  },
+  {
     v: "1.57.0",
     d: "2026-10-13",
     t: "Recettes : le ratio « X pour N personnes » reste par personne",

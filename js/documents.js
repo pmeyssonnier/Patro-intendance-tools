@@ -135,7 +135,7 @@ function recHTML(names) {
           )
             .map(
               ([k, q]) =>
-                `<tr><td>${esc(ING[k][0])} (${ING[k][1]})${colruytIngHTML(k)}</td>${R.fx && k in R.fx ? `<td colspan="${SEC.length}"><b>${qty(k, R.fx[k])}</b> au total</td>` : q.map((v) => `<td>${v}</td>`).join("")}</tr>`
+                `<tr><td>${esc(ING[k][0])} (${ING[k][1]})${colruytIngHTML(k)}</td>${q.map((v) => `<td>${v}</td>`).join("")}</tr>`
             )
             .join("")}</tbody></table></section>`;
         })
@@ -252,13 +252,7 @@ const txtRec = (n) => {
         SEC.map((s) => s[0]).join(" / ") +
         ") :\n" +
         Object.entries(R.ing)
-          .map(
-            ([k, q]) =>
-              "- " +
-              ING[k][0] +
-              " : " +
-              (R.fx && k in R.fx ? qty(k, R.fx[k]) + " au total" : q.join(" / ") + " " + ING[k][1])
-          )
+          .map(([k, q]) => "- " + ING[k][0] + " : " + q.join(" / ") + " " + ING[k][1])
           .join("\n")
     : "";
 };
@@ -376,22 +370,13 @@ function csvRec(names) {
       "Ingrédient",
       "Unité",
       ...SEC.map((s) => s[0] + " (par personne)"),
-      "Quantité totale (si unique)",
     ],
   ];
   names.forEach((n) => {
     const R = S.rec[n];
     if (!R) return;
     for (const [k, q] of Object.entries(R.ing)) {
-      const fx = R.fx && k in R.fx;
-      r.push([
-        n,
-        (R.tags || []).join(" | "),
-        ING[k][0],
-        ING[k][1],
-        ...(fx ? ["", "", "", ""] : q.map(cq)),
-        fx ? cq(R.fx[k]) : "",
-      ]);
+      r.push([n, (R.tags || []).join(" | "), ING[k][0], ING[k][1], ...q.map(cq)]);
     }
   });
   return csvOut(r);

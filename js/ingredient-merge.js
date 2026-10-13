@@ -6,28 +6,11 @@ function fusionnerIng(src, dst) {
   if (!ING[src] || !ING[dst] || src === dst) return "Choisis deux ingrédients différents.";
   if (ING[src][1] !== ING[dst][1])
     return "Les deux ingrédients n'ont pas la même unité : change l'unité de l'un d'eux avant de les fusionner.";
-  const fixe = (r, k) => !!r.fx && k in r.fx,
-    total = (r, k) => (fixe(r, k) ? r.fx[k] : r.ing[k].reduce((a, q, i) => a + q * C.n[i], 0)),
-    ar = (x) => Math.round(x * 1e6) / 1e6;
-  const melange = Object.values(S.rec).some(
-    (r) => src in r.ing && dst in r.ing && fixe(r, src) !== fixe(r, dst)
-  );
-  if (melange)
-    return "Une recette utilise l'un en quantité unique et l'autre en quantité par personne : la fusion fixerait le total pour l'effectif actuel. Mets d'abord les deux en quantité par personne, ou les deux en quantité unique.";
+  const ar = (x) => Math.round(x * 1e6) / 1e6;
   for (const r of Object.values(S.rec)) {
     if (!(src in r.ing)) continue;
-    if (!(dst in r.ing)) {
-      r.ing[dst] = r.ing[src];
-      if (fixe(r, src)) {
-        r.fx[dst] = r.fx[src];
-        if (r.fa && src in r.fa) r.fa[dst] = r.fa[src];
-      }
-    } else if (!fixe(r, src) && !fixe(r, dst)) {
-      r.ing[dst] = r.ing[dst].map((v, i) => ar(v + r.ing[src][i]));
-    } else {
-      r.fx = r.fx || {};
-      r.fx[dst] = Math.round((total(r, src) + total(r, dst)) * 100) / 100;
-    }
+    if (!(dst in r.ing)) r.ing[dst] = r.ing[src];
+    else r.ing[dst] = r.ing[dst].map((v, i) => ar(v + r.ing[src][i]));
   }
   if (!price(dst) && price(src)) {
     S.prices[dst] = price(src);
