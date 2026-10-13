@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.57.0",
+    v: "1.58.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,15 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.57.0",
+    d: "2026-10-13",
+    t: "Recettes : le ratio « X pour N personnes » reste par personne",
+    l: [
+      "Recettes › quantité unique › « X pour N personnes » : « Appliquer » garde maintenant le ratio par personne (X ÷ N) dans la recette, au lieu d'un total figé pour l'effectif du moment. La liste de courses recalcule le total selon l'effectif de chaque camp, sans ressaisir le ratio. La marge s'applique comme pour toute quantité par personne.",
+      "Recettes reçues d'une autre personne (ou saisies avant ce correctif) : le ratio d'une quantité unique n'était pas gardé. Un bandeau au-dessus du tableau convertit toutes les quantités uniques de la recette en quantités par personne, en indiquant pour combien de personnes les totaux ont été calculés.",
     ],
   },
   {
