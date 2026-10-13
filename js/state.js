@@ -249,6 +249,12 @@ for (const k in S.ov)
 
 if (S.dd && typeof S.dd === "object") DIETS = S.dd;
 
+/** Effectif servant à convertir d'anciens totaux en quantités par personne : celui du camp en cours, sinon du premier camp qui en a un, sinon 1. */
+function effectifPourConversion() {
+  const tot = (camp) => ((camp && camp.n) || []).reduce((a, b) => a + (+b || 0), 0);
+  return tot(C) || tot(Object.values(S.camps).find((x) => tot(x))) || 1;
+}
+
 (function sanitize() {
   for (const r of Object.values(S.rec)) {
     if (!r.ing) r.ing = {};
@@ -259,15 +265,17 @@ if (S.dd && typeof S.dd === "object") DIETS = S.dd;
         r.ing[k].length = SEC.length;
       }
     }
+    // anciens totaux figés (« quantité unique », supprimée) : convertis en quantités par personne avec l'effectif du camp en cours
     if (r.fx && typeof r.fx === "object") {
-      for (const k of Object.keys(r.fx)) {
-        if (!(k in r.ing) || !(+r.fx[k] >= 0)) delete r.fx[k];
-        else r.fx[k] = +r.fx[k];
-      }
-    } else delete r.fx;
-    if (r.fa && typeof r.fa === "object") {
-      for (const k of Object.keys(r.fa)) if (!(r.fx && k in r.fx)) delete r.fa[k];
-    } else delete r.fa;
+      const n = effectifPourConversion();
+      for (const k of Object.keys(r.fx))
+        if (k in r.ing && +r.fx[k] >= 0) {
+          const pp = Math.round((+r.fx[k] / n) * 1e6) / 1e6;
+          r.ing[k] = SEC.map(() => pp);
+        }
+    }
+    delete r.fx;
+    delete r.fa;
   }
   for (const k of Object.keys(S.promo)) if (!ING[k]) delete S.promo[k];
   for (const k of Object.keys(S.url)) if (!ING[k] || !lienColruyt(S.url[k])) delete S.url[k];

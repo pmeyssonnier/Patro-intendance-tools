@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.58.0",
+    v: "1.59.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,16 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.58.0",
+    d: "2026-10-13",
+    t: "Recettes : tout par personne, plus aucun total dans la recette",
+    l: [
+      "Le mode « quantité unique » (un total figé dans la recette) est supprimé : une recette ne contient plus que des quantités par personne. Le total de la liste de courses se calcule toujours d'après l'effectif du camp : il augmente avec l'effectif.",
+      "La saisie « X pour N personnes » est dans la fiche de l'ingrédient (clic sur son nom) : elle recopie X ÷ N par personne dans toutes les sections.",
+      "Les anciens totaux figés (recettes reçues d'une autre personne, ou saisies avant) sont convertis en quantités par personne au chargement, avec l'effectif du camp en cours. L'export CSV des recettes n'a plus de colonne « Quantité totale (si unique) ».",
     ],
   },
   {

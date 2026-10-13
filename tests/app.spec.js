@@ -1,6 +1,5 @@
 const { test, expect } = require("@playwright/test");
 const {
-  basculerQuantite,
   ouvrirFiche,
   fermerFiche,
   ouvrir,
@@ -143,26 +142,6 @@ test("menu : un plat se déplace au clavier d'un repas à l'autre", async ({ pag
     page.locator('.zone[data-day="1"][data-slot="d"] .cn', { hasText: "Petit-déjeuner" })
   ).toHaveCount(1);
   await expect(page.locator("#live")).toContainText("Petit-déjeuner");
-});
-
-test("recette : une quantité unique est répartie entre les régimes", async ({ page }) => {
-  await ouvrir(page);
-  await aller(page, "reg");
-  // 3 personnes sans gluten (2 chez les Conquérants, 1 chez les animateurs)
-  await deplierRegime(page, "sg");
-  await page.locator('input[data-d="sg"][data-s="2"]').fill("2");
-  await page.locator('input[data-d="sg"][data-s="3"]').fill("1");
-  await ouvrirFiche(page, "Croque-monsieur");
-  await basculerQuantite(page, page.locator('#rb tr[data-rk="pain"]'));
-  await page.locator('input[data-fx="pain"]').fill("5");
-  await page.locator('input[data-fx="pain"]').dispatchEvent("change");
-  const sortie = await page.evaluate(() => meal("Croque-monsieur").out);
-  expect(Math.round(sortie.pain)).toBe(4500); // 27 personnes sur 30
-  expect(Math.round(sortie.pain_sg)).toBe(500); // 3 personnes sur 30
-  await page.locator('input[data-fa="pain"]').uncheck();
-  const sans = await page.evaluate(() => meal("Croque-monsieur").out);
-  expect(Math.round(sans.pain)).toBe(5000);
-  expect(sans.pain_sg).toBeUndefined();
 });
 
 test("régimes : l'adaptation apparaît dans le menu imprimable", async ({ page }) => {
@@ -943,7 +922,7 @@ test("les pièces sont arrondies au supérieur sans erreur de calcul décimal", 
   expect(r).toEqual([true, "6 pc", "7 pc", "1 pc", ["6", "pc"]]);
 });
 
-test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la quantité par personne", async ({
+test("recettes : « X pour N personnes » (fiche de l'ingrédient) garde un ratio par personne, sans total", async ({
   page,
 }) => {
   await ouvrir(page);
@@ -953,88 +932,91 @@ test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la qua
   await page.locator("#ingu").selectOption("pc");
   await page.locator("#ingok").click();
   const ligne = () => page.locator("#rb tr", { hasText: "Baguette" });
-  // pas de saisie par ratio en mode « par personne » : elle est dans le mode « quantité unique »
+  // la saisie par ratio est dans la fiche de l'ingrédient, plus de « quantité unique »
   await expect(ligne().locator("[data-rq]")).toHaveCount(0);
-  await basculerQuantite(page, ligne()); // → quantité unique
+  await expect(page.locator("#rb [data-tg]")).toHaveCount(0);
+  await expect(page.locator("#rb [data-fx]")).toHaveCount(0);
+  await ligne().locator(".ib").click();
   const N = await page.evaluate(() => nn());
-  // par défaut : champ quantité vide et « 1 personne » (= quantité par personne), pas de valeur d'exemple
-  await expect(ligne().locator("[data-rq]")).toHaveValue("");
-  await expect(ligne().locator("[data-rn]")).toHaveValue("1");
-  await ligne().locator("[data-rq]").fill("1");
-  await ligne().locator("[data-rn]").fill("5");
-  await expect(ligne().locator("[data-rp]")).toContainText(
+  await expect(page.locator("#rb [data-rq]")).toHaveValue("");
+  await expect(page.locator("#rb [data-rn]")).toHaveValue("1");
+  await page.locator("#rb [data-rq]").fill("1");
+  await page.locator("#rb [data-rn]").fill("5");
+  await expect(page.locator("#rb [data-rp]")).toContainText(
     "= " + Math.ceil(N / 5 - 1e-9) + " pc pour " + N + " personnes"
   );
-  await ligne().locator("[data-ra]").click();
-  // « Appliquer » garde le ratio par personne (1/5 = 0,2), pas un total figé pour l'effectif du moment
-  await expect(ligne().locator("[data-fx]")).toHaveCount(0);
+  await page.locator("#rb [data-ra]").click();
+  // 1/5 = 0,2 par personne dans chaque section
   const champs = ligne().locator("input[data-s]");
   await expect(champs).toHaveCount(4);
   for (let i = 0; i < 4; i++) await expect(champs.nth(i)).toHaveValue("0.2");
+  // les valeurs saisies restent affichées après « Appliquer »
+  await expect(page.locator("#rb [data-rq]")).toHaveValue("1");
+  await expect(page.locator("#rb [data-rn]")).toHaveValue("5");
   // la virgule française est acceptée : 0,5 pour 4 personnes = 0,125 par personne
-  await basculerQuantite(page, ligne());
-  await ligne().locator("[data-rq]").fill("0,5");
-  await ligne().locator("[data-rn]").fill("4");
-  await ligne().locator("[data-ra]").click();
+  await page.locator("#rb [data-rq]").fill("0,5");
+  await page.locator("#rb [data-rn]").fill("4");
+  await page.locator("#rb [data-ra]").click();
   await expect(ligne().locator("input[data-s]").first()).toHaveValue("0.125");
 });
 
-test("recettes : « 500 g pour 5 personnes » donne 100 g par personne et le total en kg", async ({
+test("recettes : « 500 g pour 5 personnes » donne 100 g par personne et le total suit l'effectif", async ({
   page,
 }) => {
   await ouvrir(page);
   await ouvrirFiche(page);
   const premiere = () => page.locator("#rb tr").first();
-  await basculerQuantite(page, premiere()); // → quantité unique
-  const N = await page.evaluate(() => nn());
-  await premiere().locator("[data-rq]").fill("500");
-  await premiere().locator("[data-rn]").fill("5");
-  const attendu =
-    "= " + ((100 * N) / 1000).toFixed(2) + " kg pour " + N + " personnes (100 g par personne)";
-  await expect(premiere().locator("[data-rp]")).toContainText(attendu);
   const k = await premiere().getAttribute("data-rk");
-  await premiere().locator("[data-ra]").click();
-  // le ratio est gardé par personne (100 g) : aucun total n'est stocké
-  await expect(premiere().locator("[data-fx]")).toHaveCount(0);
+  await premiere().locator(".ib").click();
+  const N = await page.evaluate(() => nn());
+  await page.locator("#rb [data-rq]").fill("500");
+  await page.locator("#rb [data-rn]").fill("5");
+  await expect(page.locator("#rb [data-rp]")).toContainText(
+    "= " + ((100 * N) / 1000).toFixed(2) + " kg pour " + N + " personnes (100 g par personne)"
+  );
+  await page.locator("#rb [data-ra]").click();
   await expect(premiere().locator("input[data-s]").first()).toHaveValue("100");
-  // le total suit l'effectif : un autre camp (effectif différent) donne un autre total sans rien ressaisir
-  const totaux = await page.evaluate((k) => {
-    const R = S.rec[S.cur],
-      avant = R.ing[k].slice(),
-      marge = 1 + C.wa / 100,
-      total = () => meal(S.cur).out[k];
-    const t1 = total() / marge / nn();
+  // aucun total n'est stocké ; le total de la liste de courses suit l'effectif du camp
+  const r = await page.evaluate((k) => {
+    const marge = 1 + C.wa / 100,
+      total = () => meal(S.cur).out[k] / marge;
+    const t1 = total(),
+      n1 = nn();
     const n0 = C.n.slice();
     C.n = C.n.map((x) => x * 2);
-    const t2 = total() / marge / nn();
+    const t2 = total(),
+      n2 = nn();
     C.n = n0;
-    return { avant, t1, t2, fx: !!(R.fx && k in R.fx) };
+    return { t1, n1, t2, n2, fx: !!S.rec[S.cur].fx };
   }, k);
-  expect(totaux.fx).toBe(false);
-  expect(totaux.avant.every((q) => q === 100)).toBe(true);
-  expect(totaux.t1).toBeCloseTo(100, 6);
-  expect(totaux.t2).toBeCloseTo(100, 6);
+  expect(r.fx).toBe(false);
+  expect(r.t1).toBeCloseTo(100 * r.n1, 6);
+  expect(r.t2).toBeCloseTo(100 * r.n2, 6);
+  expect(r.n2).toBe(2 * r.n1);
 });
 
-test("recettes : passer de « quantité unique » à « par personne » garde le total, sans arrondi à l'entier", async ({
+test("recettes : un ancien total figé (quantité unique) est converti en quantité par personne au chargement", async ({
   page,
 }) => {
   await ouvrir(page);
-  await ouvrirFiche(page);
-  const premiere = () => page.locator("#rb tr").first();
-  await basculerQuantite(page, premiere()); // → quantité unique
-  await premiere().locator("[data-fx]").fill("1"); // 1 kg au total
-  await premiere().locator("[data-fx]").press("Tab");
-  await basculerQuantite(page, premiere()); // → par personne
-  const { vals, N, nbSec } = await page.evaluate(() => {
-    const k = Object.keys(S.rec[S.cur].ing)[0];
-    return { vals: S.rec[S.cur].ing[k], N: nn(), nbSec: SEC.length };
+  const avant = await page.evaluate(() => {
+    const p = JSON.parse(localStorage.getItem("intendance2")),
+      nom = Object.keys(p.rec)[0],
+      k = Object.keys(p.rec[nom].ing)[0],
+      N = p.camps[p.ccur].n.reduce((a, b) => a + b, 0);
+    p.rec[nom].fx = { [k]: 3 * N }; // 3 g (ou pièces) par personne pour l'effectif du camp
+    p.rec[nom].fa = { [k]: 0 };
+    localStorage.setItem("intendance2", JSON.stringify(p));
+    return { nom, k };
   });
-  expect(vals).toHaveLength(nbSec);
-  // 1 000 g répartis : 33,333333 g par personne (et non 33 g, qui ferait 990 g)
-  expect(vals[0]).toBeCloseTo(1000 / N, 5);
-  // la même valeur dans chaque section
-  expect(vals.every((v) => Math.abs(v - 1000 / N) < 1e-5)).toBe(true);
+  await page.reload();
+  const r = await page.evaluate(({ nom, k }) => {
+    const R = S.rec[nom];
+    return { ing: R.ing[k], fx: R.fx, fa: R.fa, n: SEC.length };
+  }, avant);
+  expect(r.fx).toBeUndefined();
+  expect(r.fa).toBeUndefined();
+  expect(r.ing).toEqual(Array(r.n).fill(3));
 });
 
 test("recettes : le passage à « par personne » suit le nombre de sections", async ({ page }) => {
@@ -1044,8 +1026,6 @@ test("recettes : le passage à « par personne » suit le nombre de sections", a
   await page.locator('[data-sx="2"]').click(); // 2 sections restantes
   await ouvrirFiche(page);
   const premiere = () => page.locator("#rb tr").first();
-  await basculerQuantite(page, premiere());
-  await basculerQuantite(page, premiere());
   await expect(premiere().locator("input[data-s]")).toHaveCount(2);
 });
 
@@ -2583,7 +2563,7 @@ test("catalogue : deux doublons utilisés dans des recettes se fusionnent (quant
   expect(etat.prix).toBe(6);
 });
 
-test("catalogue : la fusion peut garder l'autre sens, refuse deux unités différentes et additionne les quantités uniques", async ({
+test("catalogue : la fusion peut garder l'autre sens, refuse deux unités différentes et additionne les quantités", async ({
   page,
 }) => {
   await ouvrir(page);
@@ -2593,16 +2573,15 @@ test("catalogue : la fusion peut garder l'autre sens, refuse deux unités diffé
       c = createIng("Lait pièce", "pc", "", "aut");
     S.rec[S.cur].ing[a] = SEC.map(() => 10);
     S.rec[S.cur].ing[b] = SEC.map(() => 0);
-    S.rec[S.cur].fx = { ...(S.rec[S.cur].fx || {}), [a]: 1000, [b]: 500 };
     const unites = fusionnerIng(a, c);
     const ok = fusionnerIng(a, b);
-    return { unites, ok, aGone: !ING[a], total: S.rec[S.cur].fx[b], b: !!ING[b] };
+    return { unites, ok, aGone: !ING[a], total: S.rec[S.cur].ing[b][0], b: !!ING[b] };
   });
   expect(r.unites).toContain("pas la même unité");
   expect(r.ok).toBe("");
   expect(r.aGone).toBe(true);
   expect(r.b).toBe(true);
-  expect(r.total).toBe(1500);
+  expect(r.total).toBe(10);
 });
 
 test("catalogue : un seul bouton ✎ ouvre la modification (Nom large, prix, Effacer, Fusionner, Annuler)", async ({
@@ -3066,25 +3045,6 @@ test("robustesse : un camp courant nommé comme une propriété héritée (const
   expect(erreurs).toEqual([]);
 });
 
-test("catalogue : la fusion refuse un ingrédient en quantité unique avec un autre par personne", async ({
-  page,
-}) => {
-  await ouvrir(page);
-  const r = await page.evaluate(() => {
-    const a = createIng("Lait mixte", "ml", "", "aut"),
-      b = createIng("lait mixte", "ml", "", "aut");
-    S.rec[S.cur].ing[a] = SEC.map(() => 10);
-    S.rec[S.cur].ing[b] = SEC.map(() => 0);
-    S.rec[S.cur].fx = { ...(S.rec[S.cur].fx || {}), [b]: 500 };
-    const err = fusionnerIng(a, b);
-    return { err, a: !!ING[a], b: !!ING[b], fx: S.rec[S.cur].fx[b] };
-  });
-  expect(r.err).toContain("quantité unique");
-  expect(r.a).toBe(true);
-  expect(r.b).toBe(true);
-  expect(r.fx).toBe(500);
-});
-
 test("deux onglets : le second à enregistrer ne remplace pas le travail du premier sans prévenir", async ({
   page,
 }) => {
@@ -3187,7 +3147,7 @@ test("recettes : le nom d'un ingrédient ouvre sa fiche (comme le catalogue), un
   await expect(page.locator("#rb .ced")).toHaveCount(1);
   for (const champ of ["en", "eu", "ep", "eg", "ec"])
     await expect(page.locator(`#rb .ced [data-${champ}="${cles[0]}"]`)).toHaveCount(1);
-  await expect(page.locator(`#rb .ced [data-tg="${cles[0]}"]`)).toHaveCount(1);
+  await expect(page.locator(`#rb .ced [data-rq]`)).toHaveCount(1);
   await expect(page.locator(`#rb tr[data-rk="${cles[0]}"] .ib`)).toHaveAttribute(
     "aria-expanded",
     "true"
@@ -4457,31 +4417,4 @@ test("import de recette : un fichier qui n'est pas un fichier de favoris est ref
   });
   await expect(page.locator("#rimfm")).toContainText("autre.json");
   await expect(page.locator("#rimfm")).toContainText("n'est pas un fichier de recettes favorites");
-});
-
-test("recettes : un bandeau convertit les quantités uniques en quantités par personne, pour l'effectif d'origine", async ({
-  page,
-}) => {
-  await ouvrir(page);
-  await ouvrirFiche(page);
-  const premiere = () => page.locator("#rb tr").first();
-  await expect(page.locator("#rfxbar")).toBeEmpty();
-  await basculerQuantite(page, premiere()); // → quantité unique (total figé)
-  const k = await premiere().getAttribute("data-rk");
-  await expect(page.locator("#rfxbar")).toContainText("1 ingrédient en quantité unique");
-  // un total de 3 kg calculé pour 30 personnes = 100 g par personne
-  await premiere().locator("[data-fx]").fill("3");
-  await page.locator("#rfxn").fill("30");
-  await page.locator("#rfxok").click();
-  await expect(page.locator("#rfxbar")).toBeEmpty();
-  const r = await page.evaluate((k) => {
-    const R = S.rec[S.cur];
-    return { ing: R.ing[k], fx: !!(R.fx && k in R.fx), u: ING[k][1] };
-  }, k);
-  expect(r.fx).toBe(false);
-  expect(new Set(r.ing).size).toBe(1);
-  expect(r.ing[0]).toBeCloseTo(r.u === "pc" ? 0.1 : 100, 6);
-  // le total suit maintenant l'effectif du camp
-  const tot = await page.evaluate((k) => meal(S.cur).out[k] / (1 + C.wa / 100) / nn(), k);
-  expect(tot).toBeCloseTo(r.ing[0], 6);
 });
