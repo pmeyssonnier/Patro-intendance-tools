@@ -5,11 +5,11 @@
 const RATIO = {};
 const ratioKey = (k) => S.cur + "|" + k;
 
-/** « X pour N personnes » en mode quantité unique : le total (X ÷ N × effectif) remplace la quantité unique. */
+/** « X pour N personnes » (proposé en mode quantité unique) : « Appliquer » garde le ratio X ÷ N par personne ; le total est calculé pour l'effectif de chaque camp. */
 function ratioForm(k) {
   const u = ING[k][1],
     r = RATIO[ratioKey(k)] || { q: "", n: "1" };
-  return `<div class="rtf"><span class="s">ou</span> <input type="text" inputmode="decimal" value="${esc(r.q)}" placeholder="500" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="${esc(r.n)}" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personne(s)</span> <button class="x" data-ra="${esc(k)}">Appliquer</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, nbr(r.q), nbr(r.n))}</div></div>`;
+  return `<div class="rtf"><span class="s">ou</span> <input type="text" inputmode="decimal" value="${esc(r.q)}" placeholder="500" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="${esc(r.n)}" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personne(s)</span> <button class="x" data-ra="${esc(k)}" title="Enregistre la quantité par personne : le total suit l'effectif de chaque camp">Appliquer (par personne)</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, nbr(r.q), nbr(r.n))}</div></div>`;
 }
 
 /** Nombre saisi dans un champ texte, virgule ou point (« 0,5 »). */
@@ -350,12 +350,16 @@ $("rb").addEventListener("click", (e) => {
       q = nbr(box.querySelector("[data-rq]").value),
       n = nbr(box.querySelector("[data-rn]").value);
     if (!(q >= 0) || !(n > 0)) return;
-    if (!nn() || !R.fx || !(t.ra in R.fx)) return;
+    if (!R.fx || !(t.ra in R.fx)) return;
     RATIO[ratioKey(t.ra)] = {
       q: box.querySelector("[data-rq]").value,
       n: box.querySelector("[data-rn]").value,
     };
-    R.fx[t.ra] = ratioTotal(q, n);
+    // le ratio est gardé par personne dans toutes les sections : le total se recalcule pour chaque camp (aucun total n'est stocké)
+    const pp = Math.round((q / n) * 1e6) / 1e6;
+    R.ing[t.ra] = SEC.map(() => pp);
+    delete R.fx[t.ra];
+    if (R.fa) delete R.fa[t.ra];
     drawRec();
     calc();
   } else if (t.rm) {

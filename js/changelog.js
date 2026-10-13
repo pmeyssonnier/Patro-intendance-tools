@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.57.0",
+    d: "2026-10-13",
+    t: "Recettes : le ratio « X pour N personnes » reste par personne",
+    l: [
+      "Recettes › quantité unique › « X pour N personnes » : « Appliquer » garde maintenant le ratio par personne (X ÷ N) dans la recette, au lieu d'un total figé pour l'effectif du moment. La liste de courses recalcule le total selon l'effectif de chaque camp, sans ressaisir le ratio. La marge s'applique comme pour toute quantité par personne.",
+      "Les recettes déjà enregistrées avec une quantité unique restent inchangées ; le bouton « → par personne » les convertit.",
+    ],
+  },
+  {
     v: "1.56.0",
     d: "2026-10-09",
     t: "Import de recettes : le fichier choisi reste affiché",
