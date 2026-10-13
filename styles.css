@@ -1105,6 +1105,7 @@ th.num,
   gap: 10px;
 }
 .edg .eg-nom,
+.edg .eg-libelle,
 .edg .eg-lien,
 .edg .eg-vrac {
   grid-column: span 6;

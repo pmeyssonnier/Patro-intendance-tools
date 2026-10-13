@@ -4270,3 +4270,24 @@ test("vrac : 3 pièces dans la liste de courses donnent le poids estimé et le p
   const projet = await page.evaluate(() => projetExporte().texte);
   expect(JSON.parse(projet).pw[k]).toEqual({ kg: 1.49, g: 150 });
 });
+
+test("catalogue : le libellé du produit se modifie dans la fiche de l'ingrédient", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  // sans produit retenu, le champ est vide ; on pose un libellé
+  await expect(page.locator('[data-epn="pain"]')).toHaveValue("");
+  await page.locator('[data-epn="pain"]').fill("  BONI pain   gris 600 g ");
+  await page.locator('[data-eok="pain"]').click();
+  await expect(page.locator("#ct")).toContainText("↳ BONI pain gris 600 g");
+  // il est repris à la réouverture, survit à un rechargement, puis se vide
+  await page.reload();
+  await aller(page, "cat");
+  await page.locator('#ct [data-ced="pain"]').click();
+  await expect(page.locator('[data-epn="pain"]')).toHaveValue("BONI pain gris 600 g");
+  await page.locator('[data-epn="pain"]').fill("");
+  await page.locator('[data-eok="pain"]').click();
+  expect(await page.evaluate(() => "pain" in S.pn)).toBe(false);
+});

@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.62.0",
+    d: "2026-10-13",
+    t: "Catalogue : libellé du produit modifiable",
+    l: [
+      "Dans la fiche d'un ingrédient, un champ « Libellé du produit » permet de saisir ou de corriger à la main le nom affiché sous l'ingrédient (« ↳ BONI beurre de laiterie doux 250 g »), même quand il n'y en avait pas. Vide, il disparaît.",
+      "Le libellé n'est pas déduit du lien : les liens colruyt.be ne contiennent qu'un numéro de produit.",
+    ],
+  },
+  {
     v: "1.61.0",
     d: "2026-10-13",
     t: "Ingrédients à la pièce : prix au kg (vrac)",
