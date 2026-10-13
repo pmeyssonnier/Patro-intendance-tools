@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.60.0",
+    d: "2026-10-13",
+    t: "Recettes : « Quantité de la recette » plus visible",
+    l: [
+      "Dans la fiche d'un ingrédient de recette, la saisie « Quantité de la recette : X g pour N personnes » est maintenant en haut de la fiche, dans un encadré, au-dessus du nom, de l'unité et du prix (elle était en bas, sous les boutons).",
+    ],
+  },
+  {
     v: "1.59.0",
     d: "2026-10-13",
     t: "Recettes : « X pour N personnes » est gardé dans la recette",

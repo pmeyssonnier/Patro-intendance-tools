@@ -4199,3 +4199,16 @@ test("import de recette : « 320 g pour 4 personnes » de la recette d'origine e
     ])
   );
 });
+
+test("recettes : la saisie « Quantité de la recette » est en haut de la fiche de l'ingrédient, avant le nom", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ouvrirFiche(page);
+  const premiere = page.locator("#rb tr").first();
+  await premiere.locator(".ib").click();
+  const ratio = await page.locator("#rb .ced .rtf").boundingBox();
+  const nom = await page.locator("#rb .ced [data-en]").boundingBox();
+  expect(ratio.y + ratio.height).toBeLessThanOrEqual(nom.y);
+  await expect(page.locator("#rb .ced .rtf")).toContainText("Quantité de la recette");
+});
