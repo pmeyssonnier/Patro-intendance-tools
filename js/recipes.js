@@ -5,10 +5,22 @@
 const RATIO = {};
 const ratioKey = (k) => S.cur + "|" + k;
 
+/** Ratio « X pour N personnes » gardé dans la recette (R.ref), s'il correspond encore aux quantités par personne ; sinon null. */
+function ratioGarde(k) {
+  const R = S.rec[S.cur],
+    f = R && R.ref && R.ref[k],
+    q = R && R.ing[k];
+  if (!f || !q || !(f.q >= 0) || !(f.n > 0)) return null;
+  const pp = f.q / f.n;
+  return q.every((v) => Math.abs(v - pp) <= 1e-5 + Math.abs(pp) * 1e-5)
+    ? { q: String(f.q), n: String(f.n) }
+    : null;
+}
+
 /** « X pour N personnes » (dans la fiche de l'ingrédient) : « Appliquer » garde le ratio X ÷ N par personne dans toutes les sections ; le total n'existe que dans la liste de courses, calculé pour l'effectif de chaque camp. */
 function ratioForm(k) {
   const u = ING[k][1],
-    r = RATIO[ratioKey(k)] || { q: "", n: "1" };
+    r = RATIO[ratioKey(k)] || ratioGarde(k) || { q: "", n: "1" };
   return `<div class="rtf"><span class="s">Saisir en :</span> <input type="text" inputmode="decimal" value="${esc(r.q)}" placeholder="500" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="${esc(r.n)}" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personne(s)</span> <button class="x" data-ra="${esc(k)}" title="Enregistre la quantité par personne : le total suit l'effectif de chaque camp">Appliquer (par personne)</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, nbr(r.q), nbr(r.n))}</div></div>`;
 }
 
@@ -305,6 +317,8 @@ $("rb").addEventListener("change", (e) => {
   if (!R) return;
   if (d.k) {
     R.ing[d.k][+d.s] = saisie(e.target.value);
+    if (R.ref) delete R.ref[d.k];
+    delete RATIO[ratioKey(d.k)];
     calc();
   }
 });
@@ -337,11 +351,14 @@ $("rb").addEventListener("click", (e) => {
     // le ratio est gardé par personne dans toutes les sections : le total se recalcule pour chaque camp (aucun total n'est stocké)
     const pp = Math.round((q / n) * 1e6) / 1e6;
     R.ing[t.ra] = SEC.map(() => pp);
+    // X et N sont gardés dans la recette (export, autre appareil) pour réafficher « X pour N personnes »
+    (R.ref = R.ref || {})[t.ra] = { q, n };
     drawRec();
     calc();
   } else if (t.rm) {
     if (!confirm("Retirer « " + ING[t.rm][0] + " » de la recette « " + S.cur + " » ?")) return;
     delete R.ing[t.rm];
+    if (R.ref) delete R.ref[t.rm];
     drawRec();
     calc();
   }
@@ -535,6 +552,7 @@ $("rlist").addEventListener("click", (e) => {
 function rmIng(k) {
   for (const r of Object.values(S.rec)) {
     delete r.ing[k];
+    if (r.ref) delete r.ref[k];
   }
   delete S.prices[k];
   delete S.pn[k];

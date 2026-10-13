@@ -4132,3 +4132,70 @@ test("import de recette : un fichier qui n'est pas un fichier de favoris est ref
   await expect(page.locator("#rimfm")).toContainText("autre.json");
   await expect(page.locator("#rimfm")).toContainText("n'est pas un fichier de recettes favorites");
 });
+
+test("recettes : « X pour N personnes » est gardé dans la recette (export, autre appareil), et s'efface si on modifie une case", async ({
+  page,
+  browser,
+}) => {
+  await ouvrir(page);
+  await ouvrirFiche(page);
+  const premiere = () => page.locator("#rb tr").first();
+  const k = await premiere().getAttribute("data-rk");
+  await premiere().locator(".ib").click();
+  await page.locator("#rb [data-rq]").fill("100");
+  await page.locator("#rb [data-rn]").fill("10");
+  await page.locator("#rb [data-ra]").click();
+  await fermerFiche(page); // enregistre la recette
+  // export puis import dans un navigateur vierge (autre PC)
+  const json = await page.evaluate(() => projetExporte().texte);
+  const chemin = require("path").join(require("os").tmpdir(), "zz-ratio-" + Date.now() + ".json");
+  require("fs").writeFileSync(chemin, json);
+  const ctx2 = await browser.newContext();
+  const p2 = await ctx2.newPage();
+  await ouvrir(p2);
+  await importer(p2, chemin);
+  require("fs").unlinkSync(chemin);
+  await ouvrirFiche(p2);
+  await p2.locator(`#rb tr[data-rk="${k}"] .ib`).click();
+  await expect(p2.locator("#rb [data-rq]")).toHaveValue("100");
+  await expect(p2.locator("#rb [data-rn]")).toHaveValue("10");
+  const ref = await p2.evaluate((k) => S.rec[S.cur].ref[k], k);
+  expect(ref).toEqual({ q: 100, n: 10 });
+  // modifier une case par personne : le ratio gardé n'est plus valable
+  await p2.locator(`#rb tr[data-rk="${k}"] input[data-s="0"]`).fill("42");
+  await p2.locator(`#rb tr[data-rk="${k}"] input[data-s="0"]`).press("Tab");
+  expect(await p2.evaluate((k) => !!(S.rec[S.cur].ref || {})[k], k)).toBe(false);
+  await ctx2.close();
+});
+
+test("import de recette : « 320 g pour 4 personnes » de la recette d'origine est gardé", async ({
+  page,
+}) => {
+  const favoris = [
+    {
+      nom: "Fusilli test ratio",
+      portions: "4 personnes",
+      ingredients: ["320 g de fusilli", "10 cl de crème liquide"],
+      etapes: [],
+    },
+  ];
+  await ouvrir(page);
+  await aller(page, "rec");
+  await page.locator("#rimp").click();
+  await page.locator("#rimf").setInputFiles({
+    name: "f.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(favoris)),
+  });
+  await page.locator("#rimok").click();
+  const r = await page.evaluate(() => {
+    const R = S.rec["Fusilli test ratio"];
+    return Object.entries(R.ref).map(([k, f]) => [ING[k][0], f.q, f.n]);
+  });
+  expect(r).toEqual(
+    expect.arrayContaining([
+      ["Fusilli", 320, 4],
+      ["Crème liquide", 100, 4],
+    ])
+  );
+});
