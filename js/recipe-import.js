@@ -332,13 +332,17 @@ function creerRecetteImportee() {
     if (L.mode !== "+" && !memeFamille(L.mode, L))
       return `Unité différente pour « ${L.txt} » : choisis un autre ingrédient ou « Nouvel ingrédient ».`;
   }
-  const ing = {};
+  const ing = {},
+    ref = {};
   for (const L of prises) {
     const k = L.mode === "+" ? createIng(L.nomNouveau.trim(), L.u, L.dg, L.cat) : L.mode;
     const pp = Math.round((L.q / RI.n) * 1e6) / 1e6;
+    // la quantité de la recette d'origine (« 320 g pour 4 personnes ») est gardée ; deux lignes du même ingrédient s'additionnent, sans ratio unique
+    if (k in ing) delete ref[k];
+    else ref[k] = { q: L.q, n: RI.n };
     ing[k] = SEC.map((_, i) => Math.round((((ing[k] || [])[i] || 0) + pp) * 1e6) / 1e6);
   }
-  S.rec[nom] = { desc: descriptionImport(), ing };
+  S.rec[nom] = { desc: descriptionImport(), ing, ref };
   S.cur = nom;
   return "";
 }

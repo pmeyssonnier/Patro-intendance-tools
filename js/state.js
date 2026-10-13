@@ -276,6 +276,13 @@ function effectifPourConversion() {
     }
     delete r.fx;
     delete r.fa;
+    if (r.ref && typeof r.ref === "object") {
+      for (const k of Object.keys(r.ref)) {
+        const f = r.ref[k];
+        if (!(k in r.ing) || !f || !(+f.q >= 0) || !(+f.n > 0)) delete r.ref[k];
+        else r.ref[k] = { q: +f.q, n: +f.n };
+      }
+    } else delete r.ref;
   }
   for (const k of Object.keys(S.promo)) if (!ING[k]) delete S.promo[k];
   for (const k of Object.keys(S.url)) if (!ING[k] || !lienColruyt(S.url[k])) delete S.url[k];

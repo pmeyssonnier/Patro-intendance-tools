@@ -136,6 +136,12 @@ function cleanProject(x) {
       R.fx = {};
       for (const [k, v] of ent(r.fx)) if (okid(k) && k in R.ing) R.fx[k] = num(v, 0, 1e7);
     }
+    if (obj(r.ref)) {
+      R.ref = {};
+      for (const [k, f] of ent(r.ref))
+        if (okid(k) && k in R.ing && obj(f))
+          R.ref[k] = { q: num(f.q, 0, 1e7), n: num(f.n, 1, 1e4) };
+    }
     if (obj(r.fa)) {
       R.fa = {};
       for (const [k, v] of ent(r.fa)) if (okid(k) && k in R.ing && +v === 0) R.fa[k] = 0;
