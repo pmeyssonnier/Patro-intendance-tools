@@ -2,7 +2,7 @@
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
 // Numéro de version affiché dans le menu : à mettre à jour à chaque release (avec "version" dans package.json).
-const APP_VERSION = "1.61.0";
+const APP_VERSION = "1.62.0";
 
 // Nom de la troupe par défaut (modifiable dans Configuration).
 const TROOP0 = "Patro Sainte-Suzanne";
@@ -216,4 +216,5 @@ const DEF = {
   cat: {},
   promo: {},
   url: {},
+  pw: {},
 };

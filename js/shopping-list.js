@@ -17,6 +17,16 @@ const etiquettePromo = (k, q) => {
   return `<div class="s promo">🏷️ promo : ${eur(x.p)}/${ING[k][1] === "pc" ? "pièce" : ul(k)}${x.t ? " (" + esc(x.t) + ")" : ""}${gain}</div>`;
 };
 
+/** Ligne « vrac » sous un ingrédient à la pièce dont on connaît le prix au kg (catalogue, liste de courses) ; q : nombre de pièces à acheter, pour le poids estimé. "" sinon. */
+const etiquetteVrac = (k, q) => {
+  const v = vracDe(k);
+  if (!v) return "";
+  const poids = q
+    ? ` · ≈ ${q * v.g >= 1000 ? ((q * v.g) / 1000).toLocaleString("fr-BE", { maximumFractionDigits: 2 }) + " kg" : Math.round(q * v.g) + " g"}`
+    : "";
+  return `<div class="s">⚖️ vrac : ${eur(v.kg)}/kg · ${v.g} g la pièce${poids}</div>`;
+};
+
 /** Regroupe des ingrédients par rayon, dans l'ordre du magasin : [[nom du rayon, [clés]], …]. Un seul groupe sans titre si le regroupement est désactivé (par défaut : l'option de la liste de courses). */
 function parRayon(keys, groupe = S.gl !== false) {
   if (!groupe) return [["", keys]];
@@ -59,7 +69,7 @@ function calc() {
             .map((k) => {
               const c = (tot[k] / per(k)) * price(k);
               sum += c;
-              return `<tr><td>${esc(ING[k][0])}${price(k) ? "" : '<div class="s" style="color:#d33">⚠ prix manquant</div>'}${produitLien(k)}${etiquettePromo(k, tot[k])}</td><td>${qty(k, tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-p="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td>${eur(c)}</td></tr>`;
+              return `<tr><td>${esc(ING[k][0])}${price(k) ? "" : '<div class="s" style="color:#d33">⚠ prix manquant</div>'}${produitLien(k)}${etiquetteVrac(k, ceilp(tot[k]))}${etiquettePromo(k, tot[k])}</td><td>${qty(k, tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-p="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td>${eur(c)}</td></tr>`;
             })
             .join("")
       )

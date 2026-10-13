@@ -555,6 +555,7 @@ function rmIng(k) {
     if (r.ref) delete r.ref[k];
   }
   delete S.prices[k];
+  delete S.pw[k];
   delete S.pn[k];
   delete S.cat[k];
   delete S.promo[k];

@@ -20,7 +20,7 @@ function fusionnerIng(src, dst) {
   }
   if (!price(dst) && price(src)) {
     S.prices[dst] = price(src);
-    for (const m of [S.pn, S.promo, S.url]) if (src in m) m[dst] = m[src];
+    for (const m of [S.pn, S.promo, S.url, S.pw]) if (src in m) m[dst] = m[src];
   }
   for (const d in DIETS) {
     const ex = DIETS[d].ex;
