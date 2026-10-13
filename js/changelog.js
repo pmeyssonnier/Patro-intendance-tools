@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.59.0",
+    d: "2026-10-13",
+    t: "Recettes : « X pour N personnes » est gardé dans la recette",
+    l: [
+      "« 100 g pour 10 personnes » saisi dans la fiche d'un ingrédient est maintenant enregistré avec la recette : il est exporté avec le projet et réaffiché tel quel sur un autre appareil (avant, seul le résultat par personne était gardé, et les cases « X pour N personnes » repartaient vides).",
+      "Le ratio gardé disparaît si tu modifies à la main une case par personne, ou si deux ingrédients sont fusionnés.",
+      "L'import d'une recette garde aussi la quantité de la recette d'origine (par exemple « 320 g pour 4 personnes »).",
+    ],
+  },
+  {
     v: "1.58.0",
     d: "2026-10-13",
     t: "Recettes : tout par personne, plus aucun total dans la recette",

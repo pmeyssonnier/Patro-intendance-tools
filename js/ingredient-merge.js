@@ -9,8 +9,14 @@ function fusionnerIng(src, dst) {
   const ar = (x) => Math.round(x * 1e6) / 1e6;
   for (const r of Object.values(S.rec)) {
     if (!(src in r.ing)) continue;
-    if (!(dst in r.ing)) r.ing[dst] = r.ing[src];
-    else r.ing[dst] = r.ing[dst].map((v, i) => ar(v + r.ing[src][i]));
+    if (!(dst in r.ing)) {
+      r.ing[dst] = r.ing[src];
+      if (r.ref && r.ref[src]) r.ref[dst] = r.ref[src];
+    } else {
+      r.ing[dst] = r.ing[dst].map((v, i) => ar(v + r.ing[src][i]));
+      if (r.ref) delete r.ref[dst]; // les quantités sont additionnées : l'ancien « X pour N personnes » ne correspond plus
+    }
+    if (r.ref) delete r.ref[src];
   }
   if (!price(dst) && price(src)) {
     S.prices[dst] = price(src);
