@@ -966,13 +966,8 @@ test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la qua
     "= " + Math.ceil(N / 5 - 1e-9) + " pc pour " + N + " personnes"
   );
   await ligne().locator("[data-ra]").click();
-  await expect(ligne().locator("[data-fx]")).toHaveValue(String(N / 5));
-  // les valeurs saisies restent affichées après « Appliquer », avec le même calcul
-  await expect(ligne().locator("[data-rq]")).toHaveValue("1");
-  await expect(ligne().locator("[data-rn]")).toHaveValue("5");
-  await expect(ligne().locator("[data-rp]")).toContainText("= " + N / 5 + " pc pour " + N);
-  // « → par personne » répartit : 1/5 = 0,2 dans chaque section
-  await basculerQuantite(page, ligne());
+  // « Appliquer » garde le ratio par personne (1/5 = 0,2), pas un total figé pour l'effectif du moment
+  await expect(ligne().locator("[data-fx]")).toHaveCount(0);
   const champs = ligne().locator("input[data-s]");
   await expect(champs).toHaveCount(4);
   for (let i = 0; i < 4; i++) await expect(champs.nth(i)).toHaveValue("0.2");
@@ -981,7 +976,6 @@ test("recettes : « 1 pour 5 personnes » donne la quantité unique, puis la qua
   await ligne().locator("[data-rq]").fill("0,5");
   await ligne().locator("[data-rn]").fill("4");
   await ligne().locator("[data-ra]").click();
-  await basculerQuantite(page, ligne());
   await expect(ligne().locator("input[data-s]").first()).toHaveValue("0.125");
 });
 
@@ -998,12 +992,28 @@ test("recettes : « 500 g pour 5 personnes » donne 100 g par personne et le tot
   const attendu =
     "= " + ((100 * N) / 1000).toFixed(2) + " kg pour " + N + " personnes (100 g par personne)";
   await expect(premiere().locator("[data-rp]")).toContainText(attendu);
+  const k = await premiere().getAttribute("data-rk");
   await premiere().locator("[data-ra]").click();
-  await expect(premiere().locator("[data-fx]")).toHaveValue(String((100 * N) / 1000));
-  // après « Appliquer », le formulaire garde 500 / 5 et l'aperçu reste identique
-  await expect(premiere().locator("[data-rq]")).toHaveValue("500");
-  await expect(premiere().locator("[data-rn]")).toHaveValue("5");
-  await expect(premiere().locator("[data-rp]")).toContainText(attendu);
+  // le ratio est gardé par personne (100 g) : aucun total n'est stocké
+  await expect(premiere().locator("[data-fx]")).toHaveCount(0);
+  await expect(premiere().locator("input[data-s]").first()).toHaveValue("100");
+  // le total suit l'effectif : un autre camp (effectif différent) donne un autre total sans rien ressaisir
+  const totaux = await page.evaluate((k) => {
+    const R = S.rec[S.cur],
+      avant = R.ing[k].slice(),
+      marge = 1 + C.wa / 100,
+      total = () => meal(S.cur).out[k];
+    const t1 = total() / marge / nn();
+    const n0 = C.n.slice();
+    C.n = C.n.map((x) => x * 2);
+    const t2 = total() / marge / nn();
+    C.n = n0;
+    return { avant, t1, t2, fx: !!(R.fx && k in R.fx) };
+  }, k);
+  expect(totaux.fx).toBe(false);
+  expect(totaux.avant.every((q) => q === 100)).toBe(true);
+  expect(totaux.t1).toBeCloseTo(100, 6);
+  expect(totaux.t2).toBeCloseTo(100, 6);
 });
 
 test("recettes : passer de « quantité unique » à « par personne » garde le total, sans arrondi à l'entier", async ({
@@ -4161,4 +4171,31 @@ test("import de recette : un fichier qui n'est pas un fichier de favoris est ref
   });
   await expect(page.locator("#rimfm")).toContainText("autre.json");
   await expect(page.locator("#rimfm")).toContainText("n'est pas un fichier de recettes favorites");
+});
+
+test("recettes : un bandeau convertit les quantités uniques en quantités par personne, pour l'effectif d'origine", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ouvrirFiche(page);
+  const premiere = () => page.locator("#rb tr").first();
+  await expect(page.locator("#rfxbar")).toBeEmpty();
+  await basculerQuantite(page, premiere()); // → quantité unique (total figé)
+  const k = await premiere().getAttribute("data-rk");
+  await expect(page.locator("#rfxbar")).toContainText("1 ingrédient en quantité unique");
+  // un total de 3 kg calculé pour 30 personnes = 100 g par personne
+  await premiere().locator("[data-fx]").fill("3");
+  await page.locator("#rfxn").fill("30");
+  await page.locator("#rfxok").click();
+  await expect(page.locator("#rfxbar")).toBeEmpty();
+  const r = await page.evaluate((k) => {
+    const R = S.rec[S.cur];
+    return { ing: R.ing[k], fx: !!(R.fx && k in R.fx), u: ING[k][1] };
+  }, k);
+  expect(r.fx).toBe(false);
+  expect(new Set(r.ing).size).toBe(1);
+  expect(r.ing[0]).toBeCloseTo(r.u === "pc" ? 0.1 : 100, 6);
+  // le total suit maintenant l'effectif du camp
+  const tot = await page.evaluate((k) => meal(S.cur).out[k] / (1 + C.wa / 100) / nn(), k);
+  expect(tot).toBeCloseTo(r.ing[0], 6);
 });

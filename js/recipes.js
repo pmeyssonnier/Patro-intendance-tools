@@ -5,11 +5,11 @@
 const RATIO = {};
 const ratioKey = (k) => S.cur + "|" + k;
 
-/** « X pour N personnes » en mode quantité unique : le total (X ÷ N × effectif) remplace la quantité unique. */
+/** « X pour N personnes » (proposé en mode quantité unique) : « Appliquer » garde le ratio X ÷ N par personne ; le total est calculé pour l'effectif de chaque camp. */
 function ratioForm(k) {
   const u = ING[k][1],
     r = RATIO[ratioKey(k)] || { q: "", n: "1" };
-  return `<div class="rtf"><span class="s">ou</span> <input type="text" inputmode="decimal" value="${esc(r.q)}" placeholder="500" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="${esc(r.n)}" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personne(s)</span> <button class="x" data-ra="${esc(k)}">Appliquer</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, nbr(r.q), nbr(r.n))}</div></div>`;
+  return `<div class="rtf"><span class="s">ou</span> <input type="text" inputmode="decimal" value="${esc(r.q)}" placeholder="500" data-rq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité"> <span class="s">${u}</span> <span>pour</span> <input type="text" inputmode="numeric" value="${esc(r.n)}" data-rn="${esc(k)}" aria-label="${esc(ING[k][0])} : nombre de personnes"> <span>personne(s)</span> <button class="x" data-ra="${esc(k)}" title="Enregistre la quantité par personne : le total suit l'effectif de chaque camp">Appliquer (par personne)</button><div class="s" data-rp="${esc(k)}" role="status">${ratioPreview(k, nbr(r.q), nbr(r.n))}</div></div>`;
 }
 
 /** Nombre saisi dans un champ texte, virgule ou point (« 0,5 »). */
@@ -53,12 +53,48 @@ function drawRecList() {
     : `<p class="s">${Object.keys(S.rec).length ? "Aucune recette ne correspond au filtre." : "Aucune recette. Crée-en une avec « + Nouvelle recette », ou importe-en une."}</p>`;
 }
 
+let FXN = ""; // effectif saisi pour convertir les quantités uniques (reste affiché après un redessin)
+
+/** Bandeau au-dessus du tableau quand la recette a des quantités uniques : les convertir en quantités par personne.
+    Le total d'une quantité unique a été calculé pour un effectif donné (celui de l'auteur de la recette, ou du camp au moment de la saisie) : le ratio n'est pas gardé, il faut donc dire pour combien de personnes il a été calculé. */
+function drawFxBar() {
+  const R = S.rec[S.cur],
+    n = R && R.fx ? Object.keys(R.fx).length : 0;
+  $("rfxbar").innerHTML = n
+    ? `<div class="rtf"><span class="s">${n} ingrédient${n > 1 ? "s" : ""} en <b>quantité unique</b> : le total a été calculé pour un effectif donné, sans garder le ratio par personne. Pour qu'il suive l'effectif de chaque camp, indique pour combien de personnes ces totaux ont été calculés :</span> <input type="text" inputmode="numeric" id="rfxn" value="${esc(FXN || String(nn() || ""))}" aria-label="Nombre de personnes pour lesquelles les quantités uniques ont été calculées" style="width:70px"> <span>personne(s)</span> <button class="x" id="rfxok">Convertir en quantités par personne</button><div class="s" id="rfxm" role="status"></div></div>`
+    : "";
+}
+
+$("rfxbar").addEventListener("input", (e) => {
+  if (e.target.id === "rfxn") FXN = e.target.value;
+});
+
+$("rfxbar").addEventListener("click", (e) => {
+  if (e.target.id !== "rfxok") return;
+  const R = S.rec[S.cur],
+    n = nbr($("rfxn").value);
+  if (!R || !R.fx) return;
+  if (!(n >= 1)) {
+    $("rfxm").textContent = "Indique un nombre de personnes (1 ou plus).";
+    return;
+  }
+  for (const k of Object.keys(R.fx)) {
+    const pp = Math.round((R.fx[k] / n) * 1e6) / 1e6;
+    R.ing[k] = SEC.map(() => pp);
+    delete R.fx[k];
+    if (R.fa) delete R.fa[k];
+  }
+  drawRec();
+  calc();
+});
+
 /** Contenu de la fenêtre d'édition : types et mots-clés, description, tableau des ingrédients et liste pour en ajouter. */
 function drawRecEdit() {
   drawTags();
   const R = S.rec[S.cur];
   if (!R || !(recEdit in R.ing)) recEdit = null;
   $("rdesc").value = R ? R.desc : "";
+  drawFxBar();
   majApercu();
   $("rh").innerHTML =
     "<tr><th>Ingrédients</th>" +
@@ -350,12 +386,16 @@ $("rb").addEventListener("click", (e) => {
       q = nbr(box.querySelector("[data-rq]").value),
       n = nbr(box.querySelector("[data-rn]").value);
     if (!(q >= 0) || !(n > 0)) return;
-    if (!nn() || !R.fx || !(t.ra in R.fx)) return;
+    if (!R.fx || !(t.ra in R.fx)) return;
     RATIO[ratioKey(t.ra)] = {
       q: box.querySelector("[data-rq]").value,
       n: box.querySelector("[data-rn]").value,
     };
-    R.fx[t.ra] = ratioTotal(q, n);
+    // le ratio est gardé par personne dans toutes les sections : le total se recalcule pour chaque camp (aucun total n'est stocké)
+    const pp = Math.round((q / n) * 1e6) / 1e6;
+    R.ing[t.ra] = SEC.map(() => pp);
+    delete R.fx[t.ra];
+    if (R.fa) delete R.fa[t.ra];
     drawRec();
     calc();
   } else if (t.rm) {
