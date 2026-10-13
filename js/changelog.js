@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.60.0",
+    v: "1.61.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
@@ -15,6 +15,14 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
+    v: "1.60.0",
+    d: "2026-10-13",
+    t: "Recettes : « Quantité de la recette » plus visible",
+    l: [
+      "Dans la fiche d'un ingrédient de recette, la saisie « Quantité de la recette : X g pour N personnes » est maintenant en haut de la fiche, dans un encadré, au-dessus du nom, de l'unité et du prix (elle était en bas, sous les boutons).",
     ],
   },
   {

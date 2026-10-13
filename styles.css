@@ -1069,6 +1069,19 @@ th.num,
 .rtf .s[data-rp] {
   flex-basis: 100%;
 }
+/* dans la fiche d'un ingrédient de recette : encadré, au-dessus des champs du catalogue */
+.ced .rtf {
+  position: sticky;
+  left: 0;
+  width: calc(100cqw - 16px);
+  box-sizing: border-box;
+  white-space: normal;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--ac);
+  border-radius: 8px;
+  background: var(--grp);
+}
 
 /* Catalogue de prix : modification d'un ingrédient */
 /* Page Recettes : la fiche reste dans la partie visible du tableau (qui défile en largeur), sans l'élargir */
