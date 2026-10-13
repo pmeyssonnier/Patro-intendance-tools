@@ -4172,3 +4172,30 @@ test("import de recette : un fichier qui n'est pas un fichier de favoris est ref
   await expect(page.locator("#rimfm")).toContainText("autre.json");
   await expect(page.locator("#rimfm")).toContainText("n'est pas un fichier de recettes favorites");
 });
+
+test("recettes : un bandeau convertit les quantités uniques en quantités par personne, pour l'effectif d'origine", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await ouvrirFiche(page);
+  const premiere = () => page.locator("#rb tr").first();
+  await expect(page.locator("#rfxbar")).toBeEmpty();
+  await basculerQuantite(page, premiere()); // → quantité unique (total figé)
+  const k = await premiere().getAttribute("data-rk");
+  await expect(page.locator("#rfxbar")).toContainText("1 ingrédient en quantité unique");
+  // un total de 3 kg calculé pour 30 personnes = 100 g par personne
+  await premiere().locator("[data-fx]").fill("3");
+  await page.locator("#rfxn").fill("30");
+  await page.locator("#rfxok").click();
+  await expect(page.locator("#rfxbar")).toBeEmpty();
+  const r = await page.evaluate((k) => {
+    const R = S.rec[S.cur];
+    return { ing: R.ing[k], fx: !!(R.fx && k in R.fx), u: ING[k][1] };
+  }, k);
+  expect(r.fx).toBe(false);
+  expect(new Set(r.ing).size).toBe(1);
+  expect(r.ing[0]).toBeCloseTo(r.u === "pc" ? 0.1 : 100, 6);
+  // le total suit maintenant l'effectif du camp
+  const tot = await page.evaluate((k) => meal(S.cur).out[k] / (1 + C.wa / 100) / nn(), k);
+  expect(tot).toBeCloseTo(r.ing[0], 6);
+});

@@ -53,12 +53,48 @@ function drawRecList() {
     : `<p class="s">${Object.keys(S.rec).length ? "Aucune recette ne correspond au filtre." : "Aucune recette. Crée-en une avec « + Nouvelle recette », ou importe-en une."}</p>`;
 }
 
+let FXN = ""; // effectif saisi pour convertir les quantités uniques (reste affiché après un redessin)
+
+/** Bandeau au-dessus du tableau quand la recette a des quantités uniques : les convertir en quantités par personne.
+    Le total d'une quantité unique a été calculé pour un effectif donné (celui de l'auteur de la recette, ou du camp au moment de la saisie) : le ratio n'est pas gardé, il faut donc dire pour combien de personnes il a été calculé. */
+function drawFxBar() {
+  const R = S.rec[S.cur],
+    n = R && R.fx ? Object.keys(R.fx).length : 0;
+  $("rfxbar").innerHTML = n
+    ? `<div class="rtf"><span class="s">${n} ingrédient${n > 1 ? "s" : ""} en <b>quantité unique</b> : le total a été calculé pour un effectif donné, sans garder le ratio par personne. Pour qu'il suive l'effectif de chaque camp, indique pour combien de personnes ces totaux ont été calculés :</span> <input type="text" inputmode="numeric" id="rfxn" value="${esc(FXN || String(nn() || ""))}" aria-label="Nombre de personnes pour lesquelles les quantités uniques ont été calculées" style="width:70px"> <span>personne(s)</span> <button class="x" id="rfxok">Convertir en quantités par personne</button><div class="s" id="rfxm" role="status"></div></div>`
+    : "";
+}
+
+$("rfxbar").addEventListener("input", (e) => {
+  if (e.target.id === "rfxn") FXN = e.target.value;
+});
+
+$("rfxbar").addEventListener("click", (e) => {
+  if (e.target.id !== "rfxok") return;
+  const R = S.rec[S.cur],
+    n = nbr($("rfxn").value);
+  if (!R || !R.fx) return;
+  if (!(n >= 1)) {
+    $("rfxm").textContent = "Indique un nombre de personnes (1 ou plus).";
+    return;
+  }
+  for (const k of Object.keys(R.fx)) {
+    const pp = Math.round((R.fx[k] / n) * 1e6) / 1e6;
+    R.ing[k] = SEC.map(() => pp);
+    delete R.fx[k];
+    if (R.fa) delete R.fa[k];
+  }
+  drawRec();
+  calc();
+});
+
 /** Contenu de la fenêtre d'édition : types et mots-clés, description, tableau des ingrédients et liste pour en ajouter. */
 function drawRecEdit() {
   drawTags();
   const R = S.rec[S.cur];
   if (!R || !(recEdit in R.ing)) recEdit = null;
   $("rdesc").value = R ? R.desc : "";
+  drawFxBar();
   majApercu();
   $("rh").innerHTML =
     "<tr><th>Ingrédients</th>" +
