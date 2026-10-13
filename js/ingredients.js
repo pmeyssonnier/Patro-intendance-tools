@@ -83,6 +83,7 @@ function editIng(k, nom, unite, dg, cat) {
   } else if (nom === ING0[k][0] && unite === ING0[k][1]) delete S.ov[k];
   else S.ov[k] = { n: nom, u: unite };
   if (autre) {
+    delete S.pw[k];
     S.prices[k] = 0;
     delete S.pn[k];
     delete S.promo[k];
@@ -101,6 +102,24 @@ function poserPrix(k, p) {
   S.prices[k] = p;
   delete S.pn[k];
   delete S.promo[k];
+  delete S.pw[k];
+}
+
+/** Prix à la pièce (€) d'un ingrédient vendu au kg en vrac : prix au kg × poids moyen d'une pièce (g). */
+const prixPiece = (kg, g) => Math.round(((kg * g) / 1000) * 1e4) / 1e4;
+
+/** Prix au kg et poids d'une pièce { kg, g } d'un ingrédient à la pièce vendu en vrac, tant que son prix est bien celui calculé (si un autre prix a été saisi depuis : null). */
+function vracDe(k) {
+  const v = S.pw[k];
+  return v && ING[k] && ING[k][1] === "pc" && Math.abs(price(k) - prixPiece(v.kg, v.g)) < 1e-3
+    ? v
+    : null;
+}
+
+/** Fixe le prix d'un ingrédient à la pièce depuis son prix au kg et le poids moyen d'une pièce (g). */
+function poserVrac(k, kg, g) {
+  poserPrix(k, prixPiece(kg, g));
+  S.pw[k] = { kg, g };
 }
 
 /** Message qui explique pourquoi un ingrédient ne peut pas être supprimé (utilisé dans des recettes), ou "" s'il le peut. */

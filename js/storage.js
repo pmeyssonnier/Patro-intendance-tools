@@ -111,6 +111,7 @@ function cleanProject(x) {
     cat: {},
     promo: {},
     url: {},
+    pw: {},
     art: {},
     hid: Array.isArray(x.hid)
       ? x.hid.filter((k) => typeof k === "string" && okid(k)).slice(0, 200)
@@ -205,6 +206,10 @@ function cleanProject(x) {
   for (const [k, v] of ent(x.promo))
     if (okid(k) && obj(v) && +v.p > 0 && +v.p < 1e5)
       o.promo[k] = { p: +(+v.p).toFixed(2), t: str(v.t, 60) };
+  // prix au kg et poids d'une pièce des ingrédients vendus en vrac (identifiant -> { kg, g })
+  for (const [k, v] of ent(x.pw))
+    if (okid(k) && obj(v) && +v.kg > 0 && +v.kg < 1e5 && +v.g > 0 && +v.g < 1e5)
+      o.pw[k] = { kg: +(+v.kg).toFixed(4), g: +(+v.g).toFixed(2) };
   if (obj(x.dd)) {
     o.dd = {};
     for (const [k, v] of ent(x.dd)) {
