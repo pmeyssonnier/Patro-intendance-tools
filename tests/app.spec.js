@@ -4212,3 +4212,61 @@ test("recettes : la saisie « Quantité de la recette » est en haut de la fiche
   expect(ratio.y + ratio.height).toBeLessThanOrEqual(nom.y);
   await expect(page.locator("#rb .ced .rtf")).toContainText("Quantité de la recette");
 });
+
+test("vrac : prix au kg et poids d'une pièce donnent le prix à la pièce, gardé après un rechargement", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const k = await page.evaluate(() => {
+    const id = createIng("Oignons vrac", "pc", "", "aut");
+    refreshIng();
+    return id;
+  });
+  await aller(page, "cat");
+  await page.locator(`#ct [data-ced="${k}"]`).click();
+  // l'option est cachée tant qu'on ne la demande pas
+  await expect(page.locator(`[data-evk="${k}"]`)).toBeHidden();
+  await page.locator(`[data-evo="${k}"]`).click();
+  await page.locator(`[data-evk="${k}"]`).fill("1.49");
+  await page.locator(`[data-evg="${k}"]`).fill("150");
+  await page.locator(`[data-evg="${k}"]`).dispatchEvent("change");
+  await expect(page.locator(`[data-evr="${k}"]`)).toContainText("0,22");
+  await page.locator(`[data-eok="${k}"]`).click();
+  expect(await page.evaluate((id) => [price(id), S.pw[id]], k)).toEqual([
+    0.2235,
+    { kg: 1.49, g: 150 },
+  ]);
+  await expect(page.locator("#ct")).toContainText("vrac : 1,49");
+  // un prix saisi à la main ensuite remplace le vrac
+  await page.reload();
+  expect(await page.evaluate((id) => !!vracDe(id), k)).toBe(true);
+  await page.evaluate((id) => {
+    poserPrix(id, 0.5);
+    calc();
+  }, k);
+  expect(await page.evaluate((id) => [!!vracDe(id), id in S.pw], k)).toEqual([false, false]);
+});
+
+test("vrac : 3 pièces dans la liste de courses donnent le poids estimé et le prix du kg", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  const k = await page.evaluate(() => {
+    const id = createIng("Oignons vrac", "pc", "", "aut");
+    poserVrac(id, 1.49, 150);
+    S.art[id] = 1;
+    C.extra[id] = 3;
+    refreshIng();
+    calc();
+    return id;
+  });
+  await aller(page, "list");
+  const ligne = page.locator("#list tr", { hasText: "Oignons vrac" });
+  await expect(ligne).toContainText("3 pc");
+  await expect(ligne).toContainText("vrac : 1,49");
+  await expect(ligne).toContainText("450 g");
+  expect(montant(await ligne.locator("td").last().innerText())).toBeCloseTo(0.67, 2);
+  // le prix au kg et le poids survivent à l'export puis à l'import
+  const projet = await page.evaluate(() => projetExporte().texte);
+  expect(JSON.parse(projet).pw[k]).toEqual({ kg: 1.49, g: 150 });
+});

@@ -212,6 +212,8 @@ if (!S.promo || typeof S.promo !== "object") S.promo = {};
 
 if (!S.url || typeof S.url !== "object") S.url = {};
 
+if (!S.pw || typeof S.pw !== "object") S.pw = {};
+
 /** Nom du produit retenu (« ↳ ») pour un ingrédient, cliquable (fiche Colruyt) quand le lien est connu ; "" s'il n'y a ni produit ni lien. */
 const produitLien = (k) => {
   const nom = S.pn[k] ? nomProduit(S.pn[k]) : "",
@@ -286,6 +288,11 @@ function effectifPourConversion() {
   }
   for (const k of Object.keys(S.promo)) if (!ING[k]) delete S.promo[k];
   for (const k of Object.keys(S.url)) if (!ING[k] || !lienColruyt(S.url[k])) delete S.url[k];
+  for (const k of Object.keys(S.pw)) {
+    const v = S.pw[k];
+    if (!ING[k] || ING[k][1] !== "pc" || !v || !(+v.kg > 0) || !(+v.g > 0)) delete S.pw[k];
+    else S.pw[k] = { kg: +v.kg, g: +v.g };
+  }
   for (const k of Object.keys(S.cat))
     if (!ING[k] || !CATS.some((c) => c[0] === S.cat[k])) delete S.cat[k];
   for (const d in DIETS) {

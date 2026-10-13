@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.61.0",
+    d: "2026-10-13",
+    t: "Ingrédients à la pièce : prix au kg (vrac)",
+    l: [
+      "Dans la fiche d'un ingrédient à la pièce, le bouton « + Je connais le prix au kg (vrac) » ouvre deux champs : le prix au kg et le poids moyen d'une pièce. Le prix à la pièce s'en déduit (1,49 €/kg × 150 g = 0,22 € la pièce).",
+      "Dans les recettes, tu continues à saisir des pièces ; la liste de courses et le catalogue affichent le prix au kg, le poids d'une pièce et le poids estimé (« 3 pc ≈ 450 g »).",
+      "L'option reste cachée tant qu'on ne la demande pas. Elle est enregistrée avec le projet (export, import). Un prix saisi à la main ensuite la remplace.",
+    ],
+  },
+  {
     v: "1.60.0",
     d: "2026-10-13",
     t: "Recettes : « Quantité de la recette » plus visible",
