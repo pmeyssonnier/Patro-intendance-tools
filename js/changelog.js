@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.63.0",
+    d: "2026-10-16",
+    t: "Liste de courses : le coût suit les pièces achetées",
+    l: [
+      "Les pièces s'achètent entières : « 2 pc » dans la liste est maintenant compté 2 × le prix (avant, le coût était calculé sur la quantité exacte, par exemple 1,2 pièce, alors que la liste affichait 2 pièces).",
+      "Le total de la liste, les documents (HTML, texte, CSV) et le budget de l'import de prix utilisent ce même calcul. Les grammes et les millilitres ne changent pas.",
+    ],
+  },
+  {
     v: "1.62.0",
     d: "2026-10-13",
     t: "Catalogue : libellé du produit modifiable",
