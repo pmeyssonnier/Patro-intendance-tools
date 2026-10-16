@@ -4577,3 +4577,21 @@ test("catalogue : le libellé du produit se modifie dans la fiche de l'ingrédie
   await page.locator('[data-eok="pain"]').click();
   expect(await page.evaluate(() => "pain" in S.pn)).toBe(false);
 });
+
+test("liste de courses : une pièce s'achète entière, le coût suit la quantité affichée", async ({
+  page,
+}) => {
+  await ouvrir(page);
+  await page.evaluate(() => {
+    const id = createIng("Pot test", "pc", "", "aut");
+    S.prices[id] = 1.5;
+    S.art[id] = 1;
+    C.extra[id] = 1.2; // 1,2 pièce nécessaire : on en achète 2
+    refreshIng();
+    calc();
+  });
+  await aller(page, "list");
+  const ligne = page.locator("#list tr", { hasText: "Pot test" });
+  await expect(ligne).toContainText("2 pc");
+  expect(montant(await ligne.locator("td").last().innerText())).toBeCloseTo(3, 2); // 2 × 1,50 €
+});

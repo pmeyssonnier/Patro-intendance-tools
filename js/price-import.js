@@ -153,7 +153,7 @@ function comparerPrix(pj) {
     );
   const avantB = LAST.sum,
     apresB = LAST.keys.reduce(
-      (a, k) => a + (LAST.tot[k] / per(k)) * (k in nouveau ? nouveau[k] : price(k)),
+      (a, k) => a + (achete(k, LAST.tot[k]) / per(k)) * (k in nouveau ? nouveau[k] : price(k)),
       0
     );
   return { lignes, avantB, apresB };

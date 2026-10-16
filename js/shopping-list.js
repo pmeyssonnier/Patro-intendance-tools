@@ -6,7 +6,7 @@ let LAST = { keys: [], tot: {}, sum: 0, pm: [] };
 /** Économie possible sur un ingrédient si la promotion s'applique à toute la quantité achetée (le budget garde le prix normal). */
 const economie = (k, q) => {
   const x = promoDe(k);
-  return x ? ((price(k) - x.p) * q) / per(k) : 0;
+  return x ? ((price(k) - x.p) * achete(k, q)) / per(k) : 0;
 };
 
 /** Ligne « 🏷️ promo » sous un ingrédient (catalogue, liste de courses) ; "" s'il n'y en a pas. */
@@ -67,7 +67,7 @@ function calc() {
           (nom ? `<tr class="grp"><td colspan="4"><b>${esc(nom)}</b></td></tr>` : "") +
           l
             .map((k) => {
-              const c = (tot[k] / per(k)) * price(k);
+              const c = coutLigne(k, tot[k]);
               sum += c;
               return `<tr><td>${esc(ING[k][0])}${price(k) ? "" : '<div class="s" style="color:#d33">⚠ prix manquant</div>'}${produitLien(k)}${etiquetteVrac(k, ceilp(tot[k]))}${etiquettePromo(k, tot[k])}</td><td>${qty(k, tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-p="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td>${eur(c)}</td></tr>`;
             })

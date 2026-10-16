@@ -54,7 +54,7 @@ function listHTML() {
         (nom ? `<tr><td colspan="6"><b>${esc(nom)}</b></td></tr>` : "") +
         l
           .map((k) => {
-            const c = (LAST.tot[k] / per(k)) * price(k);
+            const c = coutLigne(k, LAST.tot[k]);
             return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${produitColruytHTML(k)}</td><td>${qty(k, LAST.tot[k])}</td><td>${price(k) ? eur(price(k)) + "/" + ul(k) : "–"}</td><td>${eur(c)}</td></tr>`;
           })
           .join("")
@@ -153,7 +153,7 @@ function recHTML(names) {
 function ligneListeTexte(k) {
   const lien = lienColruyt(S.url[k]),
     nom = prodName(k),
-    cout = (LAST.tot[k] / per(k)) * price(k);
+    cout = coutLigne(k, LAST.tot[k]);
   return (
     "☐ " +
     ING[k][0] +
@@ -297,7 +297,7 @@ function csvList() {
       u,
       cn(price(k)),
       ul(k),
-      cn((LAST.tot[k] / per(k)) * price(k)),
+      cn(coutLigne(k, LAST.tot[k])),
       price(k) ? "" : "prix manquant",
       CATS.find((c) => c[0] === catOf(k))[1],
       lienColruyt(S.url[k]),

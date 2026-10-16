@@ -70,6 +70,12 @@ const fxu = (k) => (ING[k][1] === "pc" ? 1 : 1000),
 /** Arrondi au supérieur sans les erreurs de calcul décimal : 6,000000000000001 (somme de 0,2 × effectifs) ou 2,000001 (2/3 arrondi × 3) donnent 6 et 2, pas 7 et 3. */
 const ceilp = (q) => Math.ceil(Math.round(q * 1e4) / 1e4);
 
+/** Quantité réellement achetée d'un ingrédient dans la liste de courses : les pièces s'achètent entières (arrondies au supérieur), les g et ml au plus juste. */
+const achete = (k, q) => (ING[k][1] === "pc" ? ceilp(q) : q);
+
+/** Coût d'une ligne de la liste de courses : quantité achetée × prix (la quantité affichée et le coût vont ensemble). */
+const coutLigne = (k, q) => (achete(k, q) / per(k)) * price(k);
+
 function qty(k, q) {
   const u = ING[k][1];
   if (u === "pc") return ceilp(q) + " pc";
