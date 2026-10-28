@@ -58,14 +58,18 @@ function cleanCamp(c, N) {
     mt: str(c.mt, 80, "Menu du camp"),
     menu: {},
     extra: {},
+    stock: {},
     types: [],
     off: {},
     pres: {},
+    pd: {},
     adn: {},
     col: {},
   };
   // articles ajoutés à la liste de courses hors recettes (identifiant d'ingrédient -> quantité de base)
   for (const [k, v] of ent(c.extra)) if (okid(k) && +v > 0) o.extra[k] = num(v, 0, 1e7);
+  // quantités déjà en stock (identifiant d'ingrédient -> quantité de base), retirées de ce qu'il faut acheter
+  for (const [k, v] of ent(c.stock)) if (okid(k) && +v > 0) o.stock[k] = num(v, 0, 1e7);
   for (const [k, v] of ent(c.dt))
     if (okid(k) && Array.isArray(v)) o.dt[k] = qn(v, N).map((x) => Math.min(x, 1e4));
   for (const t of (Array.isArray(c.types) ? c.types : []).slice(0, 30))
@@ -87,6 +91,16 @@ function cleanCamp(c, N) {
   for (const [pk, v] of ent(c.pres))
     if (/^\d{1,2}\|[A-Za-z0-9_-]{1,30}$/.test(pk) && Array.isArray(v))
       o.pres[pk] = qn(v, N).map((x) => Math.min(Math.round(x), 1e4));
+  // personnes qui suivent un régime à un repas à effectif réduit : « jour|type » -> régime -> présents par section (null = proportionnel)
+  for (const [pk, v] of ent(c.pd))
+    if (o.pres[pk] && obj(v))
+      for (const [dk, a] of ent(v))
+        if (okid(dk) && Array.isArray(a)) {
+          o.pd[pk] = o.pd[pk] || {};
+          o.pd[pk][dk] = Array.from({ length: N }, (_, j) =>
+            a[j] === null || a[j] === undefined ? null : num(a[j], 0, 1e4)
+          );
+        }
   // texte des adaptations (régimes) choisi pour un plat du menu imprimable : « jour|repas|plat » -> texte (vide = ligne masquée) ;
   // un texte dont le plat n'est plus dans ce repas est abandonné
   for (const [ak, v] of ent(c.adn)) {

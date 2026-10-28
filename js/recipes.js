@@ -561,7 +561,10 @@ function rmIng(k) {
   delete S.promo[k];
   delete S.url[k];
   delete S.art[k];
-  for (const c of Object.values(S.camps)) delete c.extra[k];
+  for (const c of Object.values(S.camps)) {
+    delete c.extra[k];
+    delete c.stock[k];
+  }
   if (S.cust[k]) {
     delete S.cust[k];
     delete ING[k];

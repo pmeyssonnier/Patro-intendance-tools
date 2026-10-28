@@ -604,9 +604,13 @@ footer {
 .mt .qb {
   margin-top: 4px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(12em, 1fr));
   gap: 0 18px;
   font-size: 0.82rem;
+}
+.mt .qb div span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .mt .qb div {
   display: flex;
@@ -617,11 +621,6 @@ footer {
 }
 .mt .qb b {
   white-space: nowrap;
-}
-@media (max-width: 560px) {
-  .mt .qb {
-    grid-template-columns: 1fr;
-  }
 }
 /* effectif sous le nom du repas : même couleur de texte que le nom (choisie pour contraster avec la couleur du repas) */
 .mt td.sn .ad {
@@ -816,6 +815,10 @@ body.nav #drawer {
   .top {
     margin: -16px -16px 10px 0;
   }
+}
+@page {
+  size: A4 landscape;
+  margin: 10mm;
 }
 @media print {
   .np,
@@ -2034,4 +2037,32 @@ table.fit.tcat {
     padding: 2px 8px;
     font-size: 0.85rem;
   }
+}
+
+/* Liste de courses : stock déjà disponible */
+#list .stkc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+#list .stkc > * {
+  flex: none;
+}
+#list .stkc input {
+  width: 4.6em;
+  text-align: right;
+}
+/* même largeur pour « kg », « L » et « pièce(s) » : champs et boutons restent alignés d'une ligne à l'autre */
+#list .stkc .s {
+  min-width: 4.6em;
+  text-align: left;
+}
+#list tr.stocked td:not(:nth-child(3)) {
+  color: var(--mu);
+  text-decoration: line-through;
+}
+#list tr.stocked td:first-child .s {
+  text-decoration: none;
+  display: inline-block;
 }

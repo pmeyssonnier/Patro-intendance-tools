@@ -39,43 +39,60 @@ function parRayon(keys, groupe = S.gl !== false) {
 }
 
 function calc() {
-  const tot = {},
+  const need = {},
     pm = [];
   mealList().forEach(([l, d, i, sk]) => {
     const r = meal(d, presents(i, sk));
     let c = 0;
     for (const k in r.out) {
-      tot[k] = (tot[k] || 0) + r.out[k];
+      need[k] = (need[k] || 0) + r.out[k];
       c += (r.out[k] / per(k)) * price(k);
     }
     pm.push([l, d, c, r.adapt]);
   });
   // articles ajoutés à la main (hors recettes) : ils comptent dans la liste et le total, pas dans le coût par repas
-  for (const k in C.extra) if (ING[k]) tot[k] = (tot[k] || 0) + C.extra[k];
-  let sum = 0;
-  const keys = Object.keys(tot)
-    .filter((k) => tot[k] > 0)
+  for (const k in C.extra) if (ING[k]) need[k] = (need[k] || 0) + C.extra[k];
+  // ce qui est déjà en stock (jamais plus que le besoin) se retire de ce qu'il faut acheter
+  const tot = {},
+    used = {};
+  for (const k in need) {
+    const u = Math.min(+C.stock[k] || 0, need[k]);
+    // un reste négligeable (arrondi de la saisie) compte pour « tout en stock »
+    const reste = need[k] - u < (ING[k][1] === "pc" ? 0.01 : 0.5) ? 0 : need[k] - u;
+    tot[k] = reste;
+    if (u > 0) used[k] = reste ? u : need[k];
+  }
+  let sum = 0,
+    sumStock = 0;
+  const all = Object.keys(need)
+    .filter((k) => need[k] > 0)
     .sort((a, b) => ING[a][0].localeCompare(ING[b][0], "fr"));
   // regroupée par rayon, la liste suit l'ordre des rayons (aussi dans les documents partagés, imprimés et exportés)
-  const groupes = parRayon(keys);
-  keys.splice(0, keys.length, ...groupes.flatMap(([, l]) => l));
+  const groupes = parRayon(all);
+  all.splice(0, all.length, ...groupes.flatMap(([, l]) => l));
+  const keys = all.filter((k) => tot[k] > 0),
+    stk = all.filter((k) => used[k] > 0);
   $("lgrp").checked = S.gl !== false;
   $("list").innerHTML =
     groupes
       .map(
         ([nom, l]) =>
-          (nom ? `<tr class="grp"><td colspan="4"><b>${esc(nom)}</b></td></tr>` : "") +
+          (nom ? `<tr class="grp"><td colspan="6"><b>${esc(nom)}</b></td></tr>` : "") +
           l
             .map((k) => {
-              const c = coutLigne(k, tot[k]);
+              const c = coutLigne(k, tot[k]),
+                plein = !(tot[k] > 0);
               sum += c;
-              return `<tr><td>${esc(ING[k][0])}${price(k) ? "" : '<div class="s" style="color:#d33">⚠ prix manquant</div>'}${produitLien(k)}${etiquetteVrac(k, ceilp(tot[k]))}${etiquettePromo(k, tot[k])}</td><td>${qty(k, tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-p="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td>${eur(c)}</td></tr>`;
+              return `<tr${plein ? ' class="stocked"' : ""}><td>${esc(ING[k][0])}${plein ? ' <span class="s">· tout en stock</span>' : ""}${price(k) ? "" : '<div class="s" style="color:#d33">⚠ prix manquant</div>'}${produitLien(k)}${etiquetteVrac(k, ceilp(tot[k]))}${etiquettePromo(k, tot[k])}</td><td class="num">${qty(k, need[k])}</td><td class="nw stk"><span class="stkc"><input type="number" min="0" step="any" value="${used[k] ? +(used[k] / fxu(k)).toFixed(3) : ""}" placeholder="0" data-sq="${esc(k)}" aria-label="${esc(ING[k][0])} : quantité déjà en stock, en ${uniteArticle(k)}"> <span class="s">${uniteArticle(k)}</span> <button class="x" data-sa="${esc(k)}" aria-pressed="${plein}" aria-label="${plein ? "Remettre " + esc(ING[k][0]) + " dans les achats" : "Tout " + esc(ING[k][0]) + " est déjà en stock"}" title="${plein ? "Remettre dans les achats" : "Tout est déjà en stock"}">${plein ? "↶" : "✓"}</button></span></td><td class="num">${plein ? "0" : qty(k, tot[k])}</td><td><input type="number" step="0.05" min="0" value="${price(k)}" class="${price(k) ? "" : "nop"}" data-p="${esc(k)}" aria-label="Prix de ${esc(ING[k][0])}"></td><td>${eur(c)}</td></tr>`;
             })
             .join("")
       )
       .join("") || "<tr><td>Aucun repas</td></tr>";
-  LAST = { keys, tot, sum, pm };
+  for (const k of stk) sumStock += coutLigne(k, used[k]);
+  LAST = { keys, tot, sum, pm, need, used, stk, sumStock };
   drawExtras();
+  $("stkw").hidden = !stk.length;
+  $("stkv").textContent = eur(sumStock);
   const eco = keys.reduce((a, k) => a + economie(k, tot[k]), 0);
   $("ecow").hidden = !(eco > 0.005);
   $("eco").textContent = eur(eco);
@@ -183,6 +200,24 @@ $("xl").addEventListener("click", (e) => {
   if (!k) return;
   delete C.extra[k];
   calc();
+});
+
+/** Quantité déjà en stock d'un ingrédient (en quantité de base, jamais plus que le besoin) ; 0 la retire du stock. */
+function setStock(k, v) {
+  v = Math.min(v, LAST.need[k] || 0);
+  if (v > 0) C.stock[k] = v;
+  else delete C.stock[k];
+  calc();
+}
+
+$("list").addEventListener("change", (e) => {
+  const k = e.target.dataset.sq;
+  if (k) setStock(k, Math.round(saisie(e.target.value) * fxu(k) * 1000) / 1000);
+});
+
+$("list").addEventListener("click", (e) => {
+  const k = e.target.closest("[data-sa]")?.dataset.sa;
+  if (k) setStock(k, LAST.tot[k] > 0 ? LAST.need[k] : 0);
 });
 
 $("xc").innerHTML = optionsCat("aut");

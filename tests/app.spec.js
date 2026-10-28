@@ -1319,8 +1319,8 @@ test("liste de courses : quantité, prix et coût sont alignés à droite", asyn
       );
     return { th, td };
   });
-  expect(al.th.slice(1)).toEqual(["right", "right", "right"]);
-  expect(al.td.slice(1)).toEqual(["right", "right", "right"]);
+  expect(al.th.slice(1)).toEqual(["right", "right", "right", "right", "right"]);
+  expect(al.td.slice(1)).toEqual(["right", "right", "right", "right", "right"]);
   // les colonnes de chiffres s'alignent sur le même bord droit d'une ligne à l'autre
   const bords = await page.evaluate(() =>
     [...document.querySelectorAll("#list tr:not(.grp)")]
@@ -1328,6 +1328,51 @@ test("liste de courses : quantité, prix et coût sont alignés à droite", asyn
       .map((r) => Math.round(r.lastElementChild.getBoundingClientRect().right))
   );
   expect(new Set(bords).size).toBe(1);
+});
+
+test("liste de courses : le stock se retire des achats, du total et de la liste imprimée, puis figure en fin de liste", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "list");
+  const tot0 = await page.evaluate(() => LAST.sum);
+  const [k1, k2] = await page.evaluate(() => LAST.keys.slice(0, 2));
+  const besoin1 = await page.evaluate((k) => LAST.need[k], k1);
+  // la moitié du premier produit est en stock : on achète moins, le total baisse
+  const champ = page.locator(`#list input[data-sq="${k1}"]`);
+  const moitie = await page.evaluate((k) => +(LAST.need[k] / fxu(k) / 2).toFixed(3), k1);
+  await champ.fill(String(moitie));
+  await champ.dispatchEvent("change");
+  const r = await page.evaluate((k) => ({ tot: LAST.tot[k], sum: LAST.sum, n: LAST.need[k] }), k1);
+  expect(r.tot).toBeCloseTo(besoin1 / 2, 0);
+  expect(r.sum).toBeLessThan(tot0);
+  await expect(page.locator("#stkw")).toBeVisible();
+  // le deuxième produit est entièrement en stock : la ligne reste à l'écran mais quitte les achats
+  await page.locator(`#list button[data-sa="${k2}"]`).click();
+  await expect(page.locator(`#list button[data-sa="${k2}"]`)).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  expect(await page.evaluate((k) => LAST.keys.includes(k), k2)).toBe(false);
+  // liste imprimée : même mise en page, sans la ligne en stock, quantité adaptée, stock en fin de liste
+  const html = await page.evaluate(() => listHTML());
+  const [achats, stock] = html.split("<h3>Déjà en stock</h3>");
+  const nom = (k) => page.evaluate((x) => ING[x][0], k);
+  expect(achats).toContain(await nom(k1));
+  expect(achats).not.toContain(">" + (await nom(k2)) + "<");
+  expect(stock).toContain(await nom(k1));
+  expect(stock).toContain(await nom(k2));
+  expect(stock).toContain("Valeur du stock");
+  expect(await page.evaluate(() => txtList())).toContain("DÉJÀ EN STOCK");
+  expect(await page.evaluate(() => csvList())).toContain("VALEUR DU STOCK");
+  // rechargé : le stock est conservé avec le camp
+  await page.reload();
+  await aller(page, "list");
+  expect(await page.evaluate((k) => LAST.used[k] > 0, k1)).toBe(true);
+  // ↶ remet la ligne dans les achats
+  await page.locator(`#list button[data-sa="${k2}"]`).click();
+  expect(await page.evaluate((k) => LAST.keys.includes(k), k2)).toBe(true);
+  expect(erreurs).toEqual([]);
 });
 
 test("catalogue : seule la colonne des prix est alignée à droite", async ({ page }) => {
@@ -2980,6 +3025,69 @@ test("menu : effectif réglé section par section pour un repas, un jour ou un r
   expect(await page.evaluate(() => C.pres["0|s"])).toBeUndefined();
 });
 
+test("menu : retirer une personne d'une section à régime demande si elle en suit un, sinon aucune question", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "reg");
+  await deplierRegime(page, "veg");
+  await page.locator('input[data-d="veg"][data-s="0"]').fill("2");
+  await aller(page, "menu");
+  const info = await page.evaluate(() => ({ n: [...C.n] }));
+  const zone = page.locator('.dcard[data-dj="0"] .zone[data-slot="s"]');
+  const adapt = () =>
+    page.evaluate(() => {
+      const r = slotArr(0, "s")[0];
+      return r ? meal(r, presents(0, "s")).adapt.join(" ") : "";
+    });
+  const panneau = async () => {
+    if (!(await page.locator(".zpan").count())) await zone.locator(".zn").click();
+  };
+  await page.evaluate(() => {
+    if (!slotArr(0, "s").length) C.menu[0] = { ...(C.menu[0] || {}), s: [Object.keys(S.rec)[0]] };
+    calc();
+    drawMenu();
+  });
+  // section sans régime (la dernière) : aucune question
+  const sans = info.n.findIndex((v, j) => v > 1 && j !== 0);
+  await panneau();
+  await page.locator(`.zpan [data-pr="${sans}"]`).fill("1");
+  await page.locator('.zpan [data-pra="1"]').click();
+  expect(await page.evaluate(() => C.pres["0|s"] !== undefined)).toBe(true);
+  // section 0 (2 végétariens) : une personne en moins, la question est posée
+  await panneau();
+  await page.locator('.zpan [data-pr="0"]').fill(String(info.n[0] - 1));
+  await page.locator('.zpan [data-pra="1"]').click();
+  await expect(page.locator(".zpan .zq select")).toHaveCount(1);
+  expect(await page.evaluate(() => C.pres["0|s"][0])).toBe(info.n[0]);
+  // elle suit le régime : un végétarien de moins
+  await page.locator(".zpan .zq select").selectOption("veg");
+  await page.locator('.zpan [data-prq="1"]').click();
+  expect(await page.evaluate(() => C.pd["0|s"].veg[0])).toBe(1);
+  expect(await adapt()).toContain("Végétarien ×1");
+  // elle n'en suit aucun : les deux végétariens restent
+  await panneau();
+  await page.locator('.zpan [data-pr="0"]').fill(String(info.n[0] - 2));
+  await page.locator('.zpan [data-pra="1"]').click();
+  await expect(page.locator(".zpan .zq select")).toHaveCount(1);
+  await page.locator('.zpan [data-prq="1"]').click();
+  expect(await page.evaluate(() => C.pd["0|s"].veg[0])).toBe(1);
+  // annuler la question ne change rien
+  await panneau();
+  await page.locator('.zpan [data-pr="0"]').fill("0");
+  await page.locator('.zpan [data-pra="1"]').click();
+  await page.locator('.zpan [data-prq="0"]').click();
+  await expect(page.locator(".zpan .zq select")).toHaveCount(0);
+  // survit au rechargement ; « Toute la troupe » efface les choix
+  await page.reload();
+  expect(await page.evaluate(() => C.pd["0|s"].veg[0])).toBe(1);
+  await aller(page, "menu");
+  await panneau();
+  await page.locator('.zpan [data-pra="0"]').click();
+  expect(await page.evaluate(() => C.pd["0|s"])).toBeUndefined();
+  expect(erreurs).toEqual([]);
+});
+
 test("liste de courses : ajouter deux fois le même article additionne les quantités (pièces, kg, litres)", async ({
   page,
 }) => {
@@ -3753,6 +3861,42 @@ test("menu imprimable : quantités totales par recette, deux présentations, tex
   await expect(page.locator("#mprev .qb")).toHaveCount(0);
   await expect(page.locator("#mqs")).toBeDisabled();
   expect(await page.evaluate(() => txtMenu())).not.toContain("quantités totales");
+  expect(erreurs).toEqual([]);
+});
+
+test("menu imprimable : une journée sans aucun repas prévu n'est pas affichée", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  const r = await page.evaluate(() => {
+    const garnis = days()
+      .map((_, i) => i)
+      .filter((i) => dtypes(i).some(({ k }) => slotArr(i, k).length));
+    const vide = garnis[0];
+    C.menu[vide] = {};
+    calc();
+    return { n: garnis.length, label: dlab(days()[vide]), txt: txtMenu() };
+  });
+  await expect(page.locator("#mprev tr.day")).toHaveCount(r.n - 1);
+  await expect(page.locator("#mprev")).not.toContainText(r.label);
+  expect(r.txt).not.toContain(r.label);
+  expect(erreurs).toEqual([]);
+});
+
+test("impression : zoom automatique pour tenir sur le moins de pages A4 paysage", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  await page.evaluate(() => (window.print = () => {}));
+  await page.locator("#pmenu").click();
+  const z = await page.evaluate(() => +$("pv").style.zoom);
+  expect(z).toBeGreaterThanOrEqual(0.6);
+  expect(z).toBeLessThanOrEqual(1);
+  // un document court garde sa taille, un document très long est réduit au minimum
+  expect(await page.evaluate(() => zoomImpression("<p>court</p>"))).toBe(1);
+  expect(await page.evaluate(() => zoomImpression("<p>ligne</p>".repeat(400)))).toBeLessThan(1);
   expect(erreurs).toEqual([]);
 });
 
