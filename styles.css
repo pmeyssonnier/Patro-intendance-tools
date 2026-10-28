@@ -2014,6 +2014,11 @@ table.fit.tcat {
   width: 4.6em;
   text-align: right;
 }
+/* même largeur pour « kg », « L » et « pièce(s) » : champs et boutons restent alignés d'une ligne à l'autre */
+#list .stkc .s {
+  min-width: 4.6em;
+  text-align: left;
+}
 #list tr.stocked td:not(:nth-child(3)) {
   color: var(--mu);
   text-decoration: line-through;
