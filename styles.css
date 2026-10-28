@@ -2000,3 +2000,20 @@ table.fit.tcat {
     font-size: 0.85rem;
   }
 }
+
+/* Liste de courses : stock déjà disponible */
+#list td.stk {
+  white-space: nowrap;
+}
+#list input[data-sq] {
+  width: 4.6em;
+  text-align: right;
+}
+#list tr.stocked td:not(:nth-child(3)) {
+  color: var(--mu);
+  text-decoration: line-through;
+}
+#list tr.stocked td:first-child .s {
+  text-decoration: none;
+  display: inline-block;
+}
