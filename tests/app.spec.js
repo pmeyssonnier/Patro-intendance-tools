@@ -3470,6 +3470,26 @@ test("menu imprimable : quantités totales par recette, deux présentations, tex
   expect(erreurs).toEqual([]);
 });
 
+test("menu imprimable : une journée sans aucun repas prévu n'est pas affichée", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  const r = await page.evaluate(() => {
+    const garnis = days()
+      .map((_, i) => i)
+      .filter((i) => dtypes(i).some(({ k }) => slotArr(i, k).length));
+    const vide = garnis[0];
+    C.menu[vide] = {};
+    calc();
+    return { n: garnis.length, label: dlab(days()[vide]), txt: txtMenu() };
+  });
+  await expect(page.locator("#mprev tr.day")).toHaveCount(r.n - 1);
+  await expect(page.locator("#mprev")).not.toContainText(r.label);
+  expect(r.txt).not.toContain(r.label);
+  expect(erreurs).toEqual([]);
+});
+
 test("menu imprimable : le texte des adaptations (régimes) se modifie, se masque ou revient à l'automatique", async ({
   page,
 }) => {

@@ -25,12 +25,16 @@ function qtesHTML(l) {
   return `<div class="q">${l.map(([n, q]) => `<span><b>${esc(q)}</b> ${esc(n.toLowerCase())}</span>`).join("")}</div>`;
 }
 
+/** Vrai si au moins un repas affiché de la journée i a un plat : les journées sans repas prévu ne figurent pas dans le menu. */
+const jourAvecRepas = (i) => dtypes(i).some(({ k }) => slotArr(i, k).length);
+
 function menuHTML(edit = false) {
   const dsc = +S.md,
     adp = +S.ma,
     qte = +S.mq;
   let rows = "";
   days().forEach((d, i) => {
+    if (!jourAvecRepas(i)) return;
     rows += `<tr class="day"><td colspan="${dsc ? 3 : 2}">${esc(dlab(d))}</td></tr>`;
     dtypes(i).forEach(({ k, n: lab }) => {
       const rs = slotArr(i, k);
@@ -251,8 +255,10 @@ const txtMenu = () =>
   fdate(C.end) +
   ")\n\n" +
   days()
+    .map((d, i) => [d, i])
+    .filter(([, i]) => jourAvecRepas(i))
     .map(
-      (d, i) =>
+      ([d, i]) =>
         dlab(d) +
         "\n" +
         dtypes(i)
