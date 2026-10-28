@@ -41,7 +41,9 @@ const DOC_CSS =
   ".rbar{position:sticky;top:0;z-index:2;background:#fff;padding:6px 0 8px;border-bottom:1px solid #dfe8e1;margin-bottom:4px}.rchips{display:flex;flex-wrap:wrap;gap:6px}.rchips a{border:1px solid #bcd0c2;border-radius:16px;padding:4px 12px;font-size:.88rem;text-decoration:none;background:#f3f8f4}.rchips a.on{background:#1f7a3f;border-color:#1f7a3f;color:#fff}.rchips a.on .s{color:inherit}.js .rnav h4{display:none}.mt .ad a{color:#1f7a3f}" +
   "@media(min-width:800px){body:has(.rlay){max-width:1200px}.rlay{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px;align-items:start}.rbar{grid-column:1/-1}.rnav{position:sticky;top:64px;max-height:calc(100vh - 80px);overflow:auto}}" +
   "@media print{.np{display:none}.rlay{display:block}}" +
-  ".mt .ad{font-size:.8rem;color:#5c6f62;font-style:italic}.mt td.sn .ad{color:inherit;font-style:normal;font-weight:700}.mt td.ck{width:1.4em;text-align:center}";
+  ".mt .ad{font-size:.8rem;color:#5c6f62;font-style:italic}.mt td.sn .ad{color:inherit;font-style:normal;font-weight:700}.mt td.ck{width:1.4em;text-align:center}" +
+  ".mt .q{margin-top:3px;font-size:.82rem;line-height:1.5}.mt .q span+span::before{content:' · ';color:#8a9a8f}.mt .qh{margin-top:4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#5c6f62}" +
+  ".mt .qb{margin-top:4px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;font-size:.82rem}.mt .qb div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted #1f7a3f55;padding:1px 0}.mt .qb b{white-space:nowrap}";
 
 /* Navigation du fichier HTML des recettes : choisir un type filtre la liste et les recettes affichées ; choisir une recette n'affiche qu'elle. Sans script, tout reste affiché. */
 const NAV_JS =

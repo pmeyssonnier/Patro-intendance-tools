@@ -529,6 +529,21 @@ $("madp").onchange = () => {
   calc();
 };
 
+$("mqty").checked = !!+S.mq;
+$("mqs").value = S.ms === "b" ? "b" : "a";
+$("mqs").disabled = !+S.mq;
+
+$("mqty").onchange = () => {
+  S.mq = +$("mqty").checked;
+  $("mqs").disabled = !+S.mq;
+  calc();
+};
+
+$("mqs").onchange = () => {
+  S.ms = $("mqs").value;
+  calc();
+};
+
 /* Texte des adaptations (régimes) sur le menu imprimable : on clique sur le crayon d'un plat dans l'aperçu pour le remplacer par son propre texte
    (ou le masquer) ; « Texte automatique » rend la main au calcul. Le texte est rangé dans C.adn, sous « jour|repas|plat ». */
 

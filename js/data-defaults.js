@@ -210,6 +210,8 @@ const DEF = {
   mt: "Menu du camp",
   md: 1,
   ma: 1,
+  mq: 1,
+  ms: "a",
   hid: [],
   cust: {},
   ov: {},
