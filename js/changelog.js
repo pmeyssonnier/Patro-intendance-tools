@@ -5,7 +5,7 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
-    v: "1.64.0",
+    v: "1.65.0",
     d: "2026-10-08",
     t: "Groupes en ligne : synchronisation, invitations et historique",
     l: [
