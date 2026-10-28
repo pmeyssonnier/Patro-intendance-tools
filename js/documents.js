@@ -35,7 +35,9 @@ function menuHTML(edit = false) {
   let rows = "";
   days().forEach((d, i) => {
     if (!jourAvecRepas(i)) return;
-    rows += `<tr class="day"><td colspan="${dsc ? 3 : 2}">${esc(dlab(d))}</td></tr>`;
+    // la ligne du jour et le premier repas forment un groupe insécable : le jour n'est jamais seul en bas d'une page
+    let groupe = `<tr class="day"><td colspan="${dsc ? 3 : 2}">${esc(dlab(d))}</td></tr>`,
+      reste = "";
     dtypes(i).forEach(({ k, n: lab }) => {
       const rs = slotArr(i, k);
       const dishes = rs.length
@@ -53,10 +55,13 @@ function menuHTML(edit = false) {
             .filter(Boolean)
             .join("<br>")}</td>`
         : "";
-      rows += `<tr class="sl" style="${cvars(C.col[k])}"><td class="sn">${esc(lab)}<div class="ad">${nbPres(i, k)} pers.</div></td><td>${dishes}</td>${ds}</tr>`;
+      const ligne = `<tr class="sl" style="${cvars(C.col[k])}"><td class="sn">${esc(lab)}<div class="ad">${nbPres(i, k)} pers.</div></td><td>${dishes}</td>${ds}</tr>`;
+      if (groupe.includes('class="sl"')) reste += ligne;
+      else groupe += ligne;
     });
+    rows += `<tbody class="dg">${groupe}</tbody>${reste ? `<tbody>${reste}</tbody>` : ""}`;
   });
-  return `<div class="mp pvx"><h2>${esc(C.mt || "Menu")}</h2><div class="s">${esc(C.name)} · ${fdate(C.start)} → ${fdate(C.end)} · ${nn()} personnes · ${esc(troop())}</div><table class="mt"><thead><tr><th>Repas</th><th>Au menu</th>${dsc ? "<th>Description</th>" : ""}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="mp pvx"><h2>${esc(C.mt || "Menu")}</h2><div class="s">${esc(C.name)} · ${fdate(C.start)} → ${fdate(C.end)} · ${nn()} personnes · ${esc(troop())}</div><table class="mt"><thead><tr><th>Repas</th><th>Au menu</th>${dsc ? "<th>Description</th>" : ""}</tr></thead>${rows}</table></div>`;
 }
 
 /** Cellule « Produit Colruyt » : libellé du produit retenu, lié à sa fiche, et l'adresse en clair (utile sur papier) ; vide si ni l'un ni l'autre. */

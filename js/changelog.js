@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.71.0",
+    d: "2026-10-28",
+    t: "Menu imprimé : le jour reste avec son premier repas",
+    l: [
+      "À l'impression (et dans le fichier HTML), la ligne d'un jour (« Samedi 17/10 ») n'est plus jamais seule en bas d'une page : elle reste collée au premier repas du jour, qui passe avec elle à la page suivante.",
+    ],
+  },
+  {
     v: "1.70.0",
     d: "2026-10-28",
     t: "Menu imprimé : zoom jamais agrandi",
