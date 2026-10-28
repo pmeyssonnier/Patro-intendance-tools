@@ -3470,6 +3470,42 @@ test("menu imprimable : quantités totales par recette, deux présentations, tex
   expect(erreurs).toEqual([]);
 });
 
+test("menu imprimable : une journée sans aucun repas prévu n'est pas affichée", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  const r = await page.evaluate(() => {
+    const garnis = days()
+      .map((_, i) => i)
+      .filter((i) => dtypes(i).some(({ k }) => slotArr(i, k).length));
+    const vide = garnis[0];
+    C.menu[vide] = {};
+    calc();
+    return { n: garnis.length, label: dlab(days()[vide]), txt: txtMenu() };
+  });
+  await expect(page.locator("#mprev tr.day")).toHaveCount(r.n - 1);
+  await expect(page.locator("#mprev")).not.toContainText(r.label);
+  expect(r.txt).not.toContain(r.label);
+  expect(erreurs).toEqual([]);
+});
+
+test("impression : zoom automatique pour tenir sur le moins de pages A4 paysage", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  await page.evaluate(() => (window.print = () => {}));
+  await page.locator("#pmenu").click();
+  const z = await page.evaluate(() => +$("pv").style.zoom);
+  expect(z).toBeGreaterThanOrEqual(0.6);
+  expect(z).toBeLessThanOrEqual(1);
+  // un document court garde sa taille, un document très long est réduit au minimum
+  expect(await page.evaluate(() => zoomImpression("<p>court</p>"))).toBe(1);
+  expect(await page.evaluate(() => zoomImpression("<p>ligne</p>".repeat(400)))).toBeLessThan(1);
+  expect(erreurs).toEqual([]);
+});
+
 test("menu imprimable : le texte des adaptations (régimes) se modifie, se masque ou revient à l'automatique", async ({
   page,
 }) => {
