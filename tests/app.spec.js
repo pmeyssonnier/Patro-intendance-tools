@@ -3025,6 +3025,69 @@ test("menu : effectif réglé section par section pour un repas, un jour ou un r
   expect(await page.evaluate(() => C.pres["0|s"])).toBeUndefined();
 });
 
+test("menu : retirer une personne d'une section à régime demande si elle en suit un, sinon aucune question", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "reg");
+  await deplierRegime(page, "veg");
+  await page.locator('input[data-d="veg"][data-s="0"]').fill("2");
+  await aller(page, "menu");
+  const info = await page.evaluate(() => ({ n: [...C.n] }));
+  const zone = page.locator('.dcard[data-dj="0"] .zone[data-slot="s"]');
+  const adapt = () =>
+    page.evaluate(() => {
+      const r = slotArr(0, "s")[0];
+      return r ? meal(r, presents(0, "s")).adapt.join(" ") : "";
+    });
+  const panneau = async () => {
+    if (!(await page.locator(".zpan").count())) await zone.locator(".zn").click();
+  };
+  await page.evaluate(() => {
+    if (!slotArr(0, "s").length) C.menu[0] = { ...(C.menu[0] || {}), s: [Object.keys(S.rec)[0]] };
+    calc();
+    drawMenu();
+  });
+  // section sans régime (la dernière) : aucune question
+  const sans = info.n.findIndex((v, j) => v > 1 && j !== 0);
+  await panneau();
+  await page.locator(`.zpan [data-pr="${sans}"]`).fill("1");
+  await page.locator('.zpan [data-pra="1"]').click();
+  expect(await page.evaluate(() => C.pres["0|s"] !== undefined)).toBe(true);
+  // section 0 (2 végétariens) : une personne en moins, la question est posée
+  await panneau();
+  await page.locator('.zpan [data-pr="0"]').fill(String(info.n[0] - 1));
+  await page.locator('.zpan [data-pra="1"]').click();
+  await expect(page.locator(".zpan .zq select")).toHaveCount(1);
+  expect(await page.evaluate(() => C.pres["0|s"][0])).toBe(info.n[0]);
+  // elle suit le régime : un végétarien de moins
+  await page.locator(".zpan .zq select").selectOption("veg");
+  await page.locator('.zpan [data-prq="1"]').click();
+  expect(await page.evaluate(() => C.pd["0|s"].veg[0])).toBe(1);
+  expect(await adapt()).toContain("Végétarien ×1");
+  // elle n'en suit aucun : les deux végétariens restent
+  await panneau();
+  await page.locator('.zpan [data-pr="0"]').fill(String(info.n[0] - 2));
+  await page.locator('.zpan [data-pra="1"]').click();
+  await expect(page.locator(".zpan .zq select")).toHaveCount(1);
+  await page.locator('.zpan [data-prq="1"]').click();
+  expect(await page.evaluate(() => C.pd["0|s"].veg[0])).toBe(1);
+  // annuler la question ne change rien
+  await panneau();
+  await page.locator('.zpan [data-pr="0"]').fill("0");
+  await page.locator('.zpan [data-pra="1"]').click();
+  await page.locator('.zpan [data-prq="0"]').click();
+  await expect(page.locator(".zpan .zq select")).toHaveCount(0);
+  // survit au rechargement ; « Toute la troupe » efface les choix
+  await page.reload();
+  expect(await page.evaluate(() => C.pd["0|s"].veg[0])).toBe(1);
+  await aller(page, "menu");
+  await panneau();
+  await page.locator('.zpan [data-pra="0"]').click();
+  expect(await page.evaluate(() => C.pd["0|s"])).toBeUndefined();
+  expect(erreurs).toEqual([]);
+});
+
 test("liste de courses : ajouter deux fois le même article additionne les quantités (pièces, kg, litres)", async ({
   page,
 }) => {

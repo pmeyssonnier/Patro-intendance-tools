@@ -26,7 +26,7 @@ const delPanel = (i, k, lab) => {
     col = String(C.col[k]).toLowerCase(),
     pr = presents(i, k),
     ek = esc(k);
-  return `<div class="zpan"><div class="tl"><input class="tn" value="${esc(lab)}" data-tn="${ek}" maxlength="30" aria-label="Nom du repas"><button class="x" data-tu="${ek}" data-day="${i}" title="Monter ce repas" aria-label="Monter ${esc(lab)}"${p > 0 ? "" : " disabled"}>▲</button><button class="x" data-td="${ek}" data-day="${i}" title="Descendre ce repas" aria-label="Descendre ${esc(lab)}"${p < vis.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-tx="${ek}" title="Supprimer ce type de repas de tous les jours" aria-label="Supprimer le type de repas ${esc(lab)}">🗑</button></div><div class="crow"><span class="sws">${COLS.map((c) => `<button class="sw${c.toLowerCase() === col ? " on" : ""}" style="background:${c}" data-c="${c}" data-ck="${ek}" title="${CN[c] || c}" aria-label="Couleur ${CN[c] || c} pour ${esc(lab)}" aria-pressed="${c.toLowerCase() === col}"></button>`).join("")}</span><input type="color" data-ci="${ek}" value="${esc(C.col[k])}" title="Autre couleur" aria-label="Autre couleur pour ${esc(lab)}"><span class="s cw" style="color:#d33">${lowc(C.col[k]) ? "⚠ contraste faible" : ""}</span></div><div class="zeff"><b>Effectif de ce repas</b><div class="zsec">${SEC.map((sc, j) => `<label>${esc(sc[0])}<input type="number" min="0" max="${C.n[j] || 0}" step="1" data-pr="${j}" value="${pr ? pr[j] : C.n[j] || 0}" aria-label="Présents ${esc(sc[0])} (sur ${C.n[j] || 0})"><span class="s">sur ${C.n[j] || 0}</span></label>`).join("")}</div><select data-prs aria-label="Portée de l’effectif"><option value="un">Ce repas seulement</option><option value="jour">Tous les repas de ce jour</option><option value="tous">Ce repas, tous les jours</option></select> <button class="x" data-pra="1">Appliquer</button> <button class="x" data-pra="0">Toute la troupe</button><div class="s">Présents par section : les quantités de ce repas sont calculées avec cet effectif (régimes compris).</div></div><div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${ek}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${ek}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div></div>`;
+  return `<div class="zpan"><div class="tl"><input class="tn" value="${esc(lab)}" data-tn="${ek}" maxlength="30" aria-label="Nom du repas"><button class="x" data-tu="${ek}" data-day="${i}" title="Monter ce repas" aria-label="Monter ${esc(lab)}"${p > 0 ? "" : " disabled"}>▲</button><button class="x" data-td="${ek}" data-day="${i}" title="Descendre ce repas" aria-label="Descendre ${esc(lab)}"${p < vis.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-tx="${ek}" title="Supprimer ce type de repas de tous les jours" aria-label="Supprimer le type de repas ${esc(lab)}">🗑</button></div><div class="crow"><span class="sws">${COLS.map((c) => `<button class="sw${c.toLowerCase() === col ? " on" : ""}" style="background:${c}" data-c="${c}" data-ck="${ek}" title="${CN[c] || c}" aria-label="Couleur ${CN[c] || c} pour ${esc(lab)}" aria-pressed="${c.toLowerCase() === col}"></button>`).join("")}</span><input type="color" data-ci="${ek}" value="${esc(C.col[k])}" title="Autre couleur" aria-label="Autre couleur pour ${esc(lab)}"><span class="s cw" style="color:#d33">${lowc(C.col[k]) ? "⚠ contraste faible" : ""}</span></div><div class="zeff"><b>Effectif de ce repas</b><div class="zsec">${SEC.map((sc, j) => `<label>${esc(sc[0])}<input type="number" min="0" max="${C.n[j] || 0}" step="1" data-pr="${j}" value="${pr ? pr[j] : C.n[j] || 0}" aria-label="Présents ${esc(sc[0])} (sur ${C.n[j] || 0})"><span class="s">sur ${C.n[j] || 0}</span></label>`).join("")}</div><select data-prs aria-label="Portée de l’effectif"><option value="un">Ce repas seulement</option><option value="jour">Tous les repas de ce jour</option><option value="tous">Ce repas, tous les jours</option></select> <button class="x" data-pra="1">Appliquer</button> <button class="x" data-pra="0">Toute la troupe</button><div class="s">Présents par section : les quantités de ce repas sont calculées avec cet effectif (régimes compris).</div><div class="zq" aria-live="polite"></div></div><div class="zdel"><b>Retirer « ${esc(lab)} »</b> <button class="x" data-dsc="one" data-day="${i}" data-slot="${ek}">Ce jour seulement${f(n1)}</button> <button class="x" data-dsc="all" data-day="${i}" data-slot="${ek}">Tous les jours${f(n2)}</button> <button class="x" data-dsn="1">Annuler</button></div></div>`;
 };
 
 const ouvert = (i, k) => !!delSl && delSl.day === i && delSl.k === k;
@@ -234,10 +234,38 @@ $("menu").addEventListener("click", (e) => {
           ? null
           : SEC.map((_, j) => +pan.querySelector(`[data-pr="${j}"]`).value || 0),
       portee = pan.querySelector("[data-prs]").value;
-    poserEffectif(delSl.day, delSl.k, portee, v);
+    const qs = v ? questionsRegime(delSl.day, delSl.k, v) : [];
+    if (qs.length) {
+      effQ = { day: delSl.day, k: delSl.k, portee, v, qs };
+      pan.querySelector(".zq").innerHTML = questionHTML(qs);
+      const f = pan.querySelector(".zq select");
+      if (f) f.focus();
+      return;
+    }
+    poserEffectif(delSl.day, delSl.k, portee, v, pdConserve(delSl.day, delSl.k, v));
     drawMenu();
     calc();
     say(v ? "Effectif du repas réglé" : "Toute la troupe");
+    return;
+  }
+  if (t.dataset.prq !== undefined && effQ) {
+    const pan = t.closest(".zpan"),
+      q = effQ;
+    if (t.dataset.prq === "0") {
+      effQ = null;
+      pan.querySelector(".zq").innerHTML = "";
+      return;
+    }
+    const pd = reponsesRegime(pan, q);
+    if (typeof pd === "string") {
+      pan.querySelector("[data-qe]").textContent = pd;
+      return;
+    }
+    effQ = null;
+    poserEffectif(q.day, q.k, q.portee, q.v, pd);
+    drawMenu();
+    calc();
+    say("Effectif du repas réglé, régimes pris en compte");
     return;
   }
   if (t.dataset.ck) {
@@ -281,8 +309,84 @@ $("menu").addEventListener("click", (e) => {
   calc();
 });
 
-/** Fixe les présents par section (v = tableau) ou rétablit toute la troupe (v = null) : à ce repas, à tous les repas du jour, ou à ce repas tous les jours. */
-function poserEffectif(i, k, portee, v) {
+/* Effectif réduit d'un repas : si des personnes sont retirées d'une section qui a des régimes, on demande si elles en suivent un */
+let effQ = null;
+
+/** Personnes de la section j qui suivent le régime dk à ce repas, avant la modification (arrondi). */
+const dietBase = (i, k, dk, j) => {
+  const p = presents(i, k);
+  return Math.round(dietAt(dk, j, p, p && C.n[j] ? p[j] / C.n[j] : 1));
+};
+
+/** Sections dont l'effectif baisse alors qu'elles ont des régimes présents à ce repas : [{ j, ret (personnes retirées), diets (régimes possibles) }]. */
+function questionsRegime(i, k, v) {
+  const p = presents(i, k);
+  return SEC.map((_, j) => ({
+    j,
+    ret: (p ? p[j] : C.n[j] || 0) - Math.min(Math.max(Math.round(v[j]), 0), C.n[j] || 0),
+    diets: Object.keys(DIETS).filter((dk) => dietBase(i, k, dk, j) > 0),
+  })).filter((q) => q.ret > 0 && q.diets.length);
+}
+
+function questionHTML(qs) {
+  const opts = (q) =>
+    `<option value="">${q.diets.length > 1 ? "Aucun régime" : "Non, aucun régime"}</option>` +
+    q.diets
+      .map(
+        (dk) =>
+          `<option value="${esc(dk)}">${q.diets.length > 1 ? "" : "Oui, "}${esc(DIETS[dk].n)}</option>`
+      )
+      .join("");
+  return (
+    "<b>Régimes alimentaires</b>" +
+    qs
+      .map(
+        (q) =>
+          `<div class="s">${esc(SEC[q.j][0])} : ${q.ret > 1 ? q.ret + " personnes en moins. Lesquelles suivent un régime ?" : q.diets.length > 1 ? "1 personne en moins. Suit-elle un régime, et lequel ?" : "1 personne en moins. Est-elle concernée par le régime « " + esc(DIETS[q.diets[0]].n) + " » ?"}</div>` +
+          Array.from(
+            { length: q.ret },
+            (_, n) =>
+              `<label class="s">${q.ret > 1 ? "Personne " + (n + 1) : "Cette personne"} <select data-qj="${q.j}" aria-label="${esc(SEC[q.j][0])}, personne ${n + 1} retirée : régime">${opts(q)}</select></label> `
+          ).join("")
+      )
+      .join("") +
+    ' <button class="x" data-prq="1">Valider</button> <button class="x" data-prq="0">Annuler</button><div class="s" data-qe role="alert" style="color:#d33"></div>'
+  );
+}
+
+/** Présents par régime à ce repas d'après les réponses : { régime: [par section, null = proportionnel] }, ou un message d'erreur. */
+function reponsesRegime(pan, q) {
+  const pd = JSON.parse(JSON.stringify(C.pd[q.day + "|" + q.k] || {}));
+  for (const s of q.qs) {
+    const choisis = {};
+    pan.querySelectorAll(`select[data-qj="${s.j}"]`).forEach((e) => {
+      if (e.value) choisis[e.value] = (choisis[e.value] || 0) + 1;
+    });
+    for (const dk of s.diets) {
+      const base = dietBase(q.day, q.k, dk, s.j);
+      if ((choisis[dk] || 0) > base)
+        return `${SEC[s.j][0]} : il n'y a que ${base} personne${base > 1 ? "s" : ""} « ${DIETS[dk].n} » à ce repas.`;
+      pd[dk] = pd[dk] || SEC.map(() => null);
+      pd[dk][s.j] = base - (choisis[dk] || 0);
+    }
+  }
+  return nettoyerPd(pd, q.v);
+}
+
+/** Régimes déjà choisis pour ce repas, conservés quand l'effectif change sans retirer personne d'une section à régimes. */
+const pdConserve = (i, k, v) => nettoyerPd(JSON.parse(JSON.stringify(C.pd[i + "|" + k] || {})), v);
+
+/** Retire les choix des sections de nouveau au complet et les régimes sans aucun choix ; null s'il ne reste rien. */
+function nettoyerPd(pd, v) {
+  for (const dk of Object.keys(pd)) {
+    pd[dk] = pd[dk].map((x, j) => (v && v[j] >= (C.n[j] || 0) ? null : x));
+    if (pd[dk].every((x) => x === null)) delete pd[dk];
+  }
+  return Object.keys(pd).length ? pd : null;
+}
+
+/** Fixe les présents par section (v = tableau) ou rétablit toute la troupe (v = null) : à ce repas, à tous les repas du jour, ou à ce repas tous les jours ; pd : présents par régime à ces repas (voir reponsesRegime). */
+function poserEffectif(i, k, portee, v, pd = null) {
   C.pres = C.pres || {};
   const cles =
       portee === "jour"
@@ -294,6 +398,9 @@ function poserEffectif(i, k, portee, v) {
           : [i + "|" + k],
     tous = !v || v.every((x, j) => x >= (C.n[j] || 0));
   cles.forEach((c) => {
+    C.pd = C.pd || {};
+    if (tous || !pd) delete C.pd[c];
+    else C.pd[c] = JSON.parse(JSON.stringify(pd));
     if (tous) delete C.pres[c];
     else C.pres[c] = v.map((x, j) => Math.min(Math.max(Math.round(x), 0), C.n[j] || 0));
   });

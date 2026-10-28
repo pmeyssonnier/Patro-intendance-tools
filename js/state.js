@@ -62,6 +62,7 @@ function mkCamp(name, o) {
       types: DEFT(),
       off: {},
       pres: {},
+      pd: {},
       adn: {},
       col: { ...SCOL },
       mt: "Menu du camp",
@@ -135,7 +136,10 @@ const presents = (i, k) => {
   const a = (C.pres || {})[i + "|" + k];
   if (!Array.isArray(a)) return null;
   const p = C.n.map((n, s) => Math.min(Math.max(Math.round(+a[s]) || 0, 0), n));
-  return p.some((v, s) => v < C.n[s]) ? p : null;
+  if (!p.some((v, s) => v < C.n[s])) return null;
+  const pd = (C.pd || {})[i + "|" + k];
+  if (pd) p.pd = pd;
+  return p;
 };
 
 /** Nombre total de présents à un repas (toute la troupe s'il n'est pas réduit). */
@@ -337,6 +341,8 @@ function effectifPourConversion() {
       const [, tk] = pk.split("|");
       if (!Array.isArray(c.pres[pk]) || !c.types.some((t) => t.k === tk)) delete c.pres[pk];
     }
+    if (!c.pd || typeof c.pd !== "object") c.pd = {};
+    for (const pk of Object.keys(c.pd)) if (!c.pres[pk]) delete c.pd[pk];
     if (!c.menu || typeof c.menu !== "object") c.menu = {};
     for (const dk of Object.keys(c.menu)) {
       const dm = c.menu[dk];
