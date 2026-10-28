@@ -15,19 +15,18 @@ const SH = {
 
 const shk = () => SH[$("shw").value];
 
-/** Zoom (0,6 à 1) qui fait tenir le document sur le moins de pages A4 (paysage : 277 × 190 mm utiles, portrait : 190 × 277 mm) : le plus grand zoom qui n'ajoute aucune page par rapport au zoom minimum. */
-function zoomImpression(html, paysage = false) {
-  const [larg, haut] = paysage ? [277, 190] : [190, 277],
-    PX = 96 / 25.4,
+/** Zoom (0,6 à 1) qui fait tenir le document sur le moins de pages A4 paysage (277 × 190 mm utiles) : le plus grand zoom qui n'ajoute aucune page par rapport au zoom minimum. */
+function zoomImpression(html) {
+  const PX = 96 / 25.4,
     box = document.createElement("div"),
     inner = document.createElement("div");
-  box.style.cssText = `position:absolute;left:-99999px;top:0;visibility:hidden;width:${larg * PX}px`;
+  box.style.cssText = `position:absolute;left:-99999px;top:0;visibility:hidden;width:${277 * PX}px`;
   inner.innerHTML = html;
   box.appendChild(inner);
   document.body.appendChild(box);
   const pages = (z) => {
     inner.style.zoom = z;
-    return Math.ceil(inner.getBoundingClientRect().height / (haut * PX * 0.97));
+    return Math.ceil(inner.getBoundingClientRect().height / (190 * PX * 0.97));
   };
   const cible = pages(0.6);
   let z = 1;
@@ -36,10 +35,10 @@ function zoomImpression(html, paysage = false) {
   return z;
 }
 
-/** Imprime un document : en portrait, sauf le menu (paysage). */
+/** Imprime un document : en portrait à 100 %, sauf le menu (paysage, zoom automatique). */
 function printHTML(html, paysage = false) {
   $("pv").innerHTML = html;
-  $("pv").style.zoom = zoomImpression(html, paysage);
+  $("pv").style.zoom = paysage ? zoomImpression(html) : 1;
   let st = $("pgsz");
   if (!st) {
     st = document.createElement("style");
