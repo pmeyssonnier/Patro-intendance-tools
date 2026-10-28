@@ -711,7 +711,7 @@ test("tableaux longs : la ligne de titre reste visible quand on défile", async 
   // catalogue et liste de courses : la page défile, le titre se colle sous la barre du haut
   for (const [g, id] of [
     ["cat", "ct"],
-    ["list", "list"],
+    // la liste de courses n'a plus d'en-tête sur téléphone (cartes) : voir son test dédié
   ]) {
     await aller(page, g);
     const r = await page.evaluate((id) => {
@@ -1308,6 +1308,7 @@ test("régimes : l'effectif de la section est affiché entre parenthèses et sui
 });
 
 test("liste de courses : quantité, prix et coût sont alignés à droite", async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
   await ouvrir(page);
   await aller(page, "list");
   const al = await page.evaluate(() => {
@@ -1328,6 +1329,47 @@ test("liste de courses : quantité, prix et coût sont alignés à droite", asyn
       .map((r) => Math.round(r.lastElementChild.getBoundingClientRect().right))
   );
   expect(new Set(bords).size).toBe(1);
+});
+
+test("liste de courses sur téléphone : une carte par ingrédient, tout tient dans la largeur de l'écran", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await ouvrir(page);
+  await aller(page, "list");
+  const k = await page.evaluate(() => LAST.keys[0]);
+  await page.evaluate(() => {
+    S.prices[LAST.keys[1]] = 0;
+    calc();
+  });
+  // l'en-tête du tableau disparaît : chaque champ porte déjà son libellé (Besoin, En stock, À acheter, ×, €)
+  await expect(page.locator("#ltab thead")).toBeHidden();
+  const m = await page.evaluate(() => {
+    const l = window.innerWidth,
+      ligne = document.querySelector("#list tr:not(.grp)"),
+      cases = [...ligne.children].map((e) => e.getBoundingClientRect());
+    return {
+      debord: document.documentElement.scrollWidth > l,
+      dedans: cases.every((r) => r.left >= 0 && r.right <= l + 0.5),
+      nom: cases[0].width,
+      // nom pleine largeur au-dessus ; « à acheter », prix et coût sur la même ligne, en bas
+      bandeau: new Set(cases.slice(3).map((r) => Math.round(r.top))).size,
+      ordre: cases[0].top < cases[1].top && cases[1].top < cases[3].top,
+      prix: getComputedStyle(ligne.children[4].querySelector("input")).width,
+    };
+  });
+  expect(m.debord).toBe(false);
+  expect(m.dedans).toBe(true);
+  expect(m.nom).toBeGreaterThan(300);
+  expect(m.bandeau).toBe(1);
+  expect(m.ordre).toBe(true);
+  expect(parseFloat(m.prix)).toBeGreaterThan(50);
+  // la saisie du stock et du prix marche dans la carte
+  const champ = page.locator(`#list input[data-sq="${k}"]`);
+  await expect(champ).toBeVisible();
+  await page.locator(`#list button[data-sa="${k}"]`).click();
+  await expect(page.locator("#list tr.stocked")).toHaveCount(1);
+  await expect(page.locator("#list tr.stocked")).toBeVisible();
 });
 
 test("liste de courses : le stock se retire des achats, du total et de la liste imprimée, puis figure en fin de liste", async ({

@@ -2027,3 +2027,155 @@ table.fit.tcat {
   text-decoration: none;
   display: inline-block;
 }
+
+/* Liste de courses sur téléphone : une carte par ingrédient (nom, besoin et stock, puis à acheter × prix = coût) au lieu d'un tableau trop large */
+@media (max-width: 700px) {
+  #ltab,
+  #ltab tbody,
+  #ltab tr,
+  #ltab td {
+    display: block;
+    width: auto;
+  }
+  #ltab {
+    min-width: 0;
+  }
+  #ltab thead {
+    display: none;
+  }
+  #ltab tr.grp td {
+    border-radius: 8px;
+    margin-top: 10px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+  #ltab tr:not(.grp) {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "nom nom nom"
+      "bes bes stk"
+      "ach px cout";
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--bd);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  #ltab td {
+    border: 0;
+    padding: 0;
+    white-space: normal;
+  }
+  #ltab td:nth-child(1) {
+    grid-area: nom;
+    padding: 10px 12px 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  #ltab td:nth-child(1) .s,
+  #ltab td:nth-child(1) a {
+    font-weight: 400;
+    font-size: 0.8rem;
+  }
+  #ltab td:nth-child(2) {
+    grid-area: bes;
+    padding: 4px 12px 8px;
+    text-align: left;
+    color: var(--mu);
+    font-size: 0.85rem;
+  }
+  #ltab td:nth-child(2)::before {
+    content: "Besoin : ";
+  }
+  #ltab td:nth-child(3) {
+    grid-area: stk;
+    padding: 4px 12px 8px 0;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--mu);
+    white-space: nowrap;
+  }
+  #ltab td:nth-child(3)::before {
+    content: "En stock";
+  }
+  #ltab td:nth-child(3) .stkc .s {
+    min-width: 0;
+  }
+  #ltab td:nth-child(3) .stkc input {
+    width: 3.6em;
+    height: 34px;
+  }
+  #ltab td:nth-child(3) .stkc .x {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+  }
+  #ltab td:nth-child(4),
+  #ltab td:nth-child(5),
+  #ltab td:nth-child(6) {
+    background: var(--grp);
+    padding-top: 8px;
+    padding-bottom: 8px;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+  }
+  #ltab td:nth-child(4) {
+    grid-area: ach;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding-left: 12px;
+    font-weight: 700;
+    color: var(--ac);
+    text-align: left;
+    white-space: nowrap;
+  }
+  #ltab td:nth-child(4)::before {
+    content: "À acheter";
+    font-weight: 400;
+    font-size: 0.72rem;
+    color: var(--mu);
+  }
+  #ltab td:nth-child(5) {
+    grid-area: px;
+    justify-content: center;
+    gap: 6px;
+    padding-left: 8px;
+    color: var(--mu);
+    font-size: 0.85rem;
+  }
+  #ltab td:nth-child(5)::before {
+    content: "×";
+  }
+  #ltab td:nth-child(5)::after {
+    content: "€";
+  }
+  #ltab td:nth-child(5) input {
+    width: 4.6em;
+    height: 34px;
+    text-align: right;
+  }
+  #ltab td:nth-child(6) {
+    grid-area: cout;
+    justify-content: flex-end;
+    padding-right: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  /* tout en stock : la carte est grisée, le champ de stock reste lisible */
+  #ltab tr.stocked {
+    opacity: 0.7;
+  }
+  #ltab #list tr.stocked td {
+    text-decoration: none;
+  }
+  #ltab #list tr.stocked td:nth-child(2) {
+    text-decoration: line-through;
+  }
+}

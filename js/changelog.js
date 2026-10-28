@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.66.0",
+    d: "2026-10-28",
+    t: "Liste de courses : lisible sur téléphone",
+    l: [
+      "Sur téléphone, la liste de courses n'est plus un tableau coupé à droite : chaque ingrédient est une carte. Le nom et le lien du produit en haut, « Besoin » et « En stock » (champ et ✓) au milieu, puis un bandeau « À acheter », « × prix » (modifiable) et le coût de la ligne.",
+      "Le « ⚠ prix manquant » reste sous le nom et le champ du prix passe en rouge ; les ingrédients entièrement en stock sont grisés. Sur ordinateur, le tableau ne change pas.",
+    ],
+  },
+  {
     v: "1.65.0",
     d: "2026-10-28",
     t: "Liste de courses : stock, menu et impression",
