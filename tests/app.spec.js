@@ -3659,9 +3659,11 @@ test("impression : zoom automatique ; le menu s'imprime en paysage, la liste de 
   await page.locator("#shw").selectOption("list");
   await page.locator("#sp").click();
   expect(await page.evaluate(() => $("pgsz").textContent)).toContain("portrait");
+  expect(await page.evaluate(() => +$("pv").style.zoom)).toBe(1);
   await aller(page, "list");
   await page.locator("#plist").click();
   expect(await page.evaluate(() => $("pgsz").textContent)).toContain("portrait");
+  expect(await page.evaluate(() => +$("pv").style.zoom)).toBe(1);
   expect(erreurs).toEqual([]);
 });
 
