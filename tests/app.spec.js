@@ -3438,6 +3438,38 @@ test("menu imprimable : « N pers. » prend la couleur du nom du repas, lisible 
   expect(r.css).toBe(true);
 });
 
+test("menu imprimable : quantités totales par recette, deux présentations, texte partagé", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  // cochée par défaut, présentation compacte
+  await expect(page.locator("#mqty")).toBeChecked();
+  await expect(page.locator("#mprev .q").first()).toBeVisible();
+  // les quantités affichées sont celles de meal() pour l'effectif présent
+  const att = await page.evaluate(() => {
+    const i = days().findIndex((_, j) => dtypes(j).some(({ k }) => slotArr(j, k).length));
+    const { k } = dtypes(i).find(({ k }) => slotArr(i, k).length);
+    const r = slotArr(i, k)[0];
+    const out = meal(r, presents(i, k)).out;
+    const id = Object.keys(out).find((x) => out[x] > 0);
+    return { q: qty(id, out[id]), nom: ING[id][0].toLowerCase(), plat: r };
+  });
+  await expect(page.locator("#mprev .q").first()).toContainText(att.q + " " + att.nom);
+  // présentation en liste
+  await page.locator("#mqs").selectOption("b");
+  await expect(page.locator("#mprev .qb").first()).toContainText(att.q);
+  await expect(page.locator("#mprev .q")).toHaveCount(0);
+  // texte WhatsApp
+  expect(await page.evaluate(() => txtMenu())).toContain("quantités totales : ");
+  // décocher masque tout
+  await page.locator("#mqty").uncheck();
+  await expect(page.locator("#mprev .qb")).toHaveCount(0);
+  await expect(page.locator("#mqs")).toBeDisabled();
+  expect(await page.evaluate(() => txtMenu())).not.toContain("quantités totales");
+  expect(erreurs).toEqual([]);
+});
+
 test("menu imprimable : le texte des adaptations (régimes) se modifie, se masque ou revient à l'automatique", async ({
   page,
 }) => {

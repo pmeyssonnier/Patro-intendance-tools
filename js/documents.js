@@ -10,9 +10,25 @@ function adapteMenu(i, k, r) {
 }
 
 /** `edit` : version de l'aperçu à l'écran, avec le crayon pour modifier le texte des adaptations de chaque plat. */
+/** Quantités totales d'un plat à un repas : [[ingrédient, quantité]] pour l'effectif présent (marge et régimes compris), sans les quantités nulles. */
+function qtesPlat(i, k, r) {
+  return Object.entries(meal(r, presents(i, k)).out)
+    .filter(([, v]) => v > 0)
+    .map(([id, v]) => [ING[id][0], qty(id, v)]);
+}
+
+/** Bloc de quantités sous un plat : « ligne » (compact, style A) ou « liste » en deux colonnes (style B). */
+function qtesHTML(l) {
+  if (!l.length) return "";
+  if (S.ms === "b")
+    return `<div class="qh">Quantités totales</div><div class="qb">${l.map(([n, q]) => `<div><span>${esc(n)}</span><b>${esc(q)}</b></div>`).join("")}</div>`;
+  return `<div class="q">${l.map(([n, q]) => `<span><b>${esc(q)}</b> ${esc(n.toLowerCase())}</span>`).join("")}</div>`;
+}
+
 function menuHTML(edit = false) {
   const dsc = +S.md,
-    adp = +S.ma;
+    adp = +S.ma,
+    qte = +S.mq;
   let rows = "";
   days().forEach((d, i) => {
     rows += `<tr class="day"><td colspan="${dsc ? 3 : 2}">${esc(dlab(d))}</td></tr>`;
@@ -23,7 +39,7 @@ function menuHTML(edit = false) {
             .map((r, idx) => {
               const ad = adp ? adapteMenu(i, k, r) : [];
               const ligne = ad.length ? `<div class="ad">${esc(ad.join(" · "))}</div>` : "";
-              return `<div><b>${esc(r)}</b>${edit && adp ? adLigne(i, k, idx, r, ad) : ligne}</div>`;
+              return `<div><b>${esc(r)}</b>${edit && adp ? adLigne(i, k, idx, r, ad) : ligne}${qte ? qtesHTML(qtesPlat(i, k, r)) : ""}</div>`;
             })
             .join("")
         : '<span class="ad">–</span>';
@@ -203,16 +219,22 @@ const txtPrices = () =>
   "\n\n" +
   (catKeys().map(ligneCatalogueTexte).join("\n") || "(vide)");
 
-/** Lignes d'un repas en texte : « • Midi : plat + plat », puis, sous chaque plat, sa description et ses adaptations si les cases du menu sont cochées. */
+/** Lignes d'un repas en texte : « • Midi : plat + plat », puis, sous chaque plat, sa description, ses adaptations et ses quantités totales si les cases du menu sont cochées. */
 function lignesRepasTexte(i, k, lab) {
   const rs = slotArr(i, k);
   if (!rs.length) return "";
   const plus = rs.flatMap((r) => {
     const d = +S.md && S.rec[r] ? descTexte(S.rec[r].desc) : "",
-      ad = +S.ma ? adapteMenu(i, k, r).join(" · ") : "";
+      ad = +S.ma ? adapteMenu(i, k, r).join(" · ") : "",
+      qt = +S.mq
+        ? qtesPlat(i, k, r)
+            .map(([n, q]) => q + " " + n.toLowerCase())
+            .join(" · ")
+        : "";
     return [
       d && "     " + r + " : " + d.replace(/\n+/g, " "),
       ad && "     " + r + " – adaptations : " + ad,
+      qt && "     " + r + " – quantités totales : " + qt,
     ].filter(Boolean);
   });
   return ["  • " + lab + " : " + rs.join(" + "), ...plus].join("\n");
