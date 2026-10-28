@@ -228,6 +228,8 @@ function cleanProject(x) {
     o.logo = x.logo;
   if (x.md !== undefined) o.md = +x.md ? 1 : 0;
   if (x.ma !== undefined) o.ma = +x.ma ? 1 : 0;
+  if (x.mq !== undefined) o.mq = +x.mq ? 1 : 0;
+  if (x.ms === "a" || x.ms === "b") o.ms = x.ms;
   if (obj(x.camps)) {
     o.camps = {};
     for (const [k, c] of ent(x.camps)) {

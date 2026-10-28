@@ -15,6 +15,7 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+      "Menu imprimable : case « Afficher les quantités totales par recette » (cochée par défaut), en une ligne sous le plat ou en liste de deux colonnes ; ajoutée aussi au texte WhatsApp/Mail du menu.",
     ],
   },
   {
