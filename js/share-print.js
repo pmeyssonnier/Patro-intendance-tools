@@ -64,7 +64,7 @@ const DOC_CSS =
   "@media print{.np{display:none}.rlay{display:block}}" +
   ".mt .ad{font-size:.8rem;color:#5c6f62;font-style:italic}.mt td.sn .ad{color:inherit;font-style:normal;font-weight:700}.mt td.ck{width:1.4em;text-align:center}" +
   ".mt .q{margin-top:3px;font-size:.82rem;line-height:1.5}.mt .q span+span::before{content:' · ';color:#8a9a8f}.mt .qh{margin-top:4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#5c6f62}" +
-  ".mt .qb{margin-top:4px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;font-size:.82rem}.mt .qb div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted #1f7a3f55;padding:1px 0}.mt .qb b{white-space:nowrap}";
+  ".mt .qb{margin-top:4px;display:grid;grid-template-columns:repeat(auto-fill,minmax(12em,1fr));gap:0 18px;font-size:.82rem}.mt .qb div span{min-width:0;overflow-wrap:anywhere}.mt .qb div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted #1f7a3f55;padding:1px 0}.mt .qb b{white-space:nowrap}";
 
 /* Navigation du fichier HTML des recettes : choisir un type filtre la liste et les recettes affichées ; choisir une recette n'affiche qu'elle. Sans script, tout reste affiché. */
 const NAV_JS =
