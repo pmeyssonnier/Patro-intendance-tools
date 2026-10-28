@@ -3656,11 +3656,6 @@ test("menu imprimé : la ligne du jour est collée au premier repas (jamais seul
       ok: groupes.every(
         (g) => g.children[0].classList.contains("day") && g.children[1]?.classList.contains("sl")
       ),
-      css: getComputedStyle(
-        Object.assign(document.body.appendChild(document.createElement("table")), {
-          className: "mt",
-        }).appendChild(document.createElement("tbody"))
-      ).breakInside,
       doc: docHTML(menuHTML(), "Menu").includes("tbody.dg{break-inside:avoid}"),
     };
   });
