@@ -15,7 +15,7 @@ const SH = {
 
 const shk = () => SH[$("shw").value];
 
-/** Zoom (0,6 à 1) qui fait tenir le document sur le moins de pages A4 paysage (277 × 190 mm utiles) : le plus grand zoom qui n'ajoute aucune page par rapport au zoom minimum. */
+/** Zoom d'impression du menu (A4 paysage, 277 × 190 mm utiles), de 0,85 à 1,2 : celui qui remplit le mieux les pages (peu de blanc en bas de la dernière) sans trop s'éloigner de la taille normale. Un document court garde 100 %. */
 function zoomImpression(html) {
   const PX = 96 / 25.4,
     box = document.createElement("div"),
@@ -24,15 +24,19 @@ function zoomImpression(html) {
   inner.innerHTML = html;
   box.appendChild(inner);
   document.body.appendChild(box);
-  const pages = (z) => {
-    inner.style.zoom = z;
-    return Math.ceil(inner.getBoundingClientRect().height / (190 * PX * 0.97));
-  };
-  const cible = pages(0.6);
-  let z = 1;
-  while (z > 0.6 && pages(z) > cible) z = Math.round((z - 0.02) * 100) / 100;
+  let meilleur = 1,
+    min = Infinity;
+  for (let z = 85; z <= 120; z++) {
+    inner.style.zoom = z / 100;
+    const p = inner.getBoundingClientRect().height / (190 * PX * 0.97),
+      score = Math.ceil(p) - p + Math.abs(z - 100) / 100;
+    if (score < min - 1e-9) {
+      min = score;
+      meilleur = z / 100;
+    }
+  }
   box.remove();
-  return z;
+  return meilleur;
 }
 
 /** Imprime un document : en portrait à 100 %, sauf le menu (paysage, zoom automatique). */

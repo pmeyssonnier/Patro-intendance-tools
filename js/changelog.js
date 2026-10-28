@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.69.0",
+    d: "2026-10-28",
+    t: "Menu imprimé : zoom plus lisible",
+    l: [
+      "Le zoom automatique du menu (paysage) ne cherche plus à gagner des pages : il reste lisible, entre 85 % et 120 %, et choisit la taille qui remplit le mieux les pages, avec le moins de blanc possible en bas de la dernière.",
+    ],
+  },
+  {
     v: "1.68.0",
     d: "2026-10-28",
     t: "Impression : liste de courses à 100 %",
