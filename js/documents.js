@@ -67,20 +67,28 @@ function produitColruytHTML(k) {
   return `<a href="${esc(lien)}">${esc(nom || "Fiche produit")}</a><div class="ad">${esc(lien)}</div>`;
 }
 
-function listHTML() {
-  const rows = parRayon(LAST.keys)
+/** Tableau de la liste de courses imprimée (mêmes colonnes pour les achats et pour le stock) ; q : quantité de chaque ingrédient, coche : symbole de la première colonne. */
+function tableListeHTML(keys, q, coche, vide) {
+  const rows = parRayon(keys)
     .map(
       ([nom, l]) =>
         (nom ? `<tr><td colspan="6"><b>${esc(nom)}</b></td></tr>` : "") +
         l
           .map((k) => {
-            const c = coutLigne(k, LAST.tot[k]);
-            return `<tr><td class="ck">☐</td><td>${esc(ING[k][0])}</td><td>${produitColruytHTML(k)}</td><td>${qty(k, LAST.tot[k])}</td><td>${price(k) ? eur(price(k)) + "/" + ul(k) : "–"}</td><td>${eur(c)}</td></tr>`;
+            const c = coutLigne(k, q[k]);
+            return `<tr><td class="ck">${coche}</td><td>${esc(ING[k][0])}</td><td>${produitColruytHTML(k)}</td><td>${qty(k, q[k])}</td><td>${price(k) ? eur(price(k)) + "/" + ul(k) : "–"}</td><td>${eur(c)}</td></tr>`;
           })
           .join("")
     )
     .join("");
-  return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">${esc(troop())} · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div><table class="mt"><thead><tr><th></th><th>Produit</th><th>Produit Colruyt</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows || '<tr><td colspan="6">Aucun repas</td></tr>'}</tbody></table><p><b>Total : ${eur(LAST.sum)}</b>${nn() ? " · par personne : " + eur(LAST.sum / nn()) : ""}</p></div>`;
+  return `<table class="mt"><thead><tr><th></th><th>Produit</th><th>Produit Colruyt</th><th>Quantité</th><th>Prix</th><th>Coût</th></tr></thead><tbody>${rows || `<tr><td colspan="6">${vide}</td></tr>`}</tbody></table>`;
+}
+
+function listHTML() {
+  const stock = LAST.stk.length
+    ? `<h3>Déjà en stock</h3>${tableListeHTML(LAST.stk, LAST.used, "✔", "")}<p><b>Valeur du stock : ${eur(LAST.sumStock)}</b> <span class="s">(non comptée dans le total)</span></p>`
+    : "";
+  return `<div class="mp pvx" style="${cvars()}"><h2>Liste de courses</h2><div class="s">${esc(troop())} · ${nn()} personnes · ${filled()} repas · ${new Date().toLocaleDateString("fr-BE")}</div>${tableListeHTML(LAST.keys, LAST.tot, "☐", LAST.stk.length ? "Tout est déjà en stock" : "Aucun repas")}<p><b>Total : ${eur(LAST.sum)}</b>${nn() ? " · par personne : " + eur(LAST.sum / nn()) : ""}</p>${stock}</div>`;
 }
 
 /** Ingrédients du catalogue de prix, dans l'ordre de la page, sans ceux que l'utilisateur a masqués. */
@@ -170,15 +178,16 @@ function recHTML(names) {
 }
 
 /** Ligne de la liste de courses en texte : quantité, prix, coût, puis le produit Colruyt et son adresse en dessous (si connus). */
-function ligneListeTexte(k) {
+function ligneListeTexte(k, q = LAST.tot[k], coche = "☐") {
   const lien = lienColruyt(S.url[k]),
     nom = prodName(k),
-    cout = coutLigne(k, LAST.tot[k]);
+    cout = coutLigne(k, q);
   return (
-    "☐ " +
+    coche +
+    " " +
     ING[k][0] +
     " : " +
-    qty(k, LAST.tot[k]) +
+    qty(k, q) +
     " · " +
     (price(k) ? eur(price(k)) + "/" + ul(k) + " · " + eur(cout) : "prix manquant") +
     (nom ? "\n   Colruyt : " + nom : "") +
@@ -199,7 +208,13 @@ const txtList = () =>
     .join("\n")
     .trim() || "(vide)") +
   "\n\nTotal estimé : " +
-  eur(LAST.sum);
+  eur(LAST.sum) +
+  (LAST.stk.length
+    ? "\n\nDÉJÀ EN STOCK\n" +
+      LAST.stk.map((k) => ligneListeTexte(k, LAST.used[k], "✔")).join("\n") +
+      "\n\nValeur du stock : " +
+      eur(LAST.sumStock)
+    : "");
 
 /** Ligne du catalogue de prix en texte : prix, rayon, puis le produit Colruyt et son adresse en dessous (si connus). */
 function ligneCatalogueTexte(k) {
@@ -317,23 +332,30 @@ function csvList() {
       ],
     ],
     n = nn();
-  LAST.keys.forEach((k) => {
-    const [q, u] = qparts(k, LAST.tot[k]);
+  const ligne = (k, qte, rem) => {
+    const [q, u] = qparts(k, qte);
     r.push([
       ING[k][0],
       q,
       u,
       cn(price(k)),
       ul(k),
-      cn(coutLigne(k, LAST.tot[k])),
-      price(k) ? "" : "prix manquant",
+      cn(coutLigne(k, qte)),
+      price(k) ? rem : "prix manquant",
       CATS.find((c) => c[0] === catOf(k))[1],
       lienColruyt(S.url[k]),
     ]);
-  });
+  };
+  LAST.keys.forEach((k) => ligne(k, LAST.tot[k], ""));
   r.push([]);
   r.push(["TOTAL", "", "", "", "", cn(LAST.sum), "", "", ""]);
   if (n) r.push(["Par personne", "", "", "", "", cn(LAST.sum / n), "", "", ""]);
+  if (LAST.stk.length) {
+    r.push([]);
+    r.push(["DÉJÀ EN STOCK"]);
+    LAST.stk.forEach((k) => ligne(k, LAST.used[k], "en stock"));
+    r.push(["VALEUR DU STOCK", "", "", "", "", cn(LAST.sumStock), "", "", ""]);
+  }
   r.push([]);
   r.push(["Camp", C.name]);
   r.push(["Dates", fdate(C.start) + " → " + fdate(C.end)]);

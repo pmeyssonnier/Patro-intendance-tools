@@ -58,6 +58,7 @@ function cleanCamp(c, N) {
     mt: str(c.mt, 80, "Menu du camp"),
     menu: {},
     extra: {},
+    stock: {},
     types: [],
     off: {},
     pres: {},
@@ -67,6 +68,8 @@ function cleanCamp(c, N) {
   };
   // articles ajoutés à la liste de courses hors recettes (identifiant d'ingrédient -> quantité de base)
   for (const [k, v] of ent(c.extra)) if (okid(k) && +v > 0) o.extra[k] = num(v, 0, 1e7);
+  // quantités déjà en stock (identifiant d'ingrédient -> quantité de base), retirées de ce qu'il faut acheter
+  for (const [k, v] of ent(c.stock)) if (okid(k) && +v > 0) o.stock[k] = num(v, 0, 1e7);
   for (const [k, v] of ent(c.dt))
     if (okid(k) && Array.isArray(v)) o.dt[k] = qn(v, N).map((x) => Math.min(x, 1e4));
   for (const t of (Array.isArray(c.types) ? c.types : []).slice(0, 30))

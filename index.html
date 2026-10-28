@@ -118,8 +118,8 @@
 <div class="pg" id="g-list">
 <section class="card"><h2>Liste de courses</h2>
 <p class="s np"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="lgrp" style="width:auto"> Grouper par rayon (fruits et légumes, boucherie, produits laitiers…)</label></p>
-<div class="w st"><table class="fit"><thead><tr><th>Produit</th><th class="nw num">Quantité</th><th class="num">Prix</th><th class="nw num">Coût</th></tr></thead><tbody id="list"></tbody></table></div>
-<div class="t"><span>Total : <b id="tot"></b></span><span>Par personne : <b id="pp"></b></span><span id="ecow" class="promo" hidden>🏷️ Promos possibles : −<b id="eco"></b></span><span class="s" id="np2"></span></div>
+<div class="w st"><table class="fit"><thead><tr><th>Produit</th><th class="nw num">Besoin</th><th class="nw num">En stock</th><th class="nw num">À acheter</th><th class="num">Prix</th><th class="nw num">Coût</th></tr></thead><tbody id="list"></tbody></table></div>
+<div class="t"><span>Total : <b id="tot"></b></span><span>Par personne : <b id="pp"></b></span><span id="stkw" class="s" hidden>📦 Déjà en stock : <b id="stkv"></b> (hors total)</span><span id="ecow" class="promo" hidden>🏷️ Promos possibles : −<b id="eco"></b></span><span class="s" id="np2"></span></div>
 <h3 class="np" style="margin-bottom:4px">Autres articles (hors recettes)</h3>
 <p class="s np">Ajoute ce qui ne vient pas d'une recette : liquide vaisselle, boissons, sacs poubelle… Ces articles comptent dans la liste et le total, et restent dans le catalogue pour garder leur prix.</p>
 <div class="g np"><div><label for="xn">Article</label><input id="xn" aria-label="Nom de l'article" placeholder="ex. Liquide vaisselle" maxlength="100"></div>
