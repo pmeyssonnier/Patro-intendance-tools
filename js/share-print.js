@@ -15,7 +15,7 @@ const SH = {
 
 const shk = () => SH[$("shw").value];
 
-/** Zoom d'impression du menu (A4 paysage, 277 × 190 mm utiles), de 0,85 à 1,2 : celui qui remplit le mieux les pages (peu de blanc en bas de la dernière) sans trop s'éloigner de la taille normale. Un document court garde 100 %. */
+/** Zoom d'impression du menu (A4 paysage, 277 × 190 mm utiles), de 0,85 à 1 : celui qui remplit le mieux les pages (peu de blanc en bas de la dernière), sans jamais agrandir. Un document court garde 100 %. */
 function zoomImpression(html) {
   const PX = 96 / 25.4,
     box = document.createElement("div"),
@@ -26,7 +26,7 @@ function zoomImpression(html) {
   document.body.appendChild(box);
   let meilleur = 1,
     min = Infinity;
-  for (let z = 85; z <= 120; z++) {
+  for (let z = 85; z <= 100; z++) {
     inner.style.zoom = z / 100;
     const p = inner.getBoundingClientRect().height / (190 * PX * 0.97),
       score = Math.ceil(p) - p + Math.abs(z - 100) / 100;
