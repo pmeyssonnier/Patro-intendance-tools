@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.70.0",
+    d: "2026-10-28",
+    t: "Menu imprimé : zoom jamais agrandi",
+    l: [
+      "Le zoom automatique du menu ne dépasse plus 100 % (trop gros sur 120 %) : il va de 85 % à 100 % et choisit la taille qui laisse le moins de blanc en bas de la dernière page.",
+    ],
+  },
+  {
     v: "1.69.0",
     d: "2026-10-28",
     t: "Menu imprimé : zoom plus lisible",

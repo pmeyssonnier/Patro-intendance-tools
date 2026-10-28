@@ -3649,12 +3649,12 @@ test("impression : zoom automatique ; le menu s'imprime en paysage, la liste de 
   await page.locator("#pmenu").click();
   const z = await page.evaluate(() => +$("pv").style.zoom);
   expect(z).toBeGreaterThanOrEqual(0.85);
-  expect(z).toBeLessThanOrEqual(1.2);
+  expect(z).toBeLessThanOrEqual(1);
   // un document court garde sa taille ; un document long reste lisible (jamais sous 85 %)
   expect(await page.evaluate(() => zoomImpression("<p>court</p>"))).toBe(1);
   const long = await page.evaluate(() => zoomImpression("<p>ligne</p>".repeat(400)));
   expect(long).toBeGreaterThanOrEqual(0.85);
-  expect(long).toBeLessThanOrEqual(1.2);
+  expect(long).toBeLessThanOrEqual(1);
   // l'orientation suit le document : paysage pour le menu, portrait pour la liste de courses
   expect(await page.evaluate(() => $("pgsz").textContent)).toContain("landscape");
   await aller(page, "sh");
