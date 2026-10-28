@@ -632,7 +632,8 @@ footer {
   width: 1.4em;
   text-align: center;
 }
-.mt tr {
+.mt tr,
+.mt tbody.dg {
   break-inside: avoid;
 }
 .sr {

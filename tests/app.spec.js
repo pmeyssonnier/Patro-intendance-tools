@@ -3640,6 +3640,37 @@ test("menu imprimable : une journée sans aucun repas prévu n'est pas affichée
   expect(erreurs).toEqual([]);
 });
 
+test("menu imprimé : la ligne du jour est collée au premier repas (jamais seule en bas de page)", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  const r = await page.evaluate(() => {
+    const d = document.createElement("div");
+    d.innerHTML = menuHTML();
+    const groupes = [...d.querySelectorAll("tbody.dg")];
+    return {
+      n: groupes.length,
+      jours: d.querySelectorAll("tr.day").length,
+      // chaque groupe : le jour puis un premier repas, dans un même bloc insécable
+      ok: groupes.every(
+        (g) => g.children[0].classList.contains("day") && g.children[1]?.classList.contains("sl")
+      ),
+      css: getComputedStyle(
+        Object.assign(document.body.appendChild(document.createElement("table")), {
+          className: "mt",
+        }).appendChild(document.createElement("tbody"))
+      ).breakInside,
+      doc: docHTML(menuHTML(), "Menu").includes("tbody.dg{break-inside:avoid}"),
+    };
+  });
+  expect(r.n).toBeGreaterThan(0);
+  expect(r.n).toBe(r.jours);
+  expect(r.ok).toBe(true);
+  expect(r.doc).toBe(true);
+  expect(erreurs).toEqual([]);
+});
+
 test("impression : zoom automatique ; le menu s'imprime en paysage, la liste de courses en portrait", async ({
   page,
 }) => {
