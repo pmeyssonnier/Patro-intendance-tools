@@ -3640,7 +3640,7 @@ test("menu imprimable : une journée sans aucun repas prévu n'est pas affichée
   expect(erreurs).toEqual([]);
 });
 
-test("impression : zoom automatique pour tenir sur le moins de pages A4 paysage", async ({
+test("impression : zoom automatique ; le menu s'imprime en paysage, la liste de courses en portrait", async ({
   page,
 }) => {
   const erreurs = await ouvrir(page);
@@ -3653,6 +3653,15 @@ test("impression : zoom automatique pour tenir sur le moins de pages A4 paysage"
   // un document court garde sa taille, un document très long est réduit au minimum
   expect(await page.evaluate(() => zoomImpression("<p>court</p>"))).toBe(1);
   expect(await page.evaluate(() => zoomImpression("<p>ligne</p>".repeat(400)))).toBeLessThan(1);
+  // l'orientation suit le document : paysage pour le menu, portrait pour la liste de courses
+  expect(await page.evaluate(() => $("pgsz").textContent)).toContain("landscape");
+  await aller(page, "sh");
+  await page.locator("#shw").selectOption("list");
+  await page.locator("#sp").click();
+  expect(await page.evaluate(() => $("pgsz").textContent)).toContain("portrait");
+  await aller(page, "list");
+  await page.locator("#plist").click();
+  expect(await page.evaluate(() => $("pgsz").textContent)).toContain("portrait");
   expect(erreurs).toEqual([]);
 });
 

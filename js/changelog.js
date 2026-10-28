@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.67.0",
+    d: "2026-10-28",
+    t: "Impression : menu en paysage, liste de courses en portrait",
+    l: [
+      "Seul le menu s'imprime en paysage. La liste de courses (et les autres documents : catalogue de prix, recettes) reviennent en portrait, avec le zoom automatique adapté à la page.",
+    ],
+  },
+  {
     v: "1.66.0",
     d: "2026-10-28",
     t: "Liste de courses : lisible sur téléphone",
