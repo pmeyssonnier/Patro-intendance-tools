@@ -15,18 +15,19 @@ const SH = {
 
 const shk = () => SH[$("shw").value];
 
-/** Zoom (0,6 à 1) qui fait tenir le document sur le moins de pages A4 paysage (277 × 190 mm utiles) : le plus grand zoom qui n'ajoute aucune page par rapport au zoom minimum. */
-function zoomImpression(html) {
-  const PX = 96 / 25.4,
+/** Zoom (0,6 à 1) qui fait tenir le document sur le moins de pages A4 (paysage : 277 × 190 mm utiles, portrait : 190 × 277 mm) : le plus grand zoom qui n'ajoute aucune page par rapport au zoom minimum. */
+function zoomImpression(html, paysage = false) {
+  const [larg, haut] = paysage ? [277, 190] : [190, 277],
+    PX = 96 / 25.4,
     box = document.createElement("div"),
     inner = document.createElement("div");
-  box.style.cssText = `position:absolute;left:-99999px;top:0;visibility:hidden;width:${277 * PX}px`;
+  box.style.cssText = `position:absolute;left:-99999px;top:0;visibility:hidden;width:${larg * PX}px`;
   inner.innerHTML = html;
   box.appendChild(inner);
   document.body.appendChild(box);
   const pages = (z) => {
     inner.style.zoom = z;
-    return Math.ceil(inner.getBoundingClientRect().height / (190 * PX * 0.97));
+    return Math.ceil(inner.getBoundingClientRect().height / (haut * PX * 0.97));
   };
   const cible = pages(0.6);
   let z = 1;
@@ -35,9 +36,17 @@ function zoomImpression(html) {
   return z;
 }
 
-function printHTML(html) {
+/** Imprime un document : en portrait, sauf le menu (paysage). */
+function printHTML(html, paysage = false) {
   $("pv").innerHTML = html;
-  $("pv").style.zoom = zoomImpression(html);
+  $("pv").style.zoom = zoomImpression(html, paysage);
+  let st = $("pgsz");
+  if (!st) {
+    st = document.createElement("style");
+    st.id = "pgsz";
+    document.head.appendChild(st);
+  }
+  st.textContent = `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}`;
   document.body.classList.add("pr");
   setTimeout(() => {
     try {
@@ -103,9 +112,9 @@ const shmsg = (t) => {
 
 $("plist").onclick = () => printHTML(listHTML());
 
-$("pmenu").onclick = () => printHTML(menuHTML());
+$("pmenu").onclick = () => printHTML(menuHTML(), true);
 
-$("sp").onclick = () => printHTML(shk()[2]());
+$("sp").onclick = () => printHTML(shk()[2](), $("shw").value === "menu");
 
 $("sd").onclick = () => dlHTML(shk()[2](), "Patro " + shk()[0]);
 
