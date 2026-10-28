@@ -58,6 +58,7 @@ function mkCamp(name, o) {
       notes: "",
       menu: {},
       extra: {},
+      stock: {},
       types: DEFT(),
       off: {},
       pres: {},
@@ -306,6 +307,8 @@ function effectifPourConversion() {
   for (const c of Object.values(S.camps)) {
     if (!c.extra || typeof c.extra !== "object") c.extra = {};
     for (const k of Object.keys(c.extra)) if (!ING[k] || !(+c.extra[k] > 0)) delete c.extra[k];
+    if (!c.stock || typeof c.stock !== "object") c.stock = {};
+    for (const k of Object.keys(c.stock)) if (!ING[k] || !(+c.stock[k] > 0)) delete c.stock[k];
     if (typeof c.name !== "string") c.name = "Camp";
     if (!pISO(c.start)) c.start = iso(nextDow(5));
     if (!pISO(c.end) || c.end < c.start) c.end = c.start;

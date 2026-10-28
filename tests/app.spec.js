@@ -1319,8 +1319,8 @@ test("liste de courses : quantité, prix et coût sont alignés à droite", asyn
       );
     return { th, td };
   });
-  expect(al.th.slice(1)).toEqual(["right", "right", "right"]);
-  expect(al.td.slice(1)).toEqual(["right", "right", "right"]);
+  expect(al.th.slice(1)).toEqual(["right", "right", "right", "right", "right"]);
+  expect(al.td.slice(1)).toEqual(["right", "right", "right", "right", "right"]);
   // les colonnes de chiffres s'alignent sur le même bord droit d'une ligne à l'autre
   const bords = await page.evaluate(() =>
     [...document.querySelectorAll("#list tr:not(.grp)")]
@@ -1328,6 +1328,51 @@ test("liste de courses : quantité, prix et coût sont alignés à droite", asyn
       .map((r) => Math.round(r.lastElementChild.getBoundingClientRect().right))
   );
   expect(new Set(bords).size).toBe(1);
+});
+
+test("liste de courses : le stock se retire des achats, du total et de la liste imprimée, puis figure en fin de liste", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "list");
+  const tot0 = await page.evaluate(() => LAST.sum);
+  const [k1, k2] = await page.evaluate(() => LAST.keys.slice(0, 2));
+  const besoin1 = await page.evaluate((k) => LAST.need[k], k1);
+  // la moitié du premier produit est en stock : on achète moins, le total baisse
+  const champ = page.locator(`#list input[data-sq="${k1}"]`);
+  const moitie = await page.evaluate((k) => +(LAST.need[k] / fxu(k) / 2).toFixed(3), k1);
+  await champ.fill(String(moitie));
+  await champ.dispatchEvent("change");
+  const r = await page.evaluate((k) => ({ tot: LAST.tot[k], sum: LAST.sum, n: LAST.need[k] }), k1);
+  expect(r.tot).toBeCloseTo(besoin1 / 2, 0);
+  expect(r.sum).toBeLessThan(tot0);
+  await expect(page.locator("#stkw")).toBeVisible();
+  // le deuxième produit est entièrement en stock : la ligne reste à l'écran mais quitte les achats
+  await page.locator(`#list button[data-sa="${k2}"]`).click();
+  await expect(page.locator(`#list button[data-sa="${k2}"]`)).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  );
+  expect(await page.evaluate((k) => LAST.keys.includes(k), k2)).toBe(false);
+  // liste imprimée : même mise en page, sans la ligne en stock, quantité adaptée, stock en fin de liste
+  const html = await page.evaluate(() => listHTML());
+  const [achats, stock] = html.split("<h3>Déjà en stock</h3>");
+  const nom = (k) => page.evaluate((x) => ING[x][0], k);
+  expect(achats).toContain(await nom(k1));
+  expect(achats).not.toContain(">" + (await nom(k2)) + "<");
+  expect(stock).toContain(await nom(k1));
+  expect(stock).toContain(await nom(k2));
+  expect(stock).toContain("Valeur du stock");
+  expect(await page.evaluate(() => txtList())).toContain("DÉJÀ EN STOCK");
+  expect(await page.evaluate(() => csvList())).toContain("VALEUR DU STOCK");
+  // rechargé : le stock est conservé avec le camp
+  await page.reload();
+  await aller(page, "list");
+  expect(await page.evaluate((k) => LAST.used[k] > 0, k1)).toBe(true);
+  // ↶ remet la ligne dans les achats
+  await page.locator(`#list button[data-sa="${k2}"]`).click();
+  expect(await page.evaluate((k) => LAST.keys.includes(k), k2)).toBe(true);
+  expect(erreurs).toEqual([]);
 });
 
 test("catalogue : seule la colonne des prix est alignée à droite", async ({ page }) => {

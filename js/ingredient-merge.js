@@ -27,7 +27,7 @@ function fusionnerIng(src, dst) {
     for (const x in ex) if (ex[x] === src) ex[x] = x === dst ? null : dst;
   }
   for (const c of Object.values(S.camps))
-    if (src in c.extra) c.extra[dst] = (c.extra[dst] || 0) + c.extra[src];
+    for (const m of [c.extra, c.stock]) if (src in m) m[dst] = (m[dst] || 0) + m[src];
   rmIng(src);
   return "";
 }
