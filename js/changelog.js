@@ -5,6 +5,19 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.65.0",
+    d: "2026-10-28",
+    t: "Liste de courses : stock, menu et impression",
+    l: [
+      "Liste de courses : colonne « En stock » pour chaque ingrédient (quantité déjà disponible) et bouton ✓ « tout en stock » (↶ pour annuler). Le total, le budget et la quantité à acheter ne comptent que le reste ; la ligne « Déjà en stock » en donne la valeur. Le stock est conservé avec le camp.",
+      "Liste imprimée, texte WhatsApp et CSV : même mise en page, sans les lignes entièrement en stock et avec les quantités à acheter ; une section « Déjà en stock » (quantité, prix, valeur) termine la liste.",
+      "Menu : quand on retire des personnes d'une section qui a des régimes, l'appli demande si elles en suivent un (et lequel) ; les quantités et les mentions « Végétarien ×N » suivent. Aucune question si la section n'a pas de régime.",
+      "Menu imprimable : les journées sans aucun repas prévu ne s'affichent plus (impression, fichier HTML et texte partagé).",
+      "Impression : A4 paysage et zoom automatique (de 100 % à 60 %) pour tenir sur le moins de pages possible.",
+      "Corrections d'affichage : les quantités totales du menu ne débordent plus sur la colonne voisine, et le champ de stock reste sur une seule ligne.",
+    ],
+  },
+  {
     v: "1.64.0",
     d: "2026-10-28",
     t: "Menu imprimable : quantités totales par recette",
