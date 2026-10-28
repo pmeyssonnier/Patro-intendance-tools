@@ -1,0 +1,162 @@
+rules_version = '2';
+
+// Règles de sécurité Firestore – version test.
+// Tout ce qui n'est pas autorisé ci-dessous est refusé.
+// Rôles d'un groupe : admin (gère les membres), editeur (modifie), lecteur (consulte).
+//
+// Collections :
+//   prix/{doc}                        prix communs (super-administrateur)
+//   groupes/{g}                       un groupe (nom)
+//   groupes/{g}/membres/{uid}         membres du groupe et leur rôle
+//   groupes/{g}/catalogue|camps/{id}  données du groupe, avec un numéro de version
+//   groupes/{g}/historique/{id}       versions gardées pour revenir en arrière
+//   invitations/{g|e-mail}            invitation d'une adresse à rejoindre un groupe
+//   utilisateurs/{uid}/groupes/{g}    copie du rôle, pour retrouver « mes groupes »
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function connecte() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function monMail() {
+      return request.auth.token.email.lower();
+    }
+
+    function superAdmin() {
+      return connecte() && monMail() == 'pmeyssonnier@gmail.com';
+    }
+
+    function roleDans(g) {
+      return exists(/databases/$(database)/documents/groupes/$(g)/membres/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/groupes/$(g)/membres/$(request.auth.uid)).data.role
+        : '';
+    }
+
+    function membre(g) {
+      return connecte() && roleDans(g) in ['admin', 'editeur', 'lecteur'];
+    }
+
+    function editeur(g) {
+      return connecte() && roleDans(g) in ['admin', 'editeur'];
+    }
+
+    function admin(g) {
+      return connecte() && roleDans(g) == 'admin';
+    }
+
+    function roleValide(r) {
+      return r in ['admin', 'editeur', 'lecteur'];
+    }
+
+    // Morceau de données d'un groupe (catalogue ou camp) : un texte JSON, un numéro de version et la trace de l'envoi.
+    function morceauValide() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['version', 'data', 'supprime', 'par', 'le'])
+        && d.version is int
+        && d.data is string
+        && d.data.size() <= 900000
+        && (!('supprime' in d) || d.supprime is bool);
+    }
+
+    // Version gardée dans l'historique : copie d'un morceau à un moment donné (jamais modifiée, seulement ajoutée ou élaguée).
+    function versionGardee() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['cle', 'version', 'data', 'par', 'le', 'note', 'fin'])
+        && d.cle is string
+        && d.version is int
+        && d.data is string
+        && d.data.size() <= 900000
+        && d.par == request.auth.uid
+        && (!('fin' in d) || d.fin is bool)
+        && (!('note' in d) || (d.note is string && d.note.size() <= 80));
+    }
+
+    // Invitation adressée à l'utilisateur connecté pour le groupe g (identifiant : « g|adresse »).
+    function invitationPour(g) {
+      return exists(/databases/$(database)/documents/invitations/$(g + '|' + monMail()));
+    }
+
+    function roleInvite(g) {
+      return get(/databases/$(database)/documents/invitations/$(g + '|' + monMail())).data.role;
+    }
+
+    // Prix communs (import Colruyt) : lisibles par tout utilisateur connecté, écrits par le super-administrateur seul.
+    match /prix/{doc} {
+      allow read: if connecte();
+      allow write: if superAdmin();
+    }
+
+    match /groupes/{g} {
+      allow read: if membre(g) || superAdmin();
+      allow create: if superAdmin()
+        && request.resource.data.nom is string
+        && request.resource.data.nom.size() > 0
+        && request.resource.data.nom.size() <= 80;
+      allow delete: if superAdmin();
+      allow update: if (admin(g) || superAdmin())
+        && request.resource.data.nom is string
+        && request.resource.data.nom.size() > 0
+        && request.resource.data.nom.size() <= 80;
+
+      match /membres/{uid} {
+        allow read: if membre(g) || superAdmin() || (connecte() && request.auth.uid == uid);
+        // un administrateur (ou le super-administrateur) ajoute et modifie ; l'invité s'ajoute lui-même, avec le rôle de son invitation
+        allow create: if roleValide(request.resource.data.role)
+          && ((admin(g) || superAdmin())
+            || (connecte() && request.auth.uid == uid
+              && invitationPour(g)
+              && request.resource.data.role == roleInvite(g)
+              && request.resource.data.email == monMail()));
+        allow update: if (admin(g) || superAdmin()) && roleValide(request.resource.data.role);
+        // un administrateur retire n'importe qui ; chacun peut se retirer lui-même (le client refuse de laisser le groupe sans administrateur)
+        allow delete: if admin(g) || superAdmin() || (connecte() && request.auth.uid == uid);
+      }
+
+      // Historique : les membres consultent, les éditeurs ajoutent une version et suppriment les plus anciennes.
+      match /historique/{doc} {
+        allow read: if membre(g);
+        allow create: if editeur(g) && versionGardee();
+        allow delete: if editeur(g);
+      }
+
+      // Catalogue du groupe et camps : un document par élément, avec un numéro de version qui avance de 1 à chaque écriture.
+      match /{type}/{doc} {
+        allow read: if (type == 'catalogue' || type == 'camps') && membre(g);
+        allow create: if (type == 'catalogue' || type == 'camps') && editeur(g)
+          && morceauValide()
+          && request.resource.data.version == 1;
+        allow update: if (type == 'catalogue' || type == 'camps') && editeur(g)
+          && morceauValide()
+          && request.resource.data.version == resource.data.version + 1;
+        allow delete: if (type == 'catalogue' || type == 'camps') && admin(g);
+      }
+    }
+
+    match /invitations/{id} {
+      allow read: if connecte()
+        && (resource.data.email == monMail() || admin(resource.data.groupe) || superAdmin());
+      allow create: if connecte()
+        && (admin(request.resource.data.groupe) || superAdmin())
+        && roleValide(request.resource.data.role)
+        && request.resource.data.email is string
+        && request.resource.data.email == request.resource.data.email.lower()
+        && request.resource.data.nomGroupe is string
+        && id == request.resource.data.groupe + '|' + request.resource.data.email;
+      allow delete: if connecte()
+        && (resource.data.email == monMail() || admin(resource.data.groupe) || superAdmin());
+    }
+
+    match /utilisateurs/{uid}/groupes/{g} {
+      allow read: if connecte() && request.auth.uid == uid;
+      allow create: if roleValide(request.resource.data.role)
+        && (superAdmin()
+          || admin(g)
+          || (connecte() && request.auth.uid == uid
+            && invitationPour(g)
+            && request.resource.data.role == roleInvite(g)));
+      allow update: if roleValide(request.resource.data.role) && (admin(g) || superAdmin());
+      allow delete: if admin(g) || superAdmin() || (connecte() && request.auth.uid == uid);
+    }
+  }
+}

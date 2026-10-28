@@ -5,6 +5,19 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.66.0",
+    d: "2026-10-28",
+    t: "Groupes en ligne : synchronisation, invitations et historique",
+    l: [
+      "Configuration : connexion par un lien envoyé par e-mail (sans mot de passe). Sans connexion, rien ne change : tout reste sur l'appareil et l'application fonctionne comme avant.",
+      "Mon groupe : un administrateur crée un groupe (Sainte-Suzanne, Uccle, Forest…), invite des personnes par e-mail et choisit leur rôle (administrateur, éditeur ou lecteur). Les groupes sont cloisonnés : on ne voit que les siens.",
+      "Synchronisation : camps, recettes, prix, régimes et sections sont envoyés au groupe en tâche de fond ; le travail reste possible sans réseau. Un indicateur ☁️ en haut de page montre l'état.",
+      "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
+      "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
+      "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
+    ],
+  },
+  {
     v: "1.65.0",
     d: "2026-10-28",
     t: "Liste de courses : stock, menu et impression",

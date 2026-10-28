@@ -61,7 +61,7 @@ test("les scripts et le style portent le numéro de version (évite les fichiers
   const liens = [...html.matchAll(/(?:src|href)="((?:js\/[^"]+\.js|styles\.css)[^"]*)"/g)].map(
     (m) => m[1]
   );
-  expect(liens.length).toBe(26);
+  expect(liens.length).toBe(32);
   for (const l of liens)
     expect(l).toMatch(new RegExp("\\?v=" + version.replace(/\./g, "\\.") + "$"));
 });
@@ -450,6 +450,17 @@ test("recettes : la taille des champs reste stable quand le nombre de sections c
   expect(Math.abs(apres - avant)).toBeLessThan(1);
 });
 
+test("effectifs : le total de la troupe suit les champs de section", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "eff");
+  const champs = page.locator("#cnt input");
+  const n = await champs.count();
+  for (let i = 0; i < n; i++) await champs.nth(i).fill(i === 0 ? "12" : "0");
+  await expect(page.locator("#cnttot")).toHaveText("Total : 12 personnes");
+  await champs.nth(0).fill("1");
+  await expect(page.locator("#cnttot")).toHaveText("Total : 1 personne");
+});
+
 test("recettes : la fenêtre reste ouverte au clic à côté ; Enregistrer ne la ferme pas ; les types se masquent", async ({
   page,
 }) => {
@@ -545,17 +556,6 @@ test("catalogue : le filtre « sans prix » n'affiche que les ingrédients sans 
   await expect(page.locator("#csansn")).toHaveText("(2)");
   await page.locator("#csans").uncheck();
   await expect(page.locator("#ct tr")).toHaveCount(n0);
-});
-
-test("effectifs : le total de la troupe suit les champs de section", async ({ page }) => {
-  await ouvrir(page);
-  await aller(page, "eff");
-  const champs = page.locator("#cnt input");
-  const n = await champs.count();
-  for (let i = 0; i < n; i++) await champs.nth(i).fill(i === 0 ? "12" : "0");
-  await expect(page.locator("#cnttot")).toHaveText("Total : 12 personnes");
-  await champs.nth(0).fill("1");
-  await expect(page.locator("#cnttot")).toHaveText("Total : 1 personne");
 });
 
 test("recettes : gérer les types d'origine (renommer, déplacer, supprimer, ajouter, rétablir)", async ({
@@ -3544,6 +3544,292 @@ test("menu imprimable : « N pers. » prend la couleur du nom du repas, lisible 
   expect(r.lignes.length).toBeGreaterThan(0);
   for (const [nom, eff] of r.lignes) expect(eff).toBe(nom);
   expect(r.css).toBe(true);
+});
+
+test("Compte en ligne : bandeau test réservé au site de test, aucun kit chargé au démarrage, e-mail invalide refusé sans réseau", async ({
+  page,
+}) => {
+  const externes = [];
+  page.on("request", (r) => {
+    if (/gstatic\.com|googleapis\.com/.test(r.url())) externes.push(r.url());
+  });
+  const erreurs = await ouvrir(page);
+  // en local (file://) comme sur le site habituel, pas de bandeau ; sur Firebase Hosting, oui
+  await expect(page.locator("#vtest")).toBeHidden();
+  expect(
+    await page.evaluate(() =>
+      [
+        "patro-intendance-test.web.app",
+        "patro-intendance-test.firebaseapp.com",
+        "pmeyssonnier.github.io",
+        "localhost",
+        "",
+        "web.app.exemple.be",
+      ].map(siteDeTest)
+    )
+  ).toEqual([true, true, false, false, false, false]);
+  await aller(page, "cfg");
+  await expect(page.locator("#cloudst")).toContainText("Non connecté");
+  await expect(page.locator("#cout")).toBeHidden();
+  await page.fill("#cmail", "pas-une-adresse");
+  await page.click("#cmailok");
+  await expect(page.locator("#cloudmsg")).toHaveText("Adresse e-mail invalide.");
+  expect(externes).toEqual([]);
+  expect(erreurs).toEqual([]);
+});
+
+test("groupes : invitation, dernier administrateur et contenu de la carte « Mon groupe »", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const membres = [
+      { uid: "a", email: "a@x.be", role: "admin" },
+      { uid: "e", email: "e@x.be", role: "editeur" },
+    ];
+    const base = {
+      groupes: [{ id: "g1", nom: "Sainte-Suzanne", role: "admin" }],
+      courant: "g1",
+      invitations: [],
+      membres,
+      attente: [{ id: "g1|n@x.be", email: "n@x.be", role: "lecteur" }],
+      moi: "a",
+      superAdmin: false,
+      url: "https://site.test/",
+    };
+    return {
+      id: idInvitation("g1", "  Nom@Exemple.BE "),
+      erreurs: [
+        erreurInvitation("pas-une-adresse", "editeur", membres, []),
+        erreurInvitation("E@X.be", "editeur", membres, []),
+        erreurInvitation("n@x.be", "editeur", membres, base.attente),
+        erreurInvitation("n2@x.be", "chef", membres, []),
+        erreurInvitation("n2@x.be", "editeur", membres, []),
+      ],
+      dernier: [erreurDernierAdmin(membres, "a"), erreurDernierAdmin(membres, "e")],
+      deux: erreurDernierAdmin([...membres, { uid: "b", role: "admin" }], "a"),
+      nom: [erreurNomGroupe("  "), erreurNomGroupe("x".repeat(81)), erreurNomGroupe("Uccle")],
+      admin: htmlGroupes(base),
+      lecteur: htmlGroupes({
+        ...base,
+        groupes: [{ id: "g1", nom: "Sainte-Suzanne", role: "lecteur" }],
+      }),
+      aucun: htmlGroupes({
+        ...base,
+        groupes: [],
+        courant: null,
+        invitations: [{ id: "g2|a@x.be", nomGroupe: "Uccle <b>", role: "editeur" }],
+        superAdmin: true,
+      }),
+      mail: lienMailInvitation("N@x.be", "Sainte-Suzanne", "https://site.test/"),
+    };
+  });
+  expect(r.id).toBe("g1|nom@exemple.be");
+  expect(r.erreurs).toEqual([
+    "Adresse e-mail invalide.",
+    "Cette personne est déjà membre.",
+    "Cette adresse est déjà invitée.",
+    "Rôle inconnu.",
+    "",
+  ]);
+  expect(r.dernier).toEqual(["Il faut au moins un administrateur dans le groupe.", ""]);
+  expect(r.deux).toBe("");
+  expect(r.nom[0]).toContain("vide");
+  expect(r.nom[1]).toContain("trop long");
+  expect(r.nom[2]).toBe("");
+  // l'administrateur voit les membres avec leurs commandes, l'invitation à envoyer et le formulaire ; le dernier administrateur est verrouillé
+  expect(r.admin).toContain('data-gr="inviter"');
+  expect(r.admin).toContain('data-grrole="e"');
+  expect(r.admin).toMatch(/data-grrole="a"[^>]*disabled/);
+  expect(r.admin).not.toMatch(/data-grrole="e"[^>]*disabled/);
+  expect(r.admin).toContain("En attente : n@x.be");
+  expect(r.admin).toContain("mailto:n%40x.be");
+  expect(r.admin).not.toContain('data-gr="creer"');
+  // un lecteur voit les membres sans pouvoir rien changer
+  expect(r.lecteur).toContain("e@x.be");
+  expect(r.lecteur).not.toContain("data-grrole");
+  expect(r.lecteur).not.toContain('data-gr="inviter"');
+  // sans groupe : texte d'aide, invitation reçue (échappée) et création réservée au super-administrateur
+  expect(r.aucun).toContain("membre d'aucun groupe");
+  expect(r.aucun).toContain("Uccle &lt;b&gt;");
+  expect(r.aucun).toContain('data-gr="rejoindre"');
+  expect(r.aucun).toContain('data-gr="creer"');
+  expect(r.mail).toContain("subject=");
+  expect(r.mail).toContain("Sainte-Suzanne".replace(/-/g, "-"));
+  await aller(page, "cfg");
+  await expect(page.locator("#grc")).toBeHidden();
+  expect(erreurs).toEqual([]);
+});
+
+test("synchronisation : morceaux stables, reconstruction identique, envoi des seuls morceaux modifiés", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const clone = (x) => JSON.parse(JSON.stringify(x));
+    const p = cleanProject(clone(S));
+    const m = morceauxProjet(p);
+    const ids = Object.keys(p.camps);
+    const textes = {};
+    for (const id of ids) textes[id] = m[cleCamp(id)];
+    const apres = cleanProject(
+      projetDepuisGroupe(m.cat, textes, { ...p, logo: "", cur: "inconnu" })
+    );
+    const m2 = morceauxProjet(apres);
+    const h = {};
+    for (const k of Object.keys(m)) h[k] = empreinte(m[k]);
+    // un camp modifié, un camp supprimé
+    const autre = clone(m);
+    autre[cleCamp(ids[0])] = jsonStable({ ...JSON.parse(m[cleCamp(ids[0])]), notes: "changé" });
+    const sans = clone(m);
+    delete sans[cleCamp(ids[0])];
+    const cat = JSON.parse(m.cat);
+    return {
+      stable:
+        jsonStable({ b: 1, a: [2, { d: 1, c: 2 }] }) ===
+        jsonStable({ a: [2, { c: 2, d: 1 }], b: 1 }),
+      indefini: jsonStable({ a: undefined, b: [undefined] }),
+      memeEmpreinte: empreinte("abc") === empreinte("abc"),
+      autreEmpreinte: empreinte("abc") !== empreinte("abd"),
+      cles: Object.keys(m),
+      ids,
+      catLocal: ["camps", "ccur", "logo", "cur"].filter((k) => k in cat),
+      identique: JSON.stringify(m2) === JSON.stringify(m),
+      ccur: apres.ccur === p.ccur,
+      tout: morceauxAEnvoyer(m, {})
+        .map((x) => x.cle)
+        .sort(),
+      rien: morceauxAEnvoyer(m, h),
+      modifie: morceauxAEnvoyer(autre, h),
+      supprime: morceauxAEnvoyer(sans, h),
+      taille: [erreurTaille(m), erreurTaille({ cat: "x".repeat(SYNC_TAILLE_MAX + 1) })],
+    };
+  });
+  expect(r.stable).toBe(true);
+  expect(r.indefini).toBe('{"b":[null]}');
+  expect(r.memeEmpreinte).toBe(true);
+  expect(r.autreEmpreinte).toBe(true);
+  expect(r.cles).toEqual(["cat", ...r.ids.map((i) => "c:" + i)]);
+  expect(r.catLocal).toEqual([]);
+  expect(r.identique).toBe(true);
+  expect(r.ccur).toBe(true);
+  expect(r.tout).toEqual(["cat", ...r.ids.map((i) => "c:" + i)].sort());
+  expect(r.rien).toEqual([]);
+  expect(r.modifie).toEqual([{ cle: "c:" + r.ids[0] }]);
+  expect(r.supprime).toEqual([{ cle: "c:" + r.ids[0], supprime: true }]);
+  expect(r.taille[0]).toBe("");
+  expect(r.taille[1]).toContain("catalogue");
+  expect(erreurs).toEqual([]);
+});
+
+test("historique : une version toutes les 10 minutes, 20 au plus, et contenu de la section", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const t = 1e12,
+      min = 60 * 1000,
+      versions = Array.from({ length: 25 }, (_, i) => ({ id: "v" + i, le: t + i * min }));
+    const base = {
+      groupes: [{ id: "g1", nom: "Sainte-Suzanne", role: "editeur" }],
+      courant: "g1",
+      invitations: [],
+      membres: [],
+      attente: [],
+      moi: "a",
+      superAdmin: false,
+      url: "",
+      sync: { liee: true, autre: false, ecriture: true, texte: "synchronisé" },
+    };
+    const hist = {
+      choix: [
+        { cle: "cat", nom: "Catalogue" },
+        { cle: "c:x", nom: "Camp : <i>Été</i>" },
+      ],
+      cle: "c:x",
+      versions: [{ id: "h1", le: t, par: "a@x.be", note: "Avant retour arrière" }],
+      supprimes: [{ id: "h2", nom: "Camp perdu", le: t }],
+      ecriture: true,
+    };
+    return {
+      garder: [
+        doitGarder({}, "cat", t),
+        doitGarder({ cat: t }, "cat", t + 5 * min),
+        doitGarder({ cat: t }, "cat", t + 10 * min),
+        doitGarder({ cat: t }, "c:x", t + 1),
+        doitGarder(undefined, "cat", t),
+      ],
+      id: idHistorique("c:abc", 123, "uid1234567"),
+      elaguer: aElaguer(versions),
+      editeur: htmlHistorique(hist),
+      lecteur: htmlHistorique({ ...hist, ecriture: false }),
+      carteLiee: htmlGroupes({ ...base, hist }),
+      carteNonLiee: htmlGroupes({ ...base, hist, sync: { ...base.sync, liee: false } }),
+    };
+  });
+  expect(r.garder).toEqual([true, false, true, true, true]);
+  expect(r.id).toBe("c-abc_123_uid123");
+  // les 5 plus anciennes sont élaguées, les 20 plus récentes gardées
+  expect(r.elaguer.sort()).toEqual(["v0", "v1", "v2", "v3", "v4"]);
+  expect(r.editeur).toContain('data-gr="hi-voir"');
+  expect(r.editeur).toContain('data-gr="hi-retour" data-i="h1"');
+  expect(r.editeur).toContain('data-gr="hi-restaurer" data-i="h2"');
+  expect(r.editeur).toContain("Camp : &lt;i&gt;Été&lt;/i&gt;");
+  expect(r.editeur).toContain("Avant retour arrière");
+  expect(r.lecteur).not.toContain("hi-retour");
+  expect(r.lecteur).not.toContain("hi-restaurer");
+  expect(r.carteLiee).toContain('id="hicle"');
+  expect(r.carteNonLiee).not.toContain('id="hicle"');
+  await aller(page, "cfg");
+  await expect(page.locator("#grc")).toBeHidden();
+  expect(erreurs).toEqual([]);
+});
+
+test("groupes : renommer (administrateur) et quitter le groupe, sauf pour le dernier administrateur", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  const r = await page.evaluate(() => {
+    const membres = [
+      { uid: "a", email: "a@x.be", role: "admin" },
+      { uid: "e", email: "e@x.be", role: "editeur" },
+    ];
+    const base = (role, moi, mb) => ({
+      groupes: [{ id: "g1", nom: 'Sainte-Suzanne "A"', role }],
+      courant: "g1",
+      invitations: [],
+      membres: mb,
+      attente: [],
+      moi,
+      superAdmin: false,
+      url: "",
+      sync: { liee: true, autre: false, ecriture: true, texte: "synchronisé", dernier: 1.7e12 },
+      hist: null,
+    });
+    return {
+      admin: htmlGroupes(base("admin", "a", membres)),
+      adminDeux: htmlGroupes(
+        base("admin", "a", [...membres, { uid: "b", email: "b@x.be", role: "admin" }])
+      ),
+      editeur: htmlGroupes(base("editeur", "e", membres)),
+    };
+  });
+  // l'administrateur renomme ; le nom est échappé dans le champ
+  expect(r.admin).toContain('data-gr="renommer"');
+  expect(r.admin).toContain('value="Sainte-Suzanne &quot;A&quot;"');
+  // seul administrateur : « Quitter » est verrouillé ; avec un second administrateur, il est libre
+  expect(r.admin).toMatch(/data-gr="quitter" disabled/);
+  expect(r.adminDeux).toMatch(/data-gr="quitter">/);
+  // l'administrateur retire les autres (✕) mais pas lui-même
+  expect(r.admin).toContain('data-gr="retirer" data-u="e"');
+  expect(r.admin).not.toContain('data-gr="retirer" data-u="a"');
+  // un éditeur ne renomme pas, mais peut quitter
+  expect(r.editeur).not.toContain('data-gr="renommer"');
+  expect(r.editeur).toMatch(/data-gr="quitter">/);
+  expect(r.editeur).not.toContain('data-gr="retirer"');
+  // la date du dernier envoi est affichée
+  expect(r.admin).toContain("Dernier envoi :");
+  expect(erreurs).toEqual([]);
 });
 
 test("menu imprimable : quantités totales par recette, deux présentations, texte partagé", async ({

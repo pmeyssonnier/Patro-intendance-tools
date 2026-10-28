@@ -1,0 +1,29 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "firestore.*",
+      "**/.*",
+      "**/node_modules/**",
+      "tests/**",
+      "tests.yml",
+      "test-results/**",
+      "scripts/**",
+      "exemples/**",
+      "*.md",
+      "package*.json",
+      "*.config.js"
+    ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
