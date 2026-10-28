@@ -15,7 +15,16 @@ const CHANGELOG = [
       "Conflits : si quelqu'un d'autre a modifié le groupe entre-temps, un bandeau propose de charger sa version (une copie de secours est gardée) ou de garder la tienne. Rien n'est écrasé sans ton choix.",
       "Historique : le groupe garde des versions de chaque camp et du catalogue (une toutes les 10 minutes au plus, 20 au maximum) pour revenir en arrière ; un camp supprimé peut être restauré.",
       "Un administrateur peut renommer son groupe ; chaque membre peut le quitter.",
-      "Menu imprimable : case « Afficher les quantités totales par recette » (cochée par défaut), en une ligne sous le plat ou en liste de deux colonnes ; ajoutée aussi au texte WhatsApp/Mail du menu.",
+    ],
+  },
+  {
+    v: "1.64.0",
+    d: "2026-10-28",
+    t: "Menu imprimable : quantités totales par recette",
+    l: [
+      "Nouvelle case « Afficher les quantités totales par recette » (cochée par défaut) : sous chaque plat, la quantité de chaque ingrédient pour les personnes présentes à ce repas, marge et régimes compris (les substituts sont ajoutés à leur ligne).",
+      "Deux présentations au choix : une ligne sous le plat (compacte) ou une liste en deux colonnes (lisible de loin).",
+      "Même rendu dans l'aperçu, l'impression et le fichier HTML ; le texte WhatsApp/Mail du menu ajoute une ligne « quantités totales » par plat. Les deux réglages sont conservés par la sauvegarde.",
     ],
   },
   {
