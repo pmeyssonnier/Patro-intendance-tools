@@ -1,6 +1,12 @@
 /* Intendance PSS – Calcul des quantités d'un plat (effectifs, marge, régimes).
    Script classique : dépend des fichiers chargés avant lui (voir l'ordre dans index.html). */
 
+/** Personnes d'une section qui suivent le régime dk à un repas : le nombre choisi pour ce repas (pres.pd), sinon la part proportionnelle aux présents (r = part de la section présente). */
+const dietAt = (dk, i, pres, r) => {
+  const c = pres && pres.pd && pres.pd[dk] ? pres.pd[dk][i] : null;
+  return c === null || c === undefined ? ((C.dt[dk] || [])[i] || 0) * r : c;
+};
+
 /** Quantités et adaptations d’un plat ; pres = présents par section à ce repas (null = toute la troupe). */
 function meal(d, pres = null) {
   const R = S.rec[d],
@@ -16,7 +22,7 @@ function meal(d, pres = null) {
       for (const dk in DIETS) {
         const e = DIETS[dk].ex;
         if (!(k in e)) continue;
-        const p = Math.min(rest, ((C.dt[dk] || [])[i] || 0) * r[i]);
+        const p = Math.min(rest, dietAt(dk, i, pres, r[i]));
         rest -= p;
         const sb = e[k];
         if (sb) out[sb] = (out[sb] || 0) + p * q[i] * m;
@@ -25,7 +31,7 @@ function meal(d, pres = null) {
     }
   }
   for (const dk in DIETS) {
-    const P = (C.dt[dk] || []).reduce((a, b, i) => a + b * r[i], 0);
+    const P = SEC.reduce((a, _, i) => a + dietAt(dk, i, pres, r[i]), 0);
     if (!P) continue;
     const t = Object.keys(R.ing)
       .filter((k) => k in DIETS[dk].ex)

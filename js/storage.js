@@ -61,6 +61,7 @@ function cleanCamp(c, N) {
     types: [],
     off: {},
     pres: {},
+    pd: {},
     adn: {},
     col: {},
   };
@@ -87,6 +88,16 @@ function cleanCamp(c, N) {
   for (const [pk, v] of ent(c.pres))
     if (/^\d{1,2}\|[A-Za-z0-9_-]{1,30}$/.test(pk) && Array.isArray(v))
       o.pres[pk] = qn(v, N).map((x) => Math.min(Math.round(x), 1e4));
+  // personnes qui suivent un régime à un repas à effectif réduit : « jour|type » -> régime -> présents par section (null = proportionnel)
+  for (const [pk, v] of ent(c.pd))
+    if (o.pres[pk] && obj(v))
+      for (const [dk, a] of ent(v))
+        if (okid(dk) && Array.isArray(a)) {
+          o.pd[pk] = o.pd[pk] || {};
+          o.pd[pk][dk] = Array.from({ length: N }, (_, j) =>
+            a[j] === null || a[j] === undefined ? null : num(a[j], 0, 1e4)
+          );
+        }
   // texte des adaptations (régimes) choisi pour un plat du menu imprimable : « jour|repas|plat » -> texte (vide = ligne masquée) ;
   // un texte dont le plat n'est plus dans ce repas est abandonné
   for (const [ak, v] of ent(c.adn)) {

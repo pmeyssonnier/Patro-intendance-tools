@@ -121,6 +121,7 @@ $("mcpb").onclick = () => {
   C.col = o.col || { ...SCOL };
   C.off = o.off || {};
   C.pres = o.pres || {};
+  C.pd = o.pd || {};
   C.adn = o.adn || {};
   drawMenu();
   calc();
