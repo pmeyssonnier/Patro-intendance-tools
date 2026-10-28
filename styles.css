@@ -817,6 +817,10 @@ body.nav #drawer {
     margin: -16px -16px 10px 0;
   }
 }
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
 @media print {
   .np,
   .top,
