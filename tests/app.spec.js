@@ -3662,17 +3662,44 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
     })
   );
-  await page.locator("#pmenu").click();
-  expect(await page.evaluate(() => $("pgsz").textContent)).toContain("portrait");
-  const z = await page.evaluate(() => +$("pv").style.zoom);
-  expect(z).toBeGreaterThanOrEqual(0.85);
-  expect(z).toBeLessThanOrEqual(1);
-  expect(await page.evaluate(() => docHTML(menuHTML(), "Menu", true))).toContain(
-    "size:A4 portrait"
+  // sur téléphone, le document s'ouvre seul dans un nouvel onglet, avec un bouton « Imprimer » (l'aperçu de l'appli elle-même n'est pas fiable)
+  const [onglet] = await Promise.all([page.waitForEvent("popup"), page.locator("#pmenu").click()]);
+  await onglet.waitForLoadState();
+  const doc = await onglet.content();
+  expect(doc).toContain("size:A4 portrait");
+  expect(doc).toMatch(/zoom:(0\.[89]\d?|1)\}\}/);
+  await expect(onglet.locator("button", { hasText: "Imprimer" })).toBeVisible();
+  await expect(onglet.locator("tr.day").first()).toBeVisible();
+  await onglet.close();
+  // « Fichier HTML » : sur iPhone, rien ne se télécharge (Chrome compris) : le fichier s'ouvre dans un onglet
+  await aller(page, "sh");
+  await page.locator("#shw").selectOption("menu");
+  const [fichier] = await Promise.all([page.waitForEvent("popup"), page.locator("#sd").click()]);
+  await fichier.waitForLoadState();
+  expect(await fichier.title()).toBe("Patro Menu");
+  await expect(fichier.locator("tr.day").first()).toBeVisible();
+  expect(erreurs).toEqual([]);
+});
+
+test("impression sur Android : la liste de courses s'ouvre dans un onglet, en portrait à 100 %, sans l'appli autour", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "list");
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "userAgent", {
+      get: () =>
+        "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36",
+    })
   );
-  // la mise en page d'impression reste en place assez longtemps pour que l'aperçu du téléphone soit prêt
-  await page.waitForTimeout(2500);
-  expect(await page.evaluate(() => document.body.classList.contains("pr"))).toBe(true);
+  const [onglet] = await Promise.all([page.waitForEvent("popup"), page.locator("#plist").click()]);
+  await onglet.waitForLoadState();
+  const doc = await onglet.content();
+  expect(doc).toContain("size:A4 portrait");
+  expect(doc).toContain("zoom:1}}");
+  expect(await onglet.title()).toBe("Patro Liste de courses");
+  await expect(onglet.locator("h2")).toHaveText("Liste de courses");
+  await expect(onglet.locator("#list, nav, #drawer")).toHaveCount(0);
   expect(erreurs).toEqual([]);
 });
 
@@ -3707,7 +3734,13 @@ test("impression : zoom automatique ; le menu s'imprime en paysage, la liste de 
 }) => {
   const erreurs = await ouvrir(page);
   await aller(page, "menu");
-  await page.evaluate(() => (window.print = () => {}));
+  // l'impression directe de la page, celle de l'ordinateur (sur téléphone : voir les tests d'onglet)
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "userAgent", {
+      get: () => "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36",
+    });
+    window.print = () => {};
+  });
   await page.locator("#pmenu").click();
   const z = await page.evaluate(() => +$("pv").style.zoom);
   expect(z).toBeGreaterThanOrEqual(0.85);
