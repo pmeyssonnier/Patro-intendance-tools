@@ -121,6 +121,20 @@ const NAV_JS =
   'links.forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();var id=a.getAttribute("data-r");links.forEach(function(x){x.classList.toggle("on",x.getAttribute("data-r")===id)});showRecs([id]);if(window.innerWidth<800){var m=d.querySelector(".rmain");if(m)m.scrollIntoView()}})});' +
   'pickType("all")})();';
 
+/** iPhone : un repas long (plus de 700 caractères) n'est pas gardé d'un seul tenant, sinon il laisse une page presque vide ; il est marqué « lg » (ainsi que son groupe jour + premier repas) et se coupe entre deux lignes. */
+function marquerRepasLongs(html) {
+  const texte = (h) => h.replace(/<[^>]*>/g, "").length;
+  return html.replace(/<tbody( class="dg")?>([\s\S]*?)<\/tbody>/g, (m, dg, corps) => {
+    let long = false;
+    const interieur = corps.replace(/<tr class="sl"([^>]*)>([\s\S]*?)<\/tr>/g, (r, attr, cont) => {
+      if (texte(cont) <= 700) return r;
+      long = true;
+      return `<tr class="sl lg"${attr}>${cont}</tr>`;
+    });
+    return `<tbody${dg ? ' class="dg' + (long ? " lg" : "") + '"' : ""}>${interieur}</tbody>`;
+  });
+}
+
 /** Document HTML complet et autonome (celui du « Fichier HTML » et de l'envoi par WhatsApp, Partager et Mail). */
 function docHTML(html, name, menu = false, bouton = false) {
   // sur téléphone (Android comme iPhone), l'orientation et la taille de la page sont décidées par la fenêtre d'impression du système : le document est mis en page pour du portrait, sans zoom, et à la largeur d'une page A4 (718 px à 96 ppp) pour que Chrome Android ne le réduise pas
@@ -132,7 +146,7 @@ function docHTML(html, name, menu = false, bouton = false) {
     // Safari (iPhone) coupe un repas trop haut au milieu d'une ligne de texte quand il est en cellule de tableau : chaque repas devient un bloc normal (plat, puis description dessous), que Safari coupe entre deux lignes, avec une marge en haut et en bas de chaque morceau et la bande de couleur qui continue
     ios =
       html.includes('class="sl"') && surIOS()
-        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead{display:none}.mt tr.day{display:block;break-after:avoid;page-break-after:avoid}.mt tr.day td{display:block}.mt tbody.dg{break-inside:avoid;page-break-inside:avoid}.mt tr.sl{display:block;position:relative;padding:10px 12px 10px 96px;background-color:var(--mcl);background-image:linear-gradient(var(--mc),var(--mc));background-size:84px 100%;background-repeat:no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone;break-inside:avoid;page-break-inside:avoid}.mt tr.sl td{display:block;padding:0;border:0;background:none}.mt tr.sl td.sn{position:absolute;left:0;top:10px;width:84px;padding:0 10px;background:none;color:var(--mct)}.mt tr.sl td:nth-child(3){margin-top:8px}}"
+        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead tr{display:block;position:relative;padding:8px 12px 8px 96px;background:#2a3b2f;break-inside:avoid}.mt thead th{display:inline-block;padding:0 16px 0 0;background:none}.mt thead th:first-child{position:absolute;left:0;top:8px;width:84px;padding-left:10px}.mt tr.day{display:block;break-after:avoid;page-break-after:avoid}.mt tr.day td{display:block}.mt tbody.dg{break-inside:avoid;page-break-inside:avoid}.mt tbody.dg.lg,.mt tr.sl.lg{break-inside:auto;page-break-inside:auto}.mt tr.sl{display:block;position:relative;padding:10px 12px 10px 96px;background-color:var(--mcl);background-image:linear-gradient(var(--mc),var(--mc));background-size:84px 100%;background-repeat:no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone;break-inside:avoid;page-break-inside:avoid}.mt tr.sl td{display:block;padding:0;border:0;background:none}.mt tr.sl td.sn{position:absolute;left:0;top:10px;width:84px;padding:0 10px;background:none;color:var(--mct)}.mt tr.sl td:nth-child(3){margin-top:8px}}"
         : "",
     impression =
       `@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +
@@ -172,7 +186,7 @@ function docHTML(html, name, menu = false, bouton = false) {
             '<br><span class="s">Si rien ne s\'ouvre (Chrome sur iPhone) : menu Partager du navigateur, puis « Imprimer » ou « Enregistrer dans Fichiers ».</span>') +
         "</p>"
       : "") +
-    html +
+    (ios ? marquerRepasLongs(html) : html) +
     (html.includes("data-recnav") ? "<script>" + NAV_JS + "</script>" : "") +
     "</body></html>"
   );

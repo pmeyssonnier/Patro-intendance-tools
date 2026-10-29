@@ -9,7 +9,7 @@ const CHANGELOG = [
     d: "2026-10-29",
     t: "Menu imprimé : repas trop longs sans texte coupé, plus de trait noir",
     l: [
-      "iPhone (Safari) : un repas trop long pour une page ne perd plus de texte entre deux pages (une ligne était coupée en deux et cachée). Chaque repas est un bloc normal : le plat, puis sa description dessous, coupé entre deux lignes, avec une marge en haut de la page suivante et la bande de couleur qui continue.",
+      "iPhone (Safari) : un repas trop long pour une page ne perd plus de texte entre deux pages (une ligne était coupée en deux et cachée). Chaque repas est un bloc normal : le plat, puis sa description dessous, coupé entre deux lignes, avec une marge en haut de la page suivante et la bande de couleur qui continue. Seuls les repas longs (plus de 700 caractères) peuvent se couper ; les autres restent d'un seul tenant. L'en-tête « Repas / Au menu / Description » est gardé une fois au début du document.",
       "Le trait noir au-dessus de chaque jour (« Samedi 17/10 », « Dimanche 18/10 ») disparaît, à l'impression, dans le fichier HTML et dans l'aperçu du menu.",
     ],
   },

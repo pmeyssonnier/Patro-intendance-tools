@@ -3775,6 +3775,35 @@ test("impression sur Android : la liste de courses s'ouvre dans un onglet, en po
   expect(erreurs).toEqual([]);
 });
 
+test("impression sur iPhone : l'en-tête du menu est gardé et seuls les repas longs peuvent se couper", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  const r = await page.evaluate(() => {
+    Object.defineProperty(navigator, "userAgent", {
+      get: () =>
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
+    });
+    const court = menuHTML(),
+      long = court.replace(
+        /(<tr class="sl"[^>]*>(?:(?!<\/tr>)[\s\S])*?)<\/td><\/tr>/,
+        "$1" + "<br>Texte long. ".repeat(80) + "</td></tr>"
+      );
+    return {
+      enTete: docHTML(court, "Menu", true, true).includes(".mt thead tr{display:block"),
+      courts: (docHTML(court, "Menu", true, true).match(/<tr class="sl lg"/g) || []).length,
+      longs: (docHTML(long, "Menu", true, true).match(/<tr class="sl lg"/g) || []).length,
+      groupe: /<tbody class="dg lg">/.test(docHTML(long, "Menu", true, true)),
+    };
+  });
+  expect(r.enTete).toBe(true);
+  expect(r.courts).toBe(0);
+  expect(r.longs).toBeGreaterThan(0);
+  expect(r.groupe).toBe(true);
+  expect(erreurs).toEqual([]);
+});
+
 test("menu imprimé : plus de trait noir au-dessus de chaque jour", async ({ page }) => {
   await ouvrir(page);
   await aller(page, "menu");
