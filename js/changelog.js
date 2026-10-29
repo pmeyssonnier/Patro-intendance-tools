@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.80.0",
+    d: "2026-10-30",
+    t: "Impression sur iPhone : coupures plus fines, marge en bas des repas",
+    l: [
+      "iPhone : un repas à longue description est maintenant découpé en petits morceaux (environ 260 caractères), toujours après un point, jamais dans une parenthèse, et un titre court (« LA BECHAMEL : ») ne reste jamais seul en bas d'un morceau. La page se remplit ainsi jusqu'en bas avant de passer à la suivante (avant, le texte était coupé trop tôt, laissant du blanc).",
+      "Chaque repas garde une marge de quelques millimètres sous son dernier texte, avant la fin du bloc de couleur, sans retrouver de fine bande de couleur en haut de la page suivante.",
+    ],
+  },
+  {
     v: "1.79.0",
     d: "2026-10-29",
     t: "Impression sur iPhone : le tableau à 3 colonnes comme sur ordinateur",

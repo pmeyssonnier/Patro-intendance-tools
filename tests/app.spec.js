@@ -3803,7 +3803,7 @@ test("impression sur iPhone : 3 colonnes, en-tête au début, repas longs décou
       // chaque morceau garde la couleur du repas (même attribut style) et sa colonne « Repas » vide
       couleurs: new Set([...dl.matchAll(/<tr class="sl[^"]*"( style="[^"]*")>/g)].map((m) => m[1]))
         .size,
-      vides: (dl.match(/<td class="sn"><\/td><td><\/td>/g) || []).length,
+      vides: (dl.match(/<td class="sn"><\/td><td><div class="in"><\/div><\/td>/g) || []).length,
       // aucun texte perdu
       texte: (dl.match(/Étape de la recette/g) || []).length === 40,
     };
@@ -3815,6 +3815,47 @@ test("impression sur iPhone : 3 colonnes, en-tête au début, repas longs décou
   expect(r.suites).toBeGreaterThan(0);
   expect(r.vides).toBe(r.suites);
   expect(r.texte).toBe(true);
+  expect(erreurs).toEqual([]);
+});
+
+test("impression sur iPhone : un repas long se coupe après un point, jamais dans une parenthèse ni après un titre", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  const r = await page.evaluate(() => {
+    Object.defineProperty(navigator, "userAgent", {
+      get: () =>
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
+    });
+    const phrase = "Faire revenir les oignons puis ajouter la viande et laisser cuire doucement. ",
+      desc =
+        "<b>LA BOLOGNAISE</b> : " +
+        phrase.repeat(3) +
+        "<br><b>LA BECHAMEL</b> : " +
+        phrase.repeat(2) +
+        "(Conseil : " +
+        phrase.repeat(3) +
+        "fin du conseil)<br>" +
+        phrase.repeat(6),
+      tr = `<tbody class="dg"><tr class="day"><td colspan="3">J</td></tr><tr class="sl" style="--mc:#c00"><td class="sn">Soir</td><td>Plat</td><td>${desc}</td></tr></tbody>`,
+      sortie = decouperRepasLongs(tr),
+      lignes = [...sortie.matchAll(/<tr class="sl[^"]*"[^>]*>([\s\S]*?)<\/tr>/g)].map((m) => {
+        const cellules = [...m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)];
+        return cellules[2][1].replace(/<[^>]+>/g, "").trim();
+      });
+    return { lignes, entier: lignes.join(" ").replace(/\s+/g, " ").length };
+  });
+  expect(r.lignes.length).toBeGreaterThan(3);
+  r.lignes.forEach((l, i) => {
+    // parenthèses équilibrées dans chaque morceau
+    expect((l.match(/\(/g) || []).length).toBe((l.match(/\)/g) || []).length);
+    // chaque morceau (sauf le dernier) se termine par un point, jamais par un titre court
+    if (i < r.lignes.length - 1) expect(l).toMatch(/[.!?)]$/);
+  });
+  // aucune phrase perdue
+  expect(r.lignes.join(" ")).toContain("fin du conseil");
+  expect((r.lignes.join(" ").match(/Faire revenir/g) || []).length).toBe(3 + 2 + 3 + 6);
   expect(erreurs).toEqual([]);
 });
 

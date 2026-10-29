@@ -121,15 +121,16 @@ const NAV_JS =
   'links.forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();var id=a.getAttribute("data-r");links.forEach(function(x){x.classList.toggle("on",x.getAttribute("data-r")===id)});showRecs([id]);if(window.innerWidth<800){var m=d.querySelector(".rmain");if(m)m.scrollIntoView()}})});' +
   'pickType("all")})();';
 
-/** iPhone : un repas dont la description dépasse ~650 caractères est découpé, aux sauts de ligne, en plusieurs lignes de tableau (la suite garde la couleur du repas, avec une marge en haut). Safari ne coupe pas une ligne de tableau courte en plein texte ; une ligne très haute, il la tranche. */
+/** iPhone : un repas dont la description dépasse ~400 caractères est découpé, entre deux phrases, en petites lignes de tableau d'environ 260 caractères (la suite garde la couleur du repas, avec une marge en haut). Safari remplit ainsi la page jusqu'en bas avant de passer à la suivante, et ne coupe jamais une ligne de tableau courte en plein texte. */
 function decouperRepasLongs(html) {
-  const MAX = 650,
+  const MAX = 260,
+    MIN = 400,
     texte = (h) => h.replace(/<[^>]*>/g, "").length,
     couper = (tr) => {
       const m = tr.match(
         /^<tr class="sl"([^>]*)>(<td class="sn">[\s\S]*?<\/td>)(<td>[\s\S]*?<\/td>)<td>([\s\S]*?)<\/td><\/tr>$/
       );
-      if (!m || texte(m[4]) <= MAX) return null;
+      if (!m || texte(m[4]) <= MIN) return null;
       // phrases d'une ligne : on ne coupe qu'entre deux phrases, hors des balises de mise en forme (gras, souligné, italique)
       const phrases = (l) => {
         const out = [];
@@ -141,11 +142,12 @@ function decouperRepasLongs(html) {
             d += /^<\//.test(balise) ? -1 : /^<(b|u|i)\b/i.test(balise) ? 1 : 0;
           } else if (d > 0) cur += txt;
           else
-            txt.split(/(?<=[.!?:;])\s+/).forEach((p, i) => {
-              if (i) {
+            // coupure seulement après un point (. ! ?), jamais à l'intérieur d'une parenthèse
+            txt.split(/(?<=[.!?])\s+/).forEach((p, i) => {
+              if (i && (cur.match(/\(/g) || []).length <= (cur.match(/\)/g) || []).length) {
                 out.push(cur);
                 cur = "";
-              }
+              } else if (i) cur += " ";
               cur += p;
             });
         }
@@ -159,6 +161,18 @@ function decouperRepasLongs(html) {
       let n = 0;
       for (const e of elements) {
         if (n > 0 && n + texte(e.h) > MAX) {
+          // un titre court (« LA BECHAMEL : ») ne reste jamais seul en bas d'un morceau : il passe avec la suite
+          const dernier = elements[elements.indexOf(e) - 1];
+          if (dernier && texte(dernier.h) <= 40 && morceaux[morceaux.length - 1] !== dernier.h) {
+            const k = morceaux.length - 1,
+              reste = morceaux[k]
+                .slice(0, morceaux[k].length - dernier.h.length)
+                .replace(/(<br>| )$/, "");
+            morceaux[k] = reste;
+            morceaux.push(dernier.h + (e.br ? "<br>" : " ") + e.h);
+            n = texte(dernier.h) + texte(e.h);
+            continue;
+          }
           morceaux.push("");
           n = 0;
         }
@@ -181,14 +195,17 @@ function decouperRepasLongs(html) {
     };
   return html.replace(/<tbody( class="dg")?>([\s\S]*?)<\/tbody>/g, (m, dg, corps) => {
     let suite = "";
+    // chaque cellule de contenu est enveloppée : la marge du bas fait partie du contenu et ne peut plus déborder seule sur la page suivante
+    const envelopper = (tr) =>
+      tr.replace(/<td>([\s\S]*?)<\/td>/g, '<td><div class="in">$1</div></td>');
     const interieur = corps.replace(/<tr class="sl"[^>]*>[\s\S]*?<\/tr>/g, (tr) => {
       const r = couper(tr);
-      if (!r) return tr;
+      if (!r) return envelopper(tr);
       if (dg) {
-        suite += r.suite;
-        return r.premier;
+        suite += envelopper(r.suite);
+        return envelopper(r.premier);
       }
-      return r.premier + r.suite;
+      return envelopper(r.premier + r.suite);
     });
     return dg
       ? `<tbody class="dg">${interieur}</tbody>${suite ? `<tbody>${suite}</tbody>` : ""}`
@@ -207,7 +224,7 @@ function docHTML(html, name, menu = false, bouton = false) {
     // Safari (iPhone) ne garde pas une ligne de tableau entière sur une page (et laisse parfois une fine bande de couleur en haut de la page suivante quand seul le bas de la cellule déborde : plus de marge en bas des cellules) : chaque repas devient un petit tableau à part (mêmes 3 colonnes que sur ordinateur, en-tête une fois au début), que Safari ne coupe pas ; la ligne du jour est la légende du groupe jour + premier repas
     ios =
       html.includes('class="sl"') && surIOS()
-        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead tr,.mt tbody:not(.dg) tr{display:table;width:100%;table-layout:fixed}.mt tbody:not(.dg) tr{break-inside:avoid;page-break-inside:avoid}.mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}.mt tbody.dg tr.day{display:table-caption;caption-side:top}.mt tbody.dg tr.day td{display:block}.mt tr.sl td.sn,.mt thead th:first-child{width:84px}.mt td:nth-child(2):not(:last-child),.mt thead th:nth-child(2):not(:last-child){width:40%}.mt tr.sl td{padding-bottom:0;border-bottom:0}.mt tr.sl.co td{padding-top:11px}.mt tr.sl.sp td{border-bottom-color:transparent}}"
+        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead tr,.mt tbody:not(.dg) tr{display:table;width:100%;table-layout:fixed}.mt tbody:not(.dg) tr{break-inside:avoid;page-break-inside:avoid}.mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}.mt tbody.dg tr.day{display:table-caption;caption-side:top}.mt tbody.dg tr.day td{display:block}.mt tr.sl td.sn,.mt thead th:first-child{width:84px}.mt td:nth-child(2):not(:last-child),.mt thead th:nth-child(2):not(:last-child){width:40%}.mt tr.sl td{padding-bottom:0;border-bottom:0}.mt tr.sl.co td{padding-top:7px}.mt tr.sl .in{padding-bottom:10px;break-inside:avoid;page-break-inside:avoid}.mt tr.sl.sp .in{padding-bottom:0}.mt tr.sl.sp td{border-bottom-color:transparent}}"
         : "",
     impression =
       `@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +
