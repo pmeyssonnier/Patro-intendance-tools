@@ -3677,7 +3677,7 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
   expect(doc).toMatch(/zoom:(0\.[89]\d?|1)\}\}/);
   // Safari ne garde pas une ligne de tableau entière sur une page : chaque repas devient un petit tableau insécable
   expect(doc).toContain(
-    ".mt tr{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}"
+    ".mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}"
   );
   await expect(onglet.locator("button", { hasText: "Imprimer" })).toBeVisible();
   await expect(onglet.locator("tr.day").first()).toBeVisible();

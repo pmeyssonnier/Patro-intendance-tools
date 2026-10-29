@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.77.0",
+    d: "2026-10-29",
+    t: "Impression sur iPhone : jour avec son premier repas, moins de blanc",
+    l: [
+      "iPhone (Safari) : la ligne d'un jour (« Vendredi 16/10 ») était parfois seule en haut d'une page, son premier repas passant à la suivante. Elle forme maintenant un seul bloc avec le premier repas.",
+      "La colonne « Description » est plus large (60 % au lieu de 33 %) : les repas sont moins hauts, donc moins de blanc en bas des pages.",
+    ],
+  },
+  {
     v: "1.76.0",
     d: "2026-10-29",
     t: "Impression sur téléphone : portrait ou paysage, repas entiers sur iPhone",

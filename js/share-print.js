@@ -132,7 +132,7 @@ function docHTML(html, name, menu = false, bouton = false) {
     // Safari (iPhone) ne sait pas garder une ligne de tableau entière sur une page : chaque repas devient un petit tableau à part, que Safari ne coupe pas
     ios =
       html.includes('class="sl"') && surIOS()
-        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt tr{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}.mt tr.day,.mt tr.day td{display:block}.mt tr.sl td.sn,.mt thead th:first-child{width:84px}}"
+        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead tr,.mt tbody:not(.dg) tr{display:table;width:100%;table-layout:fixed}.mt tbody:not(.dg) tr{break-inside:avoid;page-break-inside:avoid}.mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}.mt tbody.dg tr.day{display:table-caption;caption-side:top}.mt tbody.dg tr.day td{display:block}.mt tr.sl td.sn,.mt thead th:first-child{width:84px}.mt td:nth-child(2):not(:last-child),.mt thead th:nth-child(2):not(:last-child){width:40%}}"
         : "",
     impression =
       `@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +
