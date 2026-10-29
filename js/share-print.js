@@ -73,18 +73,25 @@ function printHTML(html, menu = false, nom = "Impression") {
   }, 80);
 }
 
-/** Téléphone : le document s'ouvre seul dans un nouvel onglet (même fichier que « Fichier HTML », mêmes réglages qu'à l'ordinateur) avec un bouton « Imprimer » ; l'impression se fait depuis cet onglet, qui ne contient rien d'autre. */
+/** Navigateurs intégrés à une application (Google, Facebook, Instagram, Line, WeChat) : ils n'ouvrent pas de nouvel onglet. */
+const surNavigateurInterne = () =>
+  /GSA\/|FBAN|FBAV|Instagram|Line\/|MicroMessenger/.test(navigator.userAgent);
+
+/** Téléphone : le document s'ouvre seul dans un nouvel onglet (même fichier que « Fichier HTML », mêmes réglages qu'à l'ordinateur) avec un bouton « Imprimer » ; l'impression se fait depuis cet onglet, qui ne contient rien d'autre. Sans nouvel onglet possible (application Google, fenêtre bloquée), le document remplace la page, avec un bouton « Retour à l'appli ». */
 function ouvrirPourImprimer(html, nom, menu) {
-  const url = URL.createObjectURL(
-    new Blob([docHTML(html, nom, menu, true)], { type: "text/html" })
-  );
-  if (!window.open(url, "_blank")) {
-    URL.revokeObjectURL(url);
-    return alert(
-      "Le navigateur a bloqué l'ouverture. Autorise les fenêtres pour ce site, ou utilise « Fichier HTML »."
+  if (!surNavigateurInterne()) {
+    const url = URL.createObjectURL(
+      new Blob([docHTML(html, nom, menu, true)], { type: "text/html" })
     );
+    if (window.open(url, "_blank")) {
+      setTimeout(() => URL.revokeObjectURL(url), 120000);
+      return;
+    }
+    URL.revokeObjectURL(url);
   }
-  setTimeout(() => URL.revokeObjectURL(url), 120000);
+  document.open();
+  document.write(docHTML(html, nom, menu, "retour"));
+  document.close();
 }
 
 window.addEventListener("afterprint", () => document.body.classList.remove("pr"));
@@ -95,7 +102,7 @@ const DOC_CSS =
   "*{box-sizing:border-box}body{font:16px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;color:#1f2a22;background:#fff;max-width:900px;margin:auto;padding:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
   ".mp{--mc:#1f7a3f;--mcl:#1f7a3f22;--mct:#fff}.mp h2{font-size:1.4rem;margin:0 0 2px;padding-bottom:6px;border-bottom:3px solid var(--mc)}.mp h3{margin:16px 0 2px;break-after:avoid}.s{color:#5c6f62;font-size:.88rem}" +
   ".mt{width:100%;border-collapse:collapse;font-size:.95rem;margin-top:10px}.mt th{background:#2a3b2f;color:#fff;text-align:left;padding:8px 10px}.mt td{padding:7px 10px;border-bottom:1px solid var(--mcl);vertical-align:top}" +
-  ".mt tr,.mt tbody.dg{break-inside:avoid}.mt tr.day td{background:#dfe8e1;font-weight:700;border-top:2px solid #2a3b2f}.mt tr.sl td{background:var(--mcl)}.mt tr.sl td.sn{background:var(--mc);color:var(--mct);font-weight:700;width:84px}" +
+  ".mt tr,.mt tbody.dg,.mt td>div{break-inside:avoid;page-break-inside:avoid}.mt tr.day td{background:#dfe8e1;font-weight:700;border-top:2px solid #2a3b2f}.mt tr.sl td{background:var(--mcl)}.mt tr.sl td.sn{background:var(--mc);color:var(--mct);font-weight:700;width:84px}" +
   "[hidden]{display:none!important}.rmain{min-width:0;overflow-x:auto}.rup{color:#1f7a3f;text-decoration:none;font-size:.8rem}.rnav a,.rbar a{color:#1f7a3f}.rnav h4{margin:12px 0 2px}.rnav ul{margin:2px 0 0;padding-left:1.2em}.rnav li{margin:2px 0}.rnav li a.on{font-weight:700}" +
   ".rbar{position:sticky;top:0;z-index:2;background:#fff;padding:6px 0 8px;border-bottom:1px solid #dfe8e1;margin-bottom:4px}.rchips{display:flex;flex-wrap:wrap;gap:6px}.rchips a{border:1px solid #bcd0c2;border-radius:16px;padding:4px 12px;font-size:.88rem;text-decoration:none;background:#f3f8f4}.rchips a.on{background:#1f7a3f;border-color:#1f7a3f;color:#fff}.rchips a.on .s{color:inherit}.js .rnav h4{display:none}.mt .ad a{color:#1f7a3f}" +
   "@media(min-width:800px){body:has(.rlay){max-width:1200px}.rlay{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px;align-items:start}.rbar{grid-column:1/-1}.rnav{position:sticky;top:64px;max-height:calc(100vh - 80px);overflow:auto}}" +
@@ -119,14 +126,24 @@ function docHTML(html, name, menu = false, bouton = false) {
   const paysage = menu && !surIOS(),
     // sur iPhone et iPad, pas de zoom CSS : la page y est imprimée telle quelle, sans risque de page vide
     zoom = menu && !surIOS() ? zoomImpression(html, paysage) : 1,
-    impression = `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}@media print{body{max-width:none;padding:0;zoom:${zoom}}}`;
+    // Chrome Android imprime la page avec la largeur de son écran (une ligne de menu occupe alors une page entière) : la largeur de page A4 (96 ppp) est imposée, et le bouton agrandi pour rester utilisable à l'écran
+    android = bouton && surTel() && !surIOS(),
+    viewport = android ? "width=" + (paysage ? 1047 : 718) : "width=device-width,initial-scale=1",
+    impression =
+      `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +
+      (android ? "@media screen{.np button{font-size:2.6rem}.np .s{font-size:1.8rem}}" : "");
   return (
-    '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
+    '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="' +
+    viewport +
+    '"><title>' +
     esc(name) +
     "</title><style>" +
     DOC_CSS +
     impression +
     "</style></head><body>" +
+    (bouton === "retour"
+      ? '<p class="np"><button onclick="location.reload()" style="font:inherit;font-weight:700;padding:12px 18px;border:2px solid #1f7a3f;border-radius:10px;background:#fff;color:#1f7a3f">↩ Retour à l\'appli</button></p>'
+      : "") +
     (bouton
       ? '<p class="np"><button onclick="try{print()}catch(e){}" style="font:inherit;font-weight:700;padding:12px 18px;border:0;border-radius:10px;background:#1f7a3f;color:#fff">🖨️ Imprimer / Enregistrer en PDF</button><br><span class="s">Si rien ne s\'ouvre (Chrome sur iPhone) : menu Partager du navigateur, puis « Imprimer » ou « Enregistrer dans Fichiers ».</span></p>'
       : "") +
