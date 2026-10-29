@@ -121,17 +121,78 @@ const NAV_JS =
   'links.forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();var id=a.getAttribute("data-r");links.forEach(function(x){x.classList.toggle("on",x.getAttribute("data-r")===id)});showRecs([id]);if(window.innerWidth<800){var m=d.querySelector(".rmain");if(m)m.scrollIntoView()}})});' +
   'pickType("all")})();';
 
-/** iPhone : un repas long (plus de 700 caractères) n'est pas gardé d'un seul tenant, sinon il laisse une page presque vide ; il est marqué « lg » (ainsi que son groupe jour + premier repas) et se coupe entre deux lignes. */
-function marquerRepasLongs(html) {
-  const texte = (h) => h.replace(/<[^>]*>/g, "").length;
+/** iPhone : un repas dont la description dépasse ~650 caractères est découpé, aux sauts de ligne, en plusieurs lignes de tableau (la suite garde la couleur du repas, avec une marge en haut). Safari ne coupe pas une ligne de tableau courte en plein texte ; une ligne très haute, il la tranche. */
+function decouperRepasLongs(html) {
+  const MAX = 650,
+    texte = (h) => h.replace(/<[^>]*>/g, "").length,
+    couper = (tr) => {
+      const m = tr.match(
+        /^<tr class="sl"([^>]*)>(<td class="sn">[\s\S]*?<\/td>)(<td>[\s\S]*?<\/td>)<td>([\s\S]*?)<\/td><\/tr>$/
+      );
+      if (!m || texte(m[4]) <= MAX) return null;
+      // phrases d'une ligne : on ne coupe qu'entre deux phrases, hors des balises de mise en forme (gras, souligné, italique)
+      const phrases = (l) => {
+        const out = [];
+        let cur = "",
+          d = 0;
+        for (const [, balise, txt] of l.matchAll(/(<\/?[a-z]+[^>]*>)|([^<]+)/gi)) {
+          if (balise) {
+            cur += balise;
+            d += /^<\//.test(balise) ? -1 : /^<(b|u|i)\b/i.test(balise) ? 1 : 0;
+          } else if (d > 0) cur += txt;
+          else
+            txt.split(/(?<=[.!?:;])\s+/).forEach((p, i) => {
+              if (i) {
+                out.push(cur);
+                cur = "";
+              }
+              cur += p;
+            });
+        }
+        out.push(cur);
+        return out.filter((p) => p !== "");
+      };
+      const elements = m[4]
+        .split("<br>")
+        .flatMap((l, i) => phrases(l).map((h, j) => ({ h, br: i > 0 && j === 0 })));
+      const morceaux = [""];
+      let n = 0;
+      for (const e of elements) {
+        if (n > 0 && n + texte(e.h) > MAX) {
+          morceaux.push("");
+          n = 0;
+        }
+        const k = morceaux.length - 1;
+        morceaux[k] += (n === 0 ? "" : e.br ? "<br>" : " ") + e.h;
+        n += texte(e.h);
+      }
+      if (morceaux.length < 2) return null;
+      const [attr, sn, plats] = [m[1], m[2], m[3]];
+      return {
+        premier: `<tr class="sl sp"${attr}>${sn}${plats}<td>${morceaux[0]}</td></tr>`,
+        suite: morceaux
+          .slice(1)
+          .map(
+            (l, i, tous) =>
+              `<tr class="sl co${i < tous.length - 1 ? " sp" : ""}"${attr}><td class="sn"></td><td></td><td>${l}</td></tr>`
+          )
+          .join(""),
+      };
+    };
   return html.replace(/<tbody( class="dg")?>([\s\S]*?)<\/tbody>/g, (m, dg, corps) => {
-    let long = false;
-    const interieur = corps.replace(/<tr class="sl"([^>]*)>([\s\S]*?)<\/tr>/g, (r, attr, cont) => {
-      if (texte(cont) <= 700) return r;
-      long = true;
-      return `<tr class="sl lg"${attr}>${cont}</tr>`;
+    let suite = "";
+    const interieur = corps.replace(/<tr class="sl"[^>]*>[\s\S]*?<\/tr>/g, (tr) => {
+      const r = couper(tr);
+      if (!r) return tr;
+      if (dg) {
+        suite += r.suite;
+        return r.premier;
+      }
+      return r.premier + r.suite;
     });
-    return `<tbody${dg ? ' class="dg' + (long ? " lg" : "") + '"' : ""}>${interieur}</tbody>`;
+    return dg
+      ? `<tbody class="dg">${interieur}</tbody>${suite ? `<tbody>${suite}</tbody>` : ""}`
+      : `<tbody>${interieur}</tbody>`;
   });
 }
 
@@ -143,10 +204,10 @@ function docHTML(html, name, menu = false, bouton = false) {
     zoom = menu && !tel ? zoomImpression(html, true) : 1,
     viewport = bouton && tel && !surIOS() ? "width=718" : "width=device-width,initial-scale=1",
     android = bouton && tel && !surIOS(),
-    // Safari (iPhone) coupe un repas trop haut au milieu d'une ligne de texte quand il est en cellule de tableau : chaque repas devient un bloc normal (plat, puis description dessous), que Safari coupe entre deux lignes, avec une marge en haut et en bas de chaque morceau et la bande de couleur qui continue
+    // Safari (iPhone) ne garde pas une ligne de tableau entière sur une page : chaque repas devient un petit tableau à part (mêmes 3 colonnes que sur ordinateur, en-tête une fois au début), que Safari ne coupe pas ; la ligne du jour est la légende du groupe jour + premier repas
     ios =
       html.includes('class="sl"') && surIOS()
-        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead tr{display:block;position:relative;padding:8px 12px 8px 96px;background:#2a3b2f;break-inside:avoid}.mt thead th{display:inline-block;padding:0 16px 0 0;background:none}.mt thead th:first-child{position:absolute;left:0;top:8px;width:84px;padding-left:10px}.mt tr.day{display:block;break-after:avoid;page-break-after:avoid}.mt tr.day td{display:block}.mt tbody.dg{break-inside:avoid;page-break-inside:avoid}.mt tbody.dg.lg,.mt tr.sl.lg{break-inside:auto;page-break-inside:auto}.mt tr.sl{display:block;position:relative;padding:10px 12px 10px 96px;background-color:var(--mcl);background-image:linear-gradient(var(--mc),var(--mc));background-size:84px 100%;background-repeat:no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone;break-inside:avoid;page-break-inside:avoid}.mt tr.sl td{display:block;padding:0;border:0;background:none}.mt tr.sl td.sn{position:absolute;left:0;top:10px;width:84px;padding:0 10px;background:none;color:var(--mct)}.mt tr.sl td:nth-child(2){break-inside:avoid;page-break-inside:avoid}.mt tr.sl td:nth-child(3){margin-top:8px}}"
+        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead tr,.mt tbody:not(.dg) tr{display:table;width:100%;table-layout:fixed}.mt tbody:not(.dg) tr{break-inside:avoid;page-break-inside:avoid}.mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}.mt tbody.dg tr.day{display:table-caption;caption-side:top}.mt tbody.dg tr.day td{display:block}.mt tr.sl td.sn,.mt thead th:first-child{width:84px}.mt td:nth-child(2):not(:last-child),.mt thead th:nth-child(2):not(:last-child){width:40%}.mt tr.sl.co td{padding-top:11px}.mt tr.sl.sp td{border-bottom-color:transparent}}"
         : "",
     impression =
       `@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +
@@ -186,7 +247,7 @@ function docHTML(html, name, menu = false, bouton = false) {
             '<br><span class="s">Si rien ne s\'ouvre (Chrome sur iPhone) : menu Partager du navigateur, puis « Imprimer » ou « Enregistrer dans Fichiers ».</span>') +
         "</p>"
       : "") +
-    (ios ? marquerRepasLongs(html) : html) +
+    (ios ? decouperRepasLongs(html) : html) +
     (html.includes("data-recnav") ? "<script>" + NAV_JS + "</script>" : "") +
     "</body></html>"
   );

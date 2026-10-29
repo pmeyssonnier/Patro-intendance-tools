@@ -3677,7 +3677,7 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
   expect(doc).toMatch(/zoom:(0\.[89]\d?|1)\}\}/);
   // Safari coupe au milieu d'une ligne un repas en cellule de tableau : sur iPhone chaque repas est un bloc normal, avec marge et bande de couleur qui continuent sur la page suivante
   expect(doc).toContain(
-    "-webkit-box-decoration-break:clone;box-decoration-break:clone;break-inside:avoid;page-break-inside:avoid}"
+    ".mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}"
   );
   await expect(onglet.locator("button", { hasText: "Imprimer" })).toBeVisible();
   await expect(onglet.locator("tr.day").first()).toBeVisible();
@@ -3775,7 +3775,7 @@ test("impression sur Android : la liste de courses s'ouvre dans un onglet, en po
   expect(erreurs).toEqual([]);
 });
 
-test("impression sur iPhone : l'en-tête du menu est gardé et seuls les repas longs peuvent se couper", async ({
+test("impression sur iPhone : 3 colonnes, en-tête au début, repas longs découpés en lignes de tableau", async ({
   page,
 }) => {
   const erreurs = await ouvrir(page);
@@ -3786,21 +3786,32 @@ test("impression sur iPhone : l'en-tête du menu est gardé et seuls les repas l
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
     });
     const court = menuHTML(),
+      ligne = "<br>Étape de la recette à suivre avec soin. ",
       long = court.replace(
         /(<tr class="sl"[^>]*>(?:(?!<\/tr>)[\s\S])*?)<\/td><\/tr>/,
-        "$1" + "<br>Texte long. ".repeat(80) + "</td></tr>"
-      );
+        "$1" + ligne.repeat(40) + "</td></tr>"
+      ),
+      dc = docHTML(court, "Menu", true, true),
+      dl = docHTML(long, "Menu", true, true);
     return {
-      enTete: docHTML(court, "Menu", true, true).includes(".mt thead tr{display:block"),
-      courts: (docHTML(court, "Menu", true, true).match(/<tr class="sl lg"/g) || []).length,
-      longs: (docHTML(long, "Menu", true, true).match(/<tr class="sl lg"/g) || []).length,
-      groupe: /<tbody class="dg lg">/.test(docHTML(long, "Menu", true, true)),
+      colonnes: dc.includes(".mt thead th:first-child{width:84px}"),
+      entete: (dc.match(/<thead>/g) || []).length,
+      courtsCoupes: (dc.match(/class="sl co/g) || []).length,
+      suites: (dl.match(/class="sl co/g) || []).length,
+      // chaque morceau garde la couleur du repas (même attribut style) et sa colonne « Repas » vide
+      couleurs: new Set([...dl.matchAll(/<tr class="sl[^"]*"( style="[^"]*")>/g)].map((m) => m[1]))
+        .size,
+      vides: (dl.match(/<td class="sn"><\/td><td><\/td>/g) || []).length,
+      // aucun texte perdu
+      texte: (dl.match(/Étape de la recette/g) || []).length === 40,
     };
   });
-  expect(r.enTete).toBe(true);
-  expect(r.courts).toBe(0);
-  expect(r.longs).toBeGreaterThan(0);
-  expect(r.groupe).toBe(true);
+  expect(r.colonnes).toBe(true);
+  expect(r.entete).toBe(1);
+  expect(r.courtsCoupes).toBe(0);
+  expect(r.suites).toBeGreaterThan(0);
+  expect(r.vides).toBe(r.suites);
+  expect(r.texte).toBe(true);
   expect(erreurs).toEqual([]);
 });
 
