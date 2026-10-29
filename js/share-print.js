@@ -129,9 +129,23 @@ function docHTML(html, name, menu = false, bouton = false) {
     zoom = menu && !tel ? zoomImpression(html, true) : 1,
     viewport = bouton && tel && !surIOS() ? "width=718" : "width=device-width,initial-scale=1",
     android = bouton && tel && !surIOS(),
+    // Safari (iPhone) ne sait pas garder une ligne de tableau entière sur une page : chaque repas devient un petit tableau à part, que Safari ne coupe pas
+    ios =
+      html.includes('class="sl"') && surIOS()
+        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt tr{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}.mt tr.day,.mt tr.day td{display:block}.mt tr.sl td.sn,.mt thead th:first-child{width:84px}}"
+        : "",
     impression =
-      `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +
-      (android ? "@media screen{.np button{font-size:2.6rem}.np .s{font-size:1.8rem}}" : "");
+      `@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +
+      ios +
+      (android
+        ? "@media screen{.np button{font-size:2.2rem;margin:0 8px 12px 0}.np .s{font-size:1.6rem}}"
+        : ""),
+    page = `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}`,
+    // Android : la fenêtre d'impression choisit portrait ou paysage ; Chrome imprime avec la largeur de la page (viewport), qu'on règle donc selon le sens choisi
+    imp =
+      "function imp(o){var p=o=='p';document.querySelector('meta[name=viewport]').content='width='+(p?718:1047);document.getElementById('pgs').textContent='@page{size:A4 '+(p?'portrait':'landscape')+';margin:10mm}';setTimeout(function(){try{print()}catch(e){}},400)}",
+    btn = (js, txt, fond) =>
+      `<button onclick="${js}" style="font:inherit;font-weight:700;padding:12px 18px;border:0;border-radius:10px;background:${fond};color:#fff">${txt}</button> `;
   return (
     '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="' +
     viewport +
@@ -140,12 +154,23 @@ function docHTML(html, name, menu = false, bouton = false) {
     "</title><style>" +
     DOC_CSS +
     impression +
+    '</style><style id="pgs">' +
+    page +
     "</style></head><body>" +
     (bouton === "retour"
       ? '<p class="np"><button onclick="location.reload()" style="font:inherit;font-weight:700;padding:12px 18px;border:2px solid #1f7a3f;border-radius:10px;background:#fff;color:#1f7a3f">↩ Retour à l\'appli</button></p>'
       : "") +
     (bouton
-      ? '<p class="np"><button onclick="try{print()}catch(e){}" style="font:inherit;font-weight:700;padding:12px 18px;border:0;border-radius:10px;background:#1f7a3f;color:#fff">🖨️ Imprimer / Enregistrer en PDF</button><br><span class="s">Si rien ne s\'ouvre (Chrome sur iPhone) : menu Partager du navigateur, puis « Imprimer » ou « Enregistrer dans Fichiers ».</span></p>'
+      ? '<p class="np">' +
+        (android
+          ? btn("imp('p')", "🖨️ Imprimer en portrait", "#1f7a3f") +
+            btn("imp('l')", "🖨️ Imprimer en paysage", "#2a3b2f") +
+            '<br><span class="s">Choisis le même sens (portrait ou paysage) dans la fenêtre d\'impression.</span><script>' +
+            imp +
+            "</script>"
+          : btn("try{print()}catch(e){}", "🖨️ Imprimer / Enregistrer en PDF", "#1f7a3f") +
+            '<br><span class="s">Si rien ne s\'ouvre (Chrome sur iPhone) : menu Partager du navigateur, puis « Imprimer » ou « Enregistrer dans Fichiers ».</span>') +
+        "</p>"
       : "") +
     html +
     (html.includes("data-recnav") ? "<script>" + NAV_JS + "</script>" : "") +

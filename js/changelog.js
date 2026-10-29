@@ -5,6 +5,15 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.76.0",
+    d: "2026-10-29",
+    t: "Impression sur téléphone : portrait ou paysage, repas entiers sur iPhone",
+    l: [
+      "Android (Chrome) : deux boutons, « Imprimer en portrait » et « Imprimer en paysage ». Chacun règle la mise en page sur le sens choisi (avant, le document était fait pour du portrait et n'occupait qu'une partie d'une page paysage). Il faut choisir le même sens dans la fenêtre d'impression.",
+      "iPhone (Safari) : chaque repas est un bloc que Safari ne coupe plus entre deux pages (avant, un repas pouvait commencer en bas d'une page et se terminer sur la suivante).",
+    ],
+  },
+  {
     v: "1.75.0",
     d: "2026-10-29",
     t: "Impression sur Android : pages remplies",

@@ -3675,6 +3675,10 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
   const doc = await onglet.content();
   expect(doc).toContain("size:A4 portrait");
   expect(doc).toMatch(/zoom:(0\.[89]\d?|1)\}\}/);
+  // Safari ne garde pas une ligne de tableau entière sur une page : chaque repas devient un petit tableau insécable
+  expect(doc).toContain(
+    ".mt tr{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}"
+  );
   await expect(onglet.locator("button", { hasText: "Imprimer" })).toBeVisible();
   await expect(onglet.locator("tr.day").first()).toBeVisible();
   await onglet.close();
@@ -3746,6 +3750,18 @@ test("impression sur Android : la liste de courses s'ouvre dans un onglet, en po
   const doc = await onglet.content();
   expect(doc).toContain("size:A4 portrait");
   expect(doc).toContain("zoom:1}}");
+  // Android : au choix portrait ou paysage ; la largeur de mise en page et le sens de la page suivent le bouton (la fenêtre d'impression d'Android reste à régler dans le même sens)
+  await expect(onglet.locator("button", { hasText: "Imprimer en portrait" })).toBeVisible();
+  await expect(onglet.locator("button", { hasText: "Imprimer en paysage" })).toBeVisible();
+  await onglet.evaluate(() => {
+    window.print = () => {};
+    window.imp("l");
+  });
+  expect(await onglet.locator("meta[name=viewport]").getAttribute("content")).toBe("width=1047");
+  expect(await onglet.locator("#pgs").textContent()).toContain("landscape");
+  await onglet.evaluate(() => window.imp("p"));
+  expect(await onglet.locator("meta[name=viewport]").getAttribute("content")).toBe("width=718");
+  expect(await onglet.locator("#pgs").textContent()).toContain("portrait");
   expect(await onglet.title()).toBe("Patro Liste de courses");
   // Chrome Android imprime avec la largeur de l'écran : la page A4 (718 px en portrait, 1047 px en paysage) est imposée
   expect(doc).toContain('name="viewport" content="width=718"');
