@@ -45,7 +45,7 @@ function zoomImpression(html, paysage = true) {
   return meilleur;
 }
 
-/** Imprime un document : en portrait à 100 %, sauf le menu (`menu` : paysage avec zoom automatique, en portrait sur iPhone/iPad qui ne savent pas faire de paysage). */
+/** Imprime un document : en portrait à 100 %, sauf le menu (`menu` : paysage avec zoom automatique, en portrait sur iPhone/iPad, où Safari ignore l'orientation de la page). */
 function printHTML(html, menu = false) {
   const paysage = menu && !surIOS();
   $("pv").innerHTML = html;

@@ -10,7 +10,7 @@ const CHANGELOG = [
     t: "Impression : mêmes réglages sur téléphone",
     l: [
       "Le fichier HTML partagé (WhatsApp, mail, « Fichier HTML ») reprend les réglages d'impression de l'ordinateur : le menu en paysage avec son zoom automatique, la liste de courses et les autres documents en portrait à 100 %. Le jour reste collé à son premier repas.",
-      "iPhone et iPad : Safari ne sait pas imprimer en paysage, donc le menu est alors mis en page et zoomé pour du portrait. La mise en page d'impression reste en place le temps que l'aperçu du téléphone s'affiche.",
+      "iPhone et iPad : Safari ignore l'orientation demandée par la page (le paysage ne s'y choisit que dans la fenêtre d'impression, si l'imprimante le propose), donc le menu y est mis en page et zoomé pour du portrait. La mise en page d'impression reste en place le temps que l'aperçu du téléphone s'affiche.",
     ],
   },
   {
