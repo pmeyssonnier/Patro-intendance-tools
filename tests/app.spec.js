@@ -3675,9 +3675,9 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
   const doc = await onglet.content();
   expect(doc).toContain("size:A4 portrait");
   expect(doc).toMatch(/zoom:(0\.[89]\d?|1)\}\}/);
-  // Safari ne garde pas une ligne de tableau entière sur une page : chaque repas devient un petit tableau insécable
+  // Safari coupe au milieu d'une ligne un repas en cellule de tableau : sur iPhone chaque repas est un bloc normal, avec marge et bande de couleur qui continuent sur la page suivante
   expect(doc).toContain(
-    ".mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}"
+    "-webkit-box-decoration-break:clone;box-decoration-break:clone;break-inside:avoid;page-break-inside:avoid}"
   );
   await expect(onglet.locator("button", { hasText: "Imprimer" })).toBeVisible();
   await expect(onglet.locator("tr.day").first()).toBeVisible();
@@ -3773,6 +3773,17 @@ test("impression sur Android : la liste de courses s'ouvre dans un onglet, en po
   await expect(onglet.locator("h2")).toHaveText("Liste de courses");
   await expect(onglet.locator("#list, nav, #drawer")).toHaveCount(0);
   expect(erreurs).toEqual([]);
+});
+
+test("menu imprimé : plus de trait noir au-dessus de chaque jour", async ({ page }) => {
+  await ouvrir(page);
+  await aller(page, "menu");
+  const r = await page.evaluate(() => ({
+    doc: docHTML(menuHTML(), "Menu").includes("border-top:2px solid #2a3b2f"),
+    bord: getComputedStyle(document.querySelector("#mprev tr.day td")).borderTopWidth,
+  }));
+  expect(r.doc).toBe(false);
+  expect(r.bord).toBe("0px");
 });
 
 test("menu imprimé : la ligne du jour est collée au premier repas (jamais seule en bas de page)", async ({
