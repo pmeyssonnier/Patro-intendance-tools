@@ -255,13 +255,13 @@ test("fichier HTML téléchargé : autonome et mis en forme", async ({ page, bro
   expect(fichier.texte).not.toMatch(/<script|<link/); // aucune dépendance externe
   const autre = await browser.newPage();
   await autre.setContent(fichier.texte);
-  expect(await autre.locator(".mt tr.day").count()).toBeGreaterThan(0);
-  // l'étiquette « Matin » garde sa couleur orange dans le fichier téléchargé
+  expect(await autre.locator(".mt2 .jr").count()).toBeGreaterThan(0);
+  // le bloc du repas « Matin » garde sa couleur orange (bande de gauche) dans le fichier téléchargé
   const fond = await autre
-    .locator("tr.sl td.sn", { hasText: "Matin" })
+    .locator(".rp", { hasText: "Matin" })
     .first()
-    .evaluate((e) => getComputedStyle(e).backgroundColor);
-  expect(fond).toBe("rgb(224, 138, 0)");
+    .evaluate((e) => getComputedStyle(e).backgroundImage);
+  expect(fond).toContain("rgb(224, 138, 0)");
   await autre.close();
 });
 
@@ -3675,12 +3675,11 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
   const doc = await onglet.content();
   expect(doc).toContain("size:A4 portrait");
   expect(doc).toMatch(/zoom:(0\.[89]\d?|1)\}\}/);
-  // Safari coupe au milieu d'une ligne un repas en cellule de tableau : sur iPhone chaque repas est un bloc normal, avec marge et bande de couleur qui continuent sur la page suivante
-  expect(doc).toContain(
-    ".mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}"
-  );
+  // Safari coupe une cellule de tableau au milieu d'une ligne : sur iPhone les repas sont des blocs, sans tableau (en-tête au début seulement)
+  expect(doc).toContain('<div class="mt mt2"><div class="hd">');
+  expect(doc).not.toContain("<thead>");
   await expect(onglet.locator("button", { hasText: "Imprimer" })).toBeVisible();
-  await expect(onglet.locator("tr.day").first()).toBeVisible();
+  await expect(onglet.locator(".jr").first()).toBeVisible();
   await onglet.close();
   // « Fichier HTML » : sur iPhone, rien ne se télécharge (Chrome compris) : le fichier s'ouvre dans un onglet
   await aller(page, "sh");
@@ -3688,7 +3687,7 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
   const [fichier] = await Promise.all([page.waitForEvent("popup"), page.locator("#sd").click()]);
   await fichier.waitForLoadState();
   expect(await fichier.title()).toBe("Patro Menu");
-  await expect(fichier.locator("tr.day").first()).toBeVisible();
+  await expect(fichier.locator(".jr").first()).toBeVisible();
   expect(erreurs).toEqual([]);
 });
 
@@ -3706,7 +3705,7 @@ test("impression dans l'application Google (iPhone) : pas de nouvel onglet, le d
     })
   );
   await page.locator("#pmenu").click();
-  await expect(page.locator("tr.day").first()).toBeVisible();
+  await expect(page.locator(".jr").first()).toBeVisible();
   await expect(page.locator("button", { hasText: "Imprimer" })).toBeVisible();
   await expect(page.locator("button", { hasText: "Retour à l'appli" })).toBeVisible();
   expect(onglets).toBe(0);
@@ -3775,46 +3774,88 @@ test("impression sur Android : la liste de courses s'ouvre dans un onglet, en po
   expect(erreurs).toEqual([]);
 });
 
-test("impression sur iPhone : 3 colonnes, en-tête au début, repas longs découpés en lignes de tableau", async ({
+test("impression du menu : mêmes blocs sur tous les appareils, en-tête au début sur iPhone et répété sur PC et Android", async ({
   page,
 }) => {
   const erreurs = await ouvrir(page);
   await aller(page, "menu");
   const r = await page.evaluate(() => {
-    Object.defineProperty(navigator, "userAgent", {
-      get: () =>
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
-    });
-    const court = menuHTML(),
-      ligne = "<br>Étape de la recette à suivre avec soin. ",
-      long = court.replace(
-        /(<tr class="sl"[^>]*>(?:(?!<\/tr>)[\s\S])*?)<\/td><\/tr>/,
-        "$1" + ligne.repeat(40) + "</td></tr>"
-      ),
-      dc = docHTML(court, "Menu", true, true),
-      dl = docHTML(long, "Menu", true, true);
+    const html = menuHTML(),
+      meals = (html.match(/<tr class="sl"/g) || []).length,
+      iphone = blocsImpression(html, false),
+      chrome = blocsImpression(html, true),
+      compte = (s, re) => (s.match(re) || []).length;
     return {
-      colonnes: dc.includes(".mt thead th:first-child{width:84px}"),
-      // pas de marge en bas des cellules : sinon Safari laisse une fine bande de couleur en haut de la page suivante
-      sansBande: dc.includes(".mt tr.sl td{padding-bottom:0;border-bottom:0}"),
-      entete: (dc.match(/<thead>/g) || []).length,
-      courtsCoupes: (dc.match(/class="sl co/g) || []).length,
-      suites: (dl.match(/class="sl co/g) || []).length,
-      // chaque morceau garde la couleur du repas (même attribut style) et sa colonne « Repas » vide
-      couleurs: new Set([...dl.matchAll(/<tr class="sl[^"]*"( style="[^"]*")>/g)].map((m) => m[1]))
-        .size,
-      vides: (dl.match(/<td class="sn"><\/td><td><\/td>/g) || []).length,
-      // aucun texte perdu
-      texte: (dl.match(/Étape de la recette/g) || []).length === 40,
+      meals,
+      jours: (html.match(/<tr class="day"/g) || []).length,
+      iphone: {
+        enTete: compte(iphone, /class="hd"/g),
+        thead: compte(iphone, /<thead/g),
+        blocs: compte(iphone, /class="rp"/g),
+        jr: compte(iphone, /class="jr"/g),
+      },
+      chrome: {
+        thead: compte(chrome, /<thead>/g),
+        enveloppe: chrome.includes('<table class="mt tw">') && chrome.includes('<tr class="w">'),
+        blocs: compte(chrome, /class="rp"/g),
+        jr: compte(chrome, /class="jr"/g),
+      },
+      autre: blocsImpression("<p>liste</p>", true),
     };
   });
-  expect(r.colonnes).toBe(true);
-  expect(r.sansBande).toBe(true);
-  expect(r.entete).toBe(1);
-  expect(r.courtsCoupes).toBe(0);
-  expect(r.suites).toBeGreaterThan(0);
-  expect(r.vides).toBe(r.suites);
-  expect(r.texte).toBe(true);
+  // un bloc de couleur par repas, la ligne du jour attachée au premier repas de la journée
+  expect(r.iphone.blocs).toBe(r.meals);
+  expect(r.iphone.jr).toBe(r.jours);
+  expect(r.iphone.enTete).toBe(1);
+  expect(r.iphone.thead).toBe(0);
+  expect(r.chrome.blocs).toBe(r.meals);
+  expect(r.chrome.jr).toBe(r.jours);
+  expect(r.chrome.thead).toBe(1);
+  expect(r.chrome.enveloppe).toBe(true);
+  expect(r.autre).toBeNull();
+  expect(erreurs).toEqual([]);
+});
+
+test("impression du menu : description découpée après chaque point, sans espace, marges conservées au saut de page", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  const r = await page.evaluate(() => {
+    const phrase = "Faire revenir les oignons puis ajouter la viande et laisser cuire doucement. ",
+      long =
+        "<b>LA BOLOGNAISE</b> : " +
+        phrase.repeat(3) +
+        "<br><b>LA BECHAMEL</b> : " +
+        phrase.repeat(2) +
+        "(Conseil : " +
+        phrase.repeat(3) +
+        "fin du conseil)<br>" +
+        phrase.repeat(6);
+    return {
+      court: decouperDescription("Faire chauffer. Servir chaud.", "Plat"),
+      morceaux: decouperDescription(long, "Plat"),
+      css: CSS_BLOCS,
+    };
+  });
+  // une description courte n'est pas découpée
+  expect(r.court).toBeNull();
+  // une description longue : plusieurs lignes, chacune finissant après un point (ou une parenthèse fermée)
+  expect(r.morceaux.length).toBeGreaterThan(3);
+  r.morceaux.forEach((l) => {
+    const texte = l.replace(/<[^>]+>/g, "").trim();
+    expect((texte.match(/\(/g) || []).length).toBe((texte.match(/\)/g) || []).length);
+    expect(texte).toMatch(/[.!?)]$/);
+  });
+  const tout = r.morceaux.join(" ");
+  // « LA BECHAMEL : » reste avec sa phrase, la parenthèse est entière, aucune phrase perdue
+  expect(tout).toMatch(/LA BECHAMEL<\/b> : Faire revenir/);
+  expect(tout).toContain("fin du conseil");
+  expect((tout.match(/Faire revenir/g) || []).length).toBe(3 + 2 + 3 + 6);
+  // aucun espace au milieu d'une page : les marges se recouvrent ; elles restent au saut de page (la marge négative y est supprimée)
+  expect(r.css).toContain(".mt2 .lg.co{margin-top:-14px}");
+  expect(r.css).toContain(".mt2 .lg.sp .in{padding-bottom:7px}");
+  expect(r.css).toContain(".mt2 .lg>div{display:table-cell;vertical-align:top;padding:7px 10px 0}");
   expect(erreurs).toEqual([]);
 });
 
