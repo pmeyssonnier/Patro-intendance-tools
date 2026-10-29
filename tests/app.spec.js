@@ -3645,7 +3645,13 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
 }) => {
   const erreurs = await ouvrir(page);
   await aller(page, "menu");
-  await page.evaluate(() => (window.print = () => {}));
+  await page.evaluate(() => {
+    window.print = () => {};
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      get: () => "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36",
+    });
+  });
   // le fichier HTML partagé (WhatsApp, mail, téléchargement) porte l'orientation et le zoom : le menu en paysage, le reste en portrait à 100 %
   const f = await page.evaluate(() => ({
     menu: docHTML(menuHTML(), "Menu", true),
@@ -3658,6 +3664,7 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
   // iPhone : Safari ignore l'orientation de la page, le menu est mis en page et zoomé pour du portrait
   await page.evaluate(() =>
     Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
       get: () =>
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
     })
@@ -3742,8 +3749,11 @@ test("impression sur Android : la liste de courses s'ouvre dans un onglet, en po
   expect(await onglet.title()).toBe("Patro Liste de courses");
   // Chrome Android imprime avec la largeur de l'écran : la page A4 (718 px en portrait, 1047 px en paysage) est imposée
   expect(doc).toContain('name="viewport" content="width=718"');
+  // le menu aussi : la fenêtre d'impression d'Android impose le portrait, donc mise en page portrait sans zoom (en paysage, la page était coupée à mi-hauteur)
   const menuDoc = await page.evaluate(() => docHTML(menuHTML(), "Menu", true, true));
-  expect(menuDoc).toContain('name="viewport" content="width=1047"');
+  expect(menuDoc).toContain('name="viewport" content="width=718"');
+  expect(menuDoc).toContain("@page{size:A4 portrait;margin:10mm}");
+  expect(menuDoc).toContain("zoom:1}}");
   await expect(onglet.locator("h2")).toHaveText("Liste de courses");
   await expect(onglet.locator("#list, nav, #drawer")).toHaveCount(0);
   expect(erreurs).toEqual([]);

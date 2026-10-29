@@ -51,7 +51,7 @@ function zoomImpression(html, paysage = true) {
 /** Imprime un document : en portrait à 100 %, sauf le menu (`menu` : paysage avec zoom automatique, en portrait sur iPhone/iPad, où Safari ignore l'orientation de la page). */
 function printHTML(html, menu = false, nom = "Impression") {
   if (surTel()) return ouvrirPourImprimer(html, "Patro " + nom, menu);
-  const paysage = menu && !surIOS();
+  const paysage = menu;
   $("pv").innerHTML = html;
   $("pv").style.zoom = menu ? zoomImpression(html, paysage) : 1;
   let st = $("pgsz");
@@ -123,12 +123,12 @@ const NAV_JS =
 
 /** Document HTML complet et autonome (celui du « Fichier HTML » et de l'envoi par WhatsApp, Partager et Mail). */
 function docHTML(html, name, menu = false, bouton = false) {
-  const paysage = menu && !surIOS(),
-    // sur iPhone et iPad, pas de zoom CSS : la page y est imprimée telle quelle, sans risque de page vide
-    zoom = menu && !surIOS() ? zoomImpression(html, paysage) : 1,
-    // Chrome Android imprime la page avec la largeur de son écran (une ligne de menu occupe alors une page entière) : la largeur de page A4 (96 ppp) est imposée, et le bouton agrandi pour rester utilisable à l'écran
-    android = bouton && surTel() && !surIOS(),
-    viewport = android ? "width=" + (paysage ? 1047 : 718) : "width=device-width,initial-scale=1",
+  // sur téléphone (Android comme iPhone), l'orientation et la taille de la page sont décidées par la fenêtre d'impression du système : le document est mis en page pour du portrait, sans zoom, et à la largeur d'une page A4 (718 px à 96 ppp) pour que Chrome Android ne le réduise pas
+  const tel = surTel(),
+    paysage = menu && !tel,
+    zoom = menu && !tel ? zoomImpression(html, true) : 1,
+    viewport = bouton && tel && !surIOS() ? "width=718" : "width=device-width,initial-scale=1",
+    android = bouton && tel && !surIOS(),
     impression =
       `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +
       (android ? "@media screen{.np button{font-size:2.6rem}.np .s{font-size:1.8rem}}" : "");

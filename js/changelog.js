@@ -5,6 +5,14 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.75.0",
+    d: "2026-10-29",
+    t: "Impression sur Android : pages remplies",
+    l: [
+      "Android (Chrome) : l'impression d'un menu n'occupait qu'une moitié de page, avec un ou deux repas par page. La fenêtre d'impression d'Android imprime en portrait quoi que demande la page, alors que le menu était découpé pour du paysage. Sur téléphone (Android comme iPhone), le document est maintenant mis en page pour du portrait, à la largeur d'une page A4 et sans zoom : les pages se remplissent comme sur iPhone.",
+    ],
+  },
+  {
     v: "1.74.0",
     d: "2026-10-29",
     t: "Impression et fichier HTML dans l'application Google",
