@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.74.0",
+    d: "2026-10-29",
+    t: "Impression et fichier HTML dans l'application Google",
+    l: [
+      "Dans l'application Google (et les navigateurs intégrés à Facebook, Instagram…), qui n'ouvrent pas de nouvel onglet, « Imprimer » et « Fichier HTML » remplacent la page par le document, avec un bouton « Imprimer / Enregistrer en PDF » et un bouton « Retour à l'appli ». Même chose si le navigateur bloque le nouvel onglet.",
+      "Impression : un repas (le plat et ses quantités) ne se coupe plus entre deux pages, aussi dans Safari sur iPhone (règle ancienne `page-break-inside` ajoutée).",
+      "Android (Chrome) : le document est imposé à la largeur d'une page A4 pour que l'impression garde la même mise en page qu'à l'ordinateur (plusieurs repas par page, au lieu d'un seul).",
+    ],
+  },
+  {
     v: "1.73.0",
     d: "2026-10-29",
     t: "Impression sur téléphone : le document s'ouvre dans un onglet",

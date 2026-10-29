@@ -633,8 +633,10 @@ footer {
   text-align: center;
 }
 .mt tr,
-.mt tbody.dg {
+.mt tbody.dg,
+.mt td > div {
   break-inside: avoid;
+  page-break-inside: avoid;
 }
 .sr {
   position: absolute;
@@ -841,6 +843,7 @@ body.nav #drawer {
   }
   tr {
     break-inside: avoid;
+    page-break-inside: avoid;
   }
   td input {
     border: 0;

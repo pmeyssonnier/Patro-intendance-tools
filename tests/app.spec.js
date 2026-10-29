@@ -3681,6 +3681,48 @@ test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPh
   expect(erreurs).toEqual([]);
 });
 
+test("impression dans l'application Google (iPhone) : pas de nouvel onglet, le document remplace la page avec un retour à l'appli", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  let onglets = 0;
+  page.on("popup", () => onglets++);
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "userAgent", {
+      get: () =>
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/320.0 Mobile/15E148 Safari/604.1",
+    })
+  );
+  await page.locator("#pmenu").click();
+  await expect(page.locator("tr.day").first()).toBeVisible();
+  await expect(page.locator("button", { hasText: "Imprimer" })).toBeVisible();
+  await expect(page.locator("button", { hasText: "Retour à l'appli" })).toBeVisible();
+  expect(onglets).toBe(0);
+  // « Retour à l'appli » recharge l'application
+  await page.locator("button", { hasText: "Retour à l'appli" }).click();
+  await expect(page.locator("#menu")).toBeVisible();
+  expect(erreurs).toEqual([]);
+});
+
+test("impression : si le navigateur bloque le nouvel onglet, le document remplace la page", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "list");
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "userAgent", {
+      get: () =>
+        "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36",
+    });
+    window.open = () => null;
+  });
+  await page.locator("#plist").click();
+  await expect(page.locator("h2")).toHaveText("Liste de courses");
+  await expect(page.locator("button", { hasText: "Retour à l'appli" })).toBeVisible();
+  expect(erreurs).toEqual([]);
+});
+
 test("impression sur Android : la liste de courses s'ouvre dans un onglet, en portrait à 100 %, sans l'appli autour", async ({
   page,
 }) => {
@@ -3698,6 +3740,10 @@ test("impression sur Android : la liste de courses s'ouvre dans un onglet, en po
   expect(doc).toContain("size:A4 portrait");
   expect(doc).toContain("zoom:1}}");
   expect(await onglet.title()).toBe("Patro Liste de courses");
+  // Chrome Android imprime avec la largeur de l'écran : la page A4 (718 px en portrait, 1047 px en paysage) est imposée
+  expect(doc).toContain('name="viewport" content="width=718"');
+  const menuDoc = await page.evaluate(() => docHTML(menuHTML(), "Menu", true, true));
+  expect(menuDoc).toContain('name="viewport" content="width=1047"');
   await expect(onglet.locator("h2")).toHaveText("Liste de courses");
   await expect(onglet.locator("#list, nav, #drawer")).toHaveCount(0);
   expect(erreurs).toEqual([]);
@@ -3719,7 +3765,10 @@ test("menu imprimé : la ligne du jour est collée au premier repas (jamais seul
       ok: groupes.every(
         (g) => g.children[0].classList.contains("day") && g.children[1]?.classList.contains("sl")
       ),
-      doc: docHTML(menuHTML(), "Menu").includes("tbody.dg{break-inside:avoid}"),
+      // un repas ne se coupe jamais entre deux pages : règle standard et ancienne règle (Safari, iPhone)
+      doc: docHTML(menuHTML(), "Menu").includes(
+        ".mt tr,.mt tbody.dg,.mt td>div{break-inside:avoid;page-break-inside:avoid}"
+      ),
     };
   });
   expect(r.n).toBeGreaterThan(0);
