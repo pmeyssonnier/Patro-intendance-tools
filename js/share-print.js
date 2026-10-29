@@ -20,6 +20,9 @@ const surIOS = () =>
   /iP(hone|ad|od)/.test(navigator.userAgent) ||
   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
+/** Téléphone ou tablette : l'aperçu d'impression de l'appli elle-même n'y est pas fiable (page vide sur iPhone, même page imprimée sur Android). */
+const surTel = () => surIOS() || /Android|Mobile/i.test(navigator.userAgent);
+
 /** Zoom d'impression du menu, de 0,85 à 1 : celui qui remplit le mieux les pages A4 (peu de blanc en bas de la dernière), sans jamais agrandir. Zone utile : 277 × 190 mm en paysage, 190 × 277 mm en portrait. Un document court garde 100 %. */
 function zoomImpression(html, paysage = true) {
   const [larg, haut] = paysage ? [277, 190] : [190, 277],
@@ -46,7 +49,8 @@ function zoomImpression(html, paysage = true) {
 }
 
 /** Imprime un document : en portrait à 100 %, sauf le menu (`menu` : paysage avec zoom automatique, en portrait sur iPhone/iPad, où Safari ignore l'orientation de la page). */
-function printHTML(html, menu = false) {
+function printHTML(html, menu = false, nom = "Impression") {
+  if (surTel()) return ouvrirPourImprimer(html, "Patro " + nom, menu);
   const paysage = menu && !surIOS();
   $("pv").innerHTML = html;
   $("pv").style.zoom = menu ? zoomImpression(html, paysage) : 1;
@@ -67,6 +71,20 @@ function printHTML(html, menu = false) {
     // sur téléphone, print() rend la main avant que l'aperçu soit prêt : on garde la mise en page d'impression jusqu'à « afterprint »
     setTimeout(() => document.body.classList.remove("pr"), 30000);
   }, 80);
+}
+
+/** Téléphone : le document s'ouvre seul dans un nouvel onglet (même fichier que « Fichier HTML », mêmes réglages qu'à l'ordinateur) avec un bouton « Imprimer » ; l'impression se fait depuis cet onglet, qui ne contient rien d'autre. */
+function ouvrirPourImprimer(html, nom, menu) {
+  const url = URL.createObjectURL(
+    new Blob([docHTML(html, nom, menu, true)], { type: "text/html" })
+  );
+  if (!window.open(url, "_blank")) {
+    URL.revokeObjectURL(url);
+    return alert(
+      "Le navigateur a bloqué l'ouverture. Autorise les fenêtres pour ce site, ou utilise « Fichier HTML »."
+    );
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 120000);
 }
 
 window.addEventListener("afterprint", () => document.body.classList.remove("pr"));
@@ -97,9 +115,10 @@ const NAV_JS =
   'pickType("all")})();';
 
 /** Document HTML complet et autonome (celui du « Fichier HTML » et de l'envoi par WhatsApp, Partager et Mail). */
-function docHTML(html, name, menu = false) {
+function docHTML(html, name, menu = false, bouton = false) {
   const paysage = menu && !surIOS(),
-    zoom = menu ? zoomImpression(html, paysage) : 1,
+    // sur iPhone et iPad, pas de zoom CSS : la page y est imprimée telle quelle, sans risque de page vide
+    zoom = menu && !surIOS() ? zoomImpression(html, paysage) : 1,
     impression = `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}@media print{body{max-width:none;padding:0;zoom:${zoom}}}`;
   return (
     '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
@@ -108,6 +127,9 @@ function docHTML(html, name, menu = false) {
     DOC_CSS +
     impression +
     "</style></head><body>" +
+    (bouton
+      ? '<p class="np"><button onclick="try{print()}catch(e){}" style="font:inherit;font-weight:700;padding:12px 18px;border:0;border-radius:10px;background:#1f7a3f;color:#fff">🖨️ Imprimer / Enregistrer en PDF</button><br><span class="s">Si rien ne s\'ouvre (Chrome sur iPhone) : menu Partager du navigateur, puis « Imprimer » ou « Enregistrer dans Fichiers ».</span></p>'
+      : "") +
     html +
     (html.includes("data-recnav") ? "<script>" + NAV_JS + "</script>" : "") +
     "</body></html>"
@@ -117,6 +139,8 @@ function docHTML(html, name, menu = false) {
 const nomHTML = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html";
 
 function dlHTML(html, name, menu = false) {
+  // iPhone et iPad (Chrome compris) ne téléchargent pas un fichier créé par la page : il s'ouvre dans un onglet, d'où on l'enregistre ou l'imprime par le menu Partager
+  if (surIOS()) return ouvrirPourImprimer(html, name, menu);
   dl(docHTML(html, name, menu), nomHTML(name), "text/html");
 }
 
@@ -125,11 +149,11 @@ const shmsg = (t) => {
   setTimeout(() => ($("shm").textContent = ""), 2500);
 };
 
-$("plist").onclick = () => printHTML(listHTML());
+$("plist").onclick = () => printHTML(listHTML(), false, "Liste de courses");
 
-$("pmenu").onclick = () => printHTML(menuHTML(), true);
+$("pmenu").onclick = () => printHTML(menuHTML(), true, "Menu");
 
-$("sp").onclick = () => printHTML(shk()[2](), $("shw").value === "menu");
+$("sp").onclick = () => printHTML(shk()[2](), $("shw").value === "menu", shk()[0]);
 
 $("sd").onclick = () => dlHTML(shk()[2](), "Patro " + shk()[0], $("shw").value === "menu");
 

@@ -5,6 +5,16 @@
 /** Une entrée par version : { v: numéro, d: date AAAA-MM-JJ (ou texte), t: titre court, l: liste des changements }. */
 const CHANGELOG = [
   {
+    v: "1.73.0",
+    d: "2026-10-29",
+    t: "Impression sur téléphone : le document s'ouvre dans un onglet",
+    l: [
+      "Sur téléphone (Android, iPhone, iPad), « Imprimer » ouvre le document seul dans un nouvel onglet, avec un bouton « Imprimer / Enregistrer en PDF ». L'aperçu d'impression de l'appli elle-même était vide sur iPhone et reprenait toujours la même page sur Android.",
+      "iPhone et iPad (Chrome compris) : « Fichier HTML » ne téléchargeait rien ; le fichier s'ouvre maintenant dans un onglet, d'où on l'enregistre ou l'imprime par le menu Partager du navigateur.",
+      "Le PDF obtenu est le même que sur ordinateur : menu en A4 paysage avec son zoom, liste de courses en portrait à 100 %, jours collés à leur premier repas (en portrait sur iPhone et iPad, où l'orientation de la page est ignorée).",
+    ],
+  },
+  {
     v: "1.72.0",
     d: "2026-10-29",
     t: "Impression : mêmes réglages sur téléphone",
