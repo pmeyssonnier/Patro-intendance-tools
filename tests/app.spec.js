@@ -3818,7 +3818,7 @@ test("impression sur iPhone : 3 colonnes, en-tête au début, repas longs décou
   expect(erreurs).toEqual([]);
 });
 
-test("impression sur iPhone : un repas long se coupe après un point, jamais dans une parenthèse ni après un titre", async ({
+test("impression sur iPhone : un repas long est découpé phrase par phrase, sans espace entre les lignes", async ({
   page,
 }) => {
   const erreurs = await ouvrir(page);
@@ -3829,7 +3829,7 @@ test("impression sur iPhone : un repas long se coupe après un point, jamais dan
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
     });
     const phrase = "Faire revenir les oignons puis ajouter la viande et laisser cuire doucement. ",
-      desc =
+      long =
         "<b>LA BOLOGNAISE</b> : " +
         phrase.repeat(3) +
         "<br><b>LA BECHAMEL</b> : " +
@@ -3838,24 +3838,37 @@ test("impression sur iPhone : un repas long se coupe après un point, jamais dan
         phrase.repeat(3) +
         "fin du conseil)<br>" +
         phrase.repeat(6),
-      tr = `<tbody class="dg"><tr class="day"><td colspan="3">J</td></tr><tr class="sl" style="--mc:#c00"><td class="sn">Soir</td><td>Plat</td><td>${desc}</td></tr></tbody>`,
-      sortie = decouperRepasLongs(tr),
-      lignes = [...sortie.matchAll(/<tr class="sl[^"]*"[^>]*>([\s\S]*?)<\/tr>/g)].map((m) => {
-        const cellules = [...m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)];
-        return cellules[2][1].replace(/<[^>]+>/g, "").trim();
-      });
-    return { lignes, entier: lignes.join(" ").replace(/\s+/g, " ").length };
+      court = "Faire chauffer. Servir chaud.",
+      repas = (desc) =>
+        `<tbody class="dg"><tr class="day"><td colspan="3">J</td></tr><tr class="sl" style="--mc:#c00"><td class="sn">Soir</td><td>Plat</td><td>${desc}</td></tr></tbody>`,
+      lignes = (html) =>
+        [...html.matchAll(/<tr class="sl[^"]*"[^>]*>([\s\S]*?)<\/tr>/g)].map((m) =>
+          [...m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)][2][1].replace(/<[^>]+>/g, "").trim()
+        );
+    return {
+      longues: lignes(decouperRepasLongs(repas(long))),
+      courtes: lignes(decouperRepasLongs(repas(court))),
+      doc: docHTML(repas(long), "Menu", true, true),
+    };
   });
-  expect(r.lignes.length).toBeGreaterThan(3);
-  r.lignes.forEach((l, i) => {
-    // parenthèses équilibrées dans chaque morceau
+  // une description courte reste d'un seul bloc
+  expect(r.courtes).toEqual(["Faire chauffer. Servir chaud."]);
+  // une description longue : une phrase par ligne, après chaque point
+  // 3 phrases + 2 phrases + 1 parenthèse (gardée entière) + 6 phrases
+  expect(r.longues.length).toBe(3 + 2 + 1 + 6);
+  r.longues.forEach((l) => {
+    // jamais coupée dans une parenthèse
     expect((l.match(/\(/g) || []).length).toBe((l.match(/\)/g) || []).length);
-    // chaque morceau (sauf le dernier) se termine par un point, jamais par un titre court
-    if (i < r.lignes.length - 1) expect(l).toMatch(/[.!?)]$/);
+    // chaque ligne finit après un point (ou à la fin d'un paragraphe / d'une parenthèse fermée)
+    expect(l).toMatch(/[.!?)]$/);
   });
+  // « LA BECHAMEL : » reste avec sa phrase
+  expect(r.longues.some((l) => l.startsWith("LA BECHAMEL : Faire revenir"))).toBe(true);
   // aucune phrase perdue
-  expect(r.lignes.join(" ")).toContain("fin du conseil");
-  expect((r.lignes.join(" ").match(/Faire revenir/g) || []).length).toBe(3 + 2 + 3 + 6);
+  expect((r.longues.join(" ").match(/Faire revenir/g) || []).length).toBe(3 + 2 + 3 + 6);
+  // aucun espace entre les lignes d'un même repas : la suite n'a ni marge en haut ni en bas
+  expect(r.doc).toContain(".mt tr.sl.co td{padding-top:0}");
+  expect(r.doc).toContain(".mt tr.sl.sp .in{padding-bottom:0}");
   expect(erreurs).toEqual([]);
 });
 
