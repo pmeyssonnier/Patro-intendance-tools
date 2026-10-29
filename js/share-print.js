@@ -51,8 +51,9 @@ function zoomImpression(html, paysage = true) {
 /** Imprime un document : en portrait à 100 %, sauf le menu (`menu` : paysage avec zoom automatique, en portrait sur iPhone/iPad, où Safari ignore l'orientation de la page). */
 function printHTML(html, menu = false, nom = "Impression") {
   if (surTel()) return ouvrirPourImprimer(html, "Patro " + nom, menu);
-  const paysage = menu;
-  $("pv").innerHTML = html;
+  const paysage = menu,
+    blocs = menu && html.includes('class="sl"') ? blocsImpression(html, true) : null;
+  $("pv").innerHTML = blocs || html;
   $("pv").style.zoom = menu ? zoomImpression(html, paysage) : 1;
   let st = $("pgsz");
   if (!st) {
@@ -60,7 +61,8 @@ function printHTML(html, menu = false, nom = "Impression") {
     st.id = "pgsz";
     document.head.appendChild(st);
   }
-  st.textContent = `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}`;
+  st.textContent =
+    `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}` + (blocs ? CSS_BLOCS : "");
   document.body.classList.add("pr");
   setTimeout(() => {
     try {
@@ -121,91 +123,106 @@ const NAV_JS =
   'links.forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();var id=a.getAttribute("data-r");links.forEach(function(x){x.classList.toggle("on",x.getAttribute("data-r")===id)});showRecs([id]);if(window.innerWidth<800){var m=d.querySelector(".rmain");if(m)m.scrollIntoView()}})});' +
   'pickType("all")})();';
 
-/** iPhone : la description d'un repas long est découpée phrase par phrase (après chaque point) en lignes de tableau collées les unes aux autres, sans espace entre elles ; la suite garde la couleur du repas. Safari remplit ainsi la page jusqu'en bas, puis saute de page juste après un point quand il n'y a plus de place, et ne coupe jamais une phrase en deux. Une description courte reste d'un seul bloc. */
-function decouperRepasLongs(html) {
-  const MIN = 400,
-    texte = (h) => h.replace(/<[^>]*>/g, "").length,
-    couper = (tr) => {
-      const m = tr.match(
-        /^<tr class="sl"([^>]*)>(<td class="sn">[\s\S]*?<\/td>)(<td>[\s\S]*?<\/td>)<td>([\s\S]*?)<\/td><\/tr>$/
-      );
-      if (!m || texte(m[4]) <= MIN) return null;
-      // phrases d'une ligne : on ne coupe qu'entre deux phrases, hors des balises de mise en forme (gras, souligné, italique)
-      const phrases = (l) => {
-        const out = [];
-        let cur = "",
-          d = 0;
-        for (const [, balise, txt] of l.matchAll(/(<\/?[a-z]+[^>]*>)|([^<]+)/gi)) {
-          if (balise) {
-            cur += balise;
-            d += /^<\//.test(balise) ? -1 : /^<(b|u|i)\b/i.test(balise) ? 1 : 0;
-          } else if (d > 0) cur += txt;
-          else
-            // coupure seulement après un point (. ! ?), jamais à l'intérieur d'une parenthèse
-            txt.split(/(?<=[.!?])\s+/).forEach((p, i) => {
-              if (i && (cur.match(/\(/g) || []).length <= (cur.match(/\)/g) || []).length) {
-                out.push(cur);
-                cur = "";
-              } else if (i) cur += " ";
-              cur += p;
-            });
-        }
-        out.push(cur);
-        return out.filter((p) => p !== "");
-      };
-      const elements = m[4]
-        .split("<br>")
-        .flatMap((l, i) => phrases(l).map((h, j) => ({ h, br: i > 0 && j === 0 })));
-      // une phrase par ligne de tableau : Safari saute de page juste après un point, quand il n'y a plus de place.
-      // La première ligne reçoit assez de phrases pour être aussi haute que la colonne « Au menu » (sinon un vide s'ouvre sous la première phrase).
-      const hauteurPlats = texte(m[3]) * 1.4,
-        morceaux = [];
-      let cur = "",
-        n = 0,
-        premier = true;
-      for (const e of elements) {
-        if (premier) {
-          cur += (cur ? (e.br ? "<br>" : " ") : "") + e.h;
-          n += texte(e.h);
-          if (n >= hauteurPlats) {
-            morceaux.push(cur);
-            premier = false;
-          }
-        } else morceaux.push(e.h);
-      }
-      if (premier && cur) morceaux.push(cur);
-      if (morceaux.length < 2) return null;
-      const [attr, sn, plats] = [m[1], m[2], m[3]];
-      return {
-        premier: `<tr class="sl sp"${attr}>${sn}${plats}<td>${morceaux[0]}</td></tr>`,
-        suite: morceaux
-          .slice(1)
-          .map(
-            (l, i, tous) =>
-              `<tr class="sl co${i < tous.length - 1 ? " sp" : ""}"${attr}><td class="sn"></td><td></td><td>${l}</td></tr>`
-          )
-          .join(""),
-      };
-    };
-  return html.replace(/<tbody( class="dg")?>([\s\S]*?)<\/tbody>/g, (m, dg, corps) => {
-    let suite = "";
-    // chaque cellule de contenu est enveloppée : la marge du bas fait partie du contenu et ne peut plus déborder seule sur la page suivante
-    const envelopper = (tr) =>
-      tr.replace(/<td>([\s\S]*?)<\/td>/g, '<td><div class="in">$1</div></td>');
-    const interieur = corps.replace(/<tr class="sl"[^>]*>[\s\S]*?<\/tr>/g, (tr) => {
-      const r = couper(tr);
-      if (!r) return envelopper(tr);
-      if (dg) {
-        suite += envelopper(r.suite);
-        return envelopper(r.premier);
-      }
-      return envelopper(r.premier + r.suite);
-    });
-    return dg
-      ? `<tbody class="dg">${interieur}</tbody>${suite ? `<tbody>${suite}</tbody>` : ""}`
-      : `<tbody>${interieur}</tbody>`;
-  });
+/** Phrases d'une ligne de description : on ne coupe qu'après un point (. ! ?), hors des balises de mise en forme (gras, souligné, italique) et jamais dans une parenthèse. */
+function phrasesDe(ligne) {
+  const out = [];
+  let cur = "",
+    d = 0;
+  for (const [, balise, txt] of ligne.matchAll(/(<\/?[a-z]+[^>]*>)|([^<]+)/gi)) {
+    if (balise) {
+      cur += balise;
+      d += /^<\//.test(balise) ? -1 : /^<(b|u|i)\b/i.test(balise) ? 1 : 0;
+    } else if (d > 0) cur += txt;
+    else
+      txt.split(/(?<=[.!?])\s+/).forEach((p, i) => {
+        if (i && (cur.match(/\(/g) || []).length <= (cur.match(/\)/g) || []).length) {
+          out.push(cur);
+          cur = "";
+        } else if (i) cur += " ";
+        cur += p;
+      });
+  }
+  out.push(cur);
+  return out.filter((p) => p !== "");
 }
+
+/** Description d'un repas long découpée phrase par phrase : la première ligne reçoit assez de phrases pour être aussi haute que la colonne « Au menu » (sinon un vide s'ouvre sous elle), les suivantes une phrase chacune. Une description courte (moins de ~400 caractères) n'est pas découpée (renvoie null). */
+function decouperDescription(desc, plats) {
+  const texte = (h) => h.replace(/<[^>]*>/g, "").length;
+  if (texte(desc) <= 400) return null;
+  const elements = desc
+      .split("<br>")
+      .flatMap((l, i) => phrasesDe(l).map((h, j) => ({ h, br: i > 0 && j === 0 }))),
+    hauteurPlats = texte(plats) * 1.4,
+    morceaux = [];
+  let cur = "",
+    n = 0,
+    premier = true;
+  for (const e of elements) {
+    if (premier) {
+      cur += (cur ? (e.br ? "<br>" : " ") : "") + e.h;
+      n += texte(e.h);
+      if (n >= hauteurPlats) {
+        morceaux.push(cur);
+        premier = false;
+      }
+    } else morceaux.push(e.h);
+  }
+  if (premier && cur) morceaux.push(cur);
+  return morceaux.length < 2 ? null : morceaux;
+}
+
+/** Mise en page d'impression du menu, la même sur tous les appareils : chaque repas est un bloc de couleur qui contient une ligne par phrase de sa description (plat à gauche, description à droite), sans espace entre les phrases. Chaque ligne est insécable : le saut de page tombe juste après un point, quand il n'y a plus de place. La marge du haut de la ligne suivante est recouverte par celle du bas de la précédente (marge négative) : au milieu d'une page il n'y a aucun espace, et au saut de page les marges sont conservées, donc le texte n'est collé ni au bas de la page ni au haut de la suivante. Renvoie null si le document n'est pas un menu. `tableau` : garde l'en-tête répété sur chaque page (Chrome, Android) en enveloppant les blocs dans un tableau ; sans lui (Safari, qui ne coupe pas une cellule de tableau entre deux pages) l'en-tête n'est qu'au début. */
+function blocsImpression(html, tableau = false) {
+  const m = html.match(/<table class="mt"><thead>([\s\S]*?)<\/thead>([\s\S]*?)<\/table>/);
+  if (!m || !m[2].includes('class="sl"')) return null;
+  const entetes = [...m[1].matchAll(/<th>([\s\S]*?)<\/th>/g)].map((x) => x[1]),
+    cellule = (td) => td.replace(/^<td[^>]*>|<\/td>$/g, "");
+  let jour = "",
+    jourDuBloc = "",
+    blocs = "";
+  for (const t of m[2].matchAll(/<tr class="(day|sl)"([^>]*)>([\s\S]*?)<\/tr>/g)) {
+    const cells = [...t[3].matchAll(/<td[^>]*>[\s\S]*?<\/td>/g)].map((x) => x[0]);
+    if (t[1] === "day") {
+      jour = cellule(cells[0]);
+      continue;
+    }
+    const [sn, plats, desc] = [
+        cellule(cells[0]),
+        cellule(cells[1]),
+        cells[2] ? cellule(cells[2]) : null,
+      ],
+      morceaux = desc === null ? null : decouperDescription(desc, plats),
+      lignes = morceaux || [desc],
+      ligne = (c1, c2, c3, i, n) =>
+        `<div class="lg${i ? " co" : ""}${i < n - 1 ? " sp" : ""}">${i === 0 && jourDuBloc ? `<div class="jr">${jourDuBloc}</div>` : ""}<div class="c1">${c1}</div><div class="c2"><div class="in">${c2}</div></div>${c3 === null ? "" : `<div class="c3"><div class="in">${c3}</div></div>`}</div>`;
+    jourDuBloc = jour;
+    jour = "";
+    blocs += `<div class="rp"${t[2]}>${lignes
+      .map((l, i) => ligne(i ? "" : sn, i ? "" : plats, l, i, lignes.length))
+      .join("")}</div>`;
+  }
+  const bandeau = entetes.map((e) => `<div>${e}</div>`).join("");
+  if (tableau)
+    return html.replace(
+      m[0],
+      `<table class="mt tw"><thead><tr>${entetes.map((e) => `<th>${e}</th>`).join("")}</tr></thead><tbody><tr class="w"><td colspan="${entetes.length}" style="padding:0;border:0"><div class="mt2">${blocs}</div></td></tr></tbody></table>`
+    );
+  return html.replace(m[0], `<div class="mt mt2"><div class="hd">${bandeau}</div>${blocs}</div>`);
+}
+
+/** Mise en forme des blocs du menu imprimé (écran et impression). */
+const CSS_BLOCS =
+  ".mt2 .hd{display:table;width:100%;table-layout:fixed;background:#2a3b2f;color:#fff;font-weight:700}.mt2 .hd>div{display:table-cell;padding:8px 10px}" +
+  ".mt2 .hd>div:first-child,.mt2 .lg>.c1{width:84px}.mt2 .hd>div:nth-child(2):not(:last-child),.mt2 .lg>.c2:not(:last-child){width:40%}" +
+  ".mt2 .rp{background-color:var(--mcl);background-image:linear-gradient(var(--mc),var(--mc));background-size:84px 100%;background-repeat:no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone}" +
+  ".mt2 .lg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}" +
+  ".mt2 .lg>div{display:table-cell;vertical-align:top;padding:7px 10px 0}" +
+  ".mt2 .lg>.c1{color:var(--mct);font-weight:700;padding-right:6px}.mt2 .c1 .ad{color:inherit;font-style:normal;font-weight:700;font-size:.8rem}" +
+  ".mt2 .lg>.jr{display:table-caption;caption-side:top;background:#dfe8e1;color:#1f2a22;font-weight:700;padding:7px 10px}" +
+  ".mt2 .lg .in{padding-bottom:10px}.mt2 .lg.sp .in{padding-bottom:7px}.mt2 .lg.co{margin-top:-14px}" +
+  // enveloppe de tableau (en-tête répété) : elle se coupe entre deux pages, ses lignes de blocs non
+  ".tw{table-layout:fixed}.tw th:first-child{width:84px}.tw th:nth-child(2):not(:last-child){width:40%}.mt tr.w,.mt tr.w>td>.mt2{break-inside:auto;page-break-inside:auto}";
 
 /** Document HTML complet et autonome (celui du « Fichier HTML » et de l'envoi par WhatsApp, Partager et Mail). */
 function docHTML(html, name, menu = false, bouton = false) {
@@ -215,14 +232,11 @@ function docHTML(html, name, menu = false, bouton = false) {
     zoom = menu && !tel ? zoomImpression(html, true) : 1,
     viewport = bouton && tel && !surIOS() ? "width=718" : "width=device-width,initial-scale=1",
     android = bouton && tel && !surIOS(),
-    // Safari (iPhone) ne garde pas une ligne de tableau entière sur une page (et laisse parfois une fine bande de couleur en haut de la page suivante quand seul le bas de la cellule déborde : plus de marge en bas des cellules) : chaque repas devient un petit tableau à part (mêmes 3 colonnes que sur ordinateur, en-tête une fois au début), que Safari ne coupe pas ; la ligne du jour est la légende du groupe jour + premier repas
-    ios =
-      html.includes('class="sl"') && surIOS()
-        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead tr,.mt tbody:not(.dg) tr{display:table;width:100%;table-layout:fixed}.mt tbody:not(.dg) tr{break-inside:avoid;page-break-inside:avoid}.mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}.mt tbody.dg tr.day{display:table-caption;caption-side:top}.mt tbody.dg tr.day td{display:block}.mt tr.sl td.sn,.mt thead th:first-child{width:84px}.mt td:nth-child(2):not(:last-child),.mt thead th:nth-child(2):not(:last-child){width:40%}.mt tr.sl td{padding-bottom:0;border-bottom:0}.mt tr.sl.co td{padding-top:0}.mt tr.sl .in{padding-bottom:10px;break-inside:avoid;page-break-inside:avoid}.mt tr.sl.sp .in{padding-bottom:0}.mt tr.sl.sp td{border-bottom-color:transparent}}"
-        : "",
+    // menu : les blocs de la mise en page d'impression (sans tableau sur iPhone, où Safari coupe les cellules de tableau au milieu d'une ligne)
+    blocs = html.includes('class="sl"') ? blocsImpression(html, !surIOS()) : null,
     impression =
       `@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +
-      ios +
+      (blocs ? CSS_BLOCS : "") +
       (android
         ? "@media screen{.np button{font-size:2.2rem;margin:0 8px 12px 0}.np .s{font-size:1.6rem}}"
         : ""),
@@ -258,7 +272,7 @@ function docHTML(html, name, menu = false, bouton = false) {
             '<br><span class="s">Si rien ne s\'ouvre (Chrome sur iPhone) : menu Partager du navigateur, puis « Imprimer » ou « Enregistrer dans Fichiers ».</span>') +
         "</p>"
       : "") +
-    (ios ? decouperRepasLongs(html) : html) +
+    (blocs || html) +
     (html.includes("data-recnav") ? "<script>" + NAV_JS + "</script>" : "") +
     "</body></html>"
   );

@@ -7,10 +7,11 @@ const CHANGELOG = [
   {
     v: "1.80.0",
     d: "2026-10-30",
-    t: "Impression sur iPhone : saut de page après un point, sans espace",
+    t: "Impression du menu : saut de page après un point, marges, même rendu partout",
     l: [
-      "iPhone : la description d'un repas long est découpée phrase par phrase. Quand il n'y a plus de place en bas de la page, le saut de page se fait juste après un point (avant, il tombait parfois trop tôt, laissant du blanc, ou après un titre comme « LA BECHAMEL : »). Une phrase entre parenthèses n'est jamais coupée, et une description courte reste d'un seul bloc.",
-      "Aucun espace entre les phrases d'un même repas : le texte reste continu, comme sur ordinateur. Le bloc de couleur garde une marge de quelques millimètres sous son dernier texte.",
+      "Menu imprimé, sur PC, Android et iPhone : la description d'un repas long est découpée phrase par phrase. Quand il n'y a plus de place en bas de la page, le saut de page se fait juste après un point (avant : repas entier repoussé à la page suivante, laissant la page presque vide, ou texte coupé au milieu d'une phrase ou après un titre comme « LA BECHAMEL : »). Une phrase entre parenthèses n'est jamais coupée ; une description courte reste d'un seul bloc.",
+      "Aucun espace entre les phrases d'un même repas. Au saut de page, le bloc de couleur garde une marge sous le dernier texte et une marge au-dessus du premier texte de la page suivante : le texte n'est plus collé au bord.",
+      "L'en-tête « Repas / Au menu / Description » est répété sur chaque page (PC, Android) ou affiché au début (iPhone, où Safari ne sait pas répéter l'en-tête d'un tableau sans couper le texte).",
     ],
   },
   {
