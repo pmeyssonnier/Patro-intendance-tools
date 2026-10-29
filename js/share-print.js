@@ -15,12 +15,18 @@ const SH = {
 
 const shk = () => SH[$("shw").value];
 
-/** Zoom d'impression du menu (A4 paysage, 277 × 190 mm utiles), de 0,85 à 1 : celui qui remplit le mieux les pages (peu de blanc en bas de la dernière), sans jamais agrandir. Un document court garde 100 %. */
-function zoomImpression(html) {
-  const PX = 96 / 25.4,
+/** iPhone et iPad : Safari ignore l'orientation demandée par la page (@page size) et imprime en portrait. */
+const surIOS = () =>
+  /iP(hone|ad|od)/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+/** Zoom d'impression du menu, de 0,85 à 1 : celui qui remplit le mieux les pages A4 (peu de blanc en bas de la dernière), sans jamais agrandir. Zone utile : 277 × 190 mm en paysage, 190 × 277 mm en portrait. Un document court garde 100 %. */
+function zoomImpression(html, paysage = true) {
+  const [larg, haut] = paysage ? [277, 190] : [190, 277],
+    PX = 96 / 25.4,
     box = document.createElement("div"),
     inner = document.createElement("div");
-  box.style.cssText = `position:absolute;left:-99999px;top:0;visibility:hidden;width:${277 * PX}px`;
+  box.style.cssText = `position:absolute;left:-99999px;top:0;visibility:hidden;width:${larg * PX}px`;
   inner.innerHTML = html;
   box.appendChild(inner);
   document.body.appendChild(box);
@@ -28,7 +34,7 @@ function zoomImpression(html) {
     min = Infinity;
   for (let z = 85; z <= 100; z++) {
     inner.style.zoom = z / 100;
-    const p = inner.getBoundingClientRect().height / (190 * PX * 0.97),
+    const p = inner.getBoundingClientRect().height / (haut * PX * 0.97),
       score = Math.ceil(p) - p + Math.abs(z - 100) / 100;
     if (score < min - 1e-9) {
       min = score;
@@ -39,10 +45,11 @@ function zoomImpression(html) {
   return meilleur;
 }
 
-/** Imprime un document : en portrait à 100 %, sauf le menu (paysage, zoom automatique). */
-function printHTML(html, paysage = false) {
+/** Imprime un document : en portrait à 100 %, sauf le menu (`menu` : paysage avec zoom automatique, en portrait sur iPhone/iPad, où Safari ignore l'orientation de la page). */
+function printHTML(html, menu = false) {
+  const paysage = menu && !surIOS();
   $("pv").innerHTML = html;
-  $("pv").style.zoom = paysage ? zoomImpression(html) : 1;
+  $("pv").style.zoom = menu ? zoomImpression(html, paysage) : 1;
   let st = $("pgsz");
   if (!st) {
     st = document.createElement("style");
@@ -57,7 +64,8 @@ function printHTML(html, paysage = false) {
     } catch (e) {
       alert("Impression impossible ici : utilise « Fichier HTML » puis imprime le fichier.");
     }
-    setTimeout(() => document.body.classList.remove("pr"), 1500);
+    // sur téléphone, print() rend la main avant que l'aperçu soit prêt : on garde la mise en page d'impression jusqu'à « afterprint »
+    setTimeout(() => document.body.classList.remove("pr"), 30000);
   }, 80);
 }
 
@@ -89,12 +97,16 @@ const NAV_JS =
   'pickType("all")})();';
 
 /** Document HTML complet et autonome (celui du « Fichier HTML » et de l'envoi par WhatsApp, Partager et Mail). */
-function docHTML(html, name) {
+function docHTML(html, name, menu = false) {
+  const paysage = menu && !surIOS(),
+    zoom = menu ? zoomImpression(html, paysage) : 1,
+    impression = `@page{size:A4 ${paysage ? "landscape" : "portrait"};margin:10mm}@media print{body{max-width:none;padding:0;zoom:${zoom}}}`;
   return (
     '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' +
     esc(name) +
     "</title><style>" +
     DOC_CSS +
+    impression +
     "</style></head><body>" +
     html +
     (html.includes("data-recnav") ? "<script>" + NAV_JS + "</script>" : "") +
@@ -104,8 +116,8 @@ function docHTML(html, name) {
 
 const nomHTML = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".html";
 
-function dlHTML(html, name) {
-  dl(docHTML(html, name), nomHTML(name), "text/html");
+function dlHTML(html, name, menu = false) {
+  dl(docHTML(html, name, menu), nomHTML(name), "text/html");
 }
 
 const shmsg = (t) => {
@@ -119,7 +131,7 @@ $("pmenu").onclick = () => printHTML(menuHTML(), true);
 
 $("sp").onclick = () => printHTML(shk()[2](), $("shw").value === "menu");
 
-$("sd").onclick = () => dlHTML(shk()[2](), "Patro " + shk()[0]);
+$("sd").onclick = () => dlHTML(shk()[2](), "Patro " + shk()[0], $("shw").value === "menu");
 
 $("sx").onclick = () => dlCsv(shk()[0], shk()[3]());
 
@@ -133,9 +145,10 @@ function envoyerHTML(canal) {
   const nom = "Patro " + shk()[0],
     titre = troop() + " – " + shk()[0],
     html = shk()[2](),
-    fichier = new File([docHTML(html, nom)], nomHTML(nom), { type: "text/html" }),
+    menu = $("shw").value === "menu",
+    fichier = new File([docHTML(html, nom, menu)], nomHTML(nom), { type: "text/html" }),
     telecharge = () => {
-      dlHTML(html, nom);
+      dlHTML(html, nom, menu);
       shmsg("Fichier téléchargé : joins-le à ton message.");
     };
   if (navigator.canShare && navigator.canShare({ files: [fichier] })) {

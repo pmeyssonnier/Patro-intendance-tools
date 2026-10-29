@@ -3640,6 +3640,42 @@ test("menu imprimable : une journée sans aucun repas prévu n'est pas affichée
   expect(erreurs).toEqual([]);
 });
 
+test("impression sur téléphone : mêmes réglages qu'à l'ordinateur ; sur iPhone, le menu s'imprime en portrait", async ({
+  page,
+}) => {
+  const erreurs = await ouvrir(page);
+  await aller(page, "menu");
+  await page.evaluate(() => (window.print = () => {}));
+  // le fichier HTML partagé (WhatsApp, mail, téléchargement) porte l'orientation et le zoom : le menu en paysage, le reste en portrait à 100 %
+  const f = await page.evaluate(() => ({
+    menu: docHTML(menuHTML(), "Menu", true),
+    liste: docHTML(listHTML(), "Liste"),
+  }));
+  expect(f.menu).toContain("@page{size:A4 landscape;margin:10mm}");
+  expect(f.menu).toMatch(/@media print\{body\{max-width:none;padding:0;zoom:(0\.[89]\d?|1)\}\}/);
+  expect(f.liste).toContain("@page{size:A4 portrait;margin:10mm}");
+  expect(f.liste).toContain("zoom:1}}");
+  // iPhone : Safari ignore l'orientation de la page, le menu est mis en page et zoomé pour du portrait
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "userAgent", {
+      get: () =>
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
+    })
+  );
+  await page.locator("#pmenu").click();
+  expect(await page.evaluate(() => $("pgsz").textContent)).toContain("portrait");
+  const z = await page.evaluate(() => +$("pv").style.zoom);
+  expect(z).toBeGreaterThanOrEqual(0.85);
+  expect(z).toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => docHTML(menuHTML(), "Menu", true))).toContain(
+    "size:A4 portrait"
+  );
+  // la mise en page d'impression reste en place assez longtemps pour que l'aperçu du téléphone soit prêt
+  await page.waitForTimeout(2500);
+  expect(await page.evaluate(() => document.body.classList.contains("pr"))).toBe(true);
+  expect(erreurs).toEqual([]);
+});
+
 test("menu imprimé : la ligne du jour est collée au premier repas (jamais seule en bas de page)", async ({
   page,
 }) => {
