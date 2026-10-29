@@ -204,10 +204,10 @@ function docHTML(html, name, menu = false, bouton = false) {
     zoom = menu && !tel ? zoomImpression(html, true) : 1,
     viewport = bouton && tel && !surIOS() ? "width=718" : "width=device-width,initial-scale=1",
     android = bouton && tel && !surIOS(),
-    // Safari (iPhone) ne garde pas une ligne de tableau entière sur une page : chaque repas devient un petit tableau à part (mêmes 3 colonnes que sur ordinateur, en-tête une fois au début), que Safari ne coupe pas ; la ligne du jour est la légende du groupe jour + premier repas
+    // Safari (iPhone) ne garde pas une ligne de tableau entière sur une page (et laisse parfois une fine bande de couleur en haut de la page suivante quand seul le bas de la cellule déborde : plus de marge en bas des cellules) : chaque repas devient un petit tableau à part (mêmes 3 colonnes que sur ordinateur, en-tête une fois au début), que Safari ne coupe pas ; la ligne du jour est la légende du groupe jour + premier repas
     ios =
       html.includes('class="sl"') && surIOS()
-        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead tr,.mt tbody:not(.dg) tr{display:table;width:100%;table-layout:fixed}.mt tbody:not(.dg) tr{break-inside:avoid;page-break-inside:avoid}.mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}.mt tbody.dg tr.day{display:table-caption;caption-side:top}.mt tbody.dg tr.day td{display:block}.mt tr.sl td.sn,.mt thead th:first-child{width:84px}.mt td:nth-child(2):not(:last-child),.mt thead th:nth-child(2):not(:last-child){width:40%}.mt tr.sl.co td{padding-top:11px}.mt tr.sl.sp td{border-bottom-color:transparent}}"
+        ? "@media print{.mt,.mt thead,.mt tbody{display:block}.mt thead tr,.mt tbody:not(.dg) tr{display:table;width:100%;table-layout:fixed}.mt tbody:not(.dg) tr{break-inside:avoid;page-break-inside:avoid}.mt tbody.dg{display:table;width:100%;table-layout:fixed;break-inside:avoid;page-break-inside:avoid}.mt tbody.dg tr.day{display:table-caption;caption-side:top}.mt tbody.dg tr.day td{display:block}.mt tr.sl td.sn,.mt thead th:first-child{width:84px}.mt td:nth-child(2):not(:last-child),.mt thead th:nth-child(2):not(:last-child){width:40%}.mt tr.sl td{padding-bottom:0}.mt tr.sl.co td{padding-top:11px}.mt tr.sl.sp td{border-bottom-color:transparent}}"
         : "",
     impression =
       `@media print{body{max-width:none;padding:0;zoom:${zoom}}}` +

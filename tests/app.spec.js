@@ -3795,6 +3795,8 @@ test("impression sur iPhone : 3 colonnes, en-tête au début, repas longs décou
       dl = docHTML(long, "Menu", true, true);
     return {
       colonnes: dc.includes(".mt thead th:first-child{width:84px}"),
+      // pas de marge en bas des cellules : sinon Safari laisse une fine bande de couleur en haut de la page suivante
+      sansBande: dc.includes(".mt tr.sl td{padding-bottom:0}"),
       entete: (dc.match(/<thead>/g) || []).length,
       courtsCoupes: (dc.match(/class="sl co/g) || []).length,
       suites: (dl.match(/class="sl co/g) || []).length,
@@ -3807,6 +3809,7 @@ test("impression sur iPhone : 3 colonnes, en-tête au début, repas longs décou
     };
   });
   expect(r.colonnes).toBe(true);
+  expect(r.sansBande).toBe(true);
   expect(r.entete).toBe(1);
   expect(r.courtsCoupes).toBe(0);
   expect(r.suites).toBeGreaterThan(0);

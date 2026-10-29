@@ -11,6 +11,7 @@ const CHANGELOG = [
     l: [
       "iPhone (Safari) : le menu reprend la mise en page de l'ordinateur, avec 3 colonnes séparées (Repas, Au menu, Description) et l'en-tête une fois au début, aligné sur les colonnes. Le plat et la description ne sont plus empilés dans un seul bloc.",
       "Un repas dont la description est longue est découpé, entre deux phrases, en plusieurs lignes de tableau : la suite garde la couleur du repas, avec une petite marge en haut de la page, et aucun texte n'est coupé ni caché. Les repas courts restent entiers sur une page.",
+      "Plus de fine bande de couleur en haut d'une page quand un repas finit juste au bas de la page précédente.",
       "Les colonnes suivent le sens de la page : portrait ou paysage, choisi dans l'aperçu d'impression de l'iPhone.",
     ],
   },
